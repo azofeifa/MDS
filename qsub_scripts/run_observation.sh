@@ -9,7 +9,7 @@
 
 #PBS -l walltime=48:00:00
 #PBS -l nodes=1:ppn=64
-#PBS -l mem=200gb
+#PBS -l mem=20gb
 
 hostlist=$( cat $PBS_NODEFILE | sort | uniq | tr '\n' ',' | sed -e 's/,$//' )
 # -- OpenMP environment variables --
@@ -21,7 +21,8 @@ module load mpich_3.1.4
 #================================================================
 #paths to config and src
 src=/Users/azofeifa/Lab/gTFIv2/CPP_src/SE
-DB=
+DB=/Users/azofeifa/Lab/gTFIv2/PSSM_DB/HOCOMOCOv10_HUMAN_mono_meme_format.meme
+bed=/Users/azofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/before_1_1/Allen2014_DMSO2_3-19_divergent_classifications.bed
 fasta=/Users/azofeifa/Lab/genome_files/hg19.fa
 out=/Users/azofeifa/
 br=500
@@ -30,5 +31,5 @@ log_out=XX
 #================================================================
 #calling command
 cmd="mpirun -np $PBS_NUM_NODES -hosts ${hostlist}"
-$cmd $src 
+$cmd $src -DB $DB -fasta $fasta -bed $bed -o $out -br $br -pad $pad -log_out $log_out
 #================================================================
