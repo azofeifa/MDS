@@ -13,9 +13,9 @@ CPP_FLAGS_32  	= -D32_BIT
 CPP_FLAGS_64  	= -D64_BIT
 
 GCCVERSION 		= $(shell ${CXX} -dumpversion)
-SE: main.o load.o split.o read_in_parameters.o get_motif_pvalues.o scanner.o out.o
+SE: main.o load.o split.o read_in_parameters.o get_motif_pvalues.o scanner.o out.o ACGT_profile.o
 	@printf "linking           : "
-	@${CXX} ${CXXFLAGS} ${PWD}/scanner.o  ${PWD}/main.o ${PWD}/load.o ${PWD}/out.o ${PWD}/split.o ${PWD}/read_in_parameters.o ${PWD}/get_motif_pvalues.o -o ${EXEC}
+	@${CXX} ${CXXFLAGS} ${PWD}/scanner.o ${PWD}/ACGT_profile.o  ${PWD}/main.o ${PWD}/load.o ${PWD}/out.o ${PWD}/split.o ${PWD}/read_in_parameters.o ${PWD}/get_motif_pvalues.o -o ${EXEC}
 	@printf "done\n"
 	@echo "========================================="
 	@printf "finished :)\n"
@@ -28,6 +28,10 @@ main.o:
 	@echo "GCC version: "${GCCVERSION}
 	@printf "main              : "
 	@${CXX} -c ${CXXFLAGS} ${PWD}/main.cpp 
+	@printf "done\n"
+ACGT_profile.o:
+	@printf "ACGT_profile      : "
+	@${CXX} -c ${CXXFLAGS} ${PWD}/ACGT_profile.cpp 
 	@printf "done\n"
 scanner.o:
 	@printf "scanner           : "

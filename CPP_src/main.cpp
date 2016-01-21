@@ -3,6 +3,7 @@
 #include "get_motif_pvalues.h"
 #include "scanner.h"
 #include "out.h"
+#include "ACGT_profile.h"
 #include <vector>
 #include <string>
 using namespace std;
@@ -42,7 +43,9 @@ int main(int argc,char* argv[]){
 	DP_pvalues(PSSMS,bins, background);
 	intervals 	= run_accross(intervals, PSSMS,background);
 
-	write_observation_stats(intervals, out_dir, job_ID, PSSMS);
+	map<string, vector<vector<double> > > G= get_average_ACGT_profile(intervals, PSSMS,pad);
+
+	write_observation_stats(intervals, out_dir, job_ID, PSSMS, G, pad);
 
 
 	return 0;
