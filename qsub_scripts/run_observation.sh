@@ -20,8 +20,13 @@ module load mpich_3.1.4
 
 #================================================================
 #paths to config and src
-src=
-
+src=/Users/azofeifa/Lab/gTFIv2/CPP_src/SE
+DB=
+fasta=/Users/azofeifa/Lab/genome_files/hg19.fa
+out=/Users/azofeifa/
+br=500
+pad=1500
+log_out=XX
 #================================================================
 #calling command
 cmd="mpirun -np $PBS_NUM_NODES -hosts ${hostlist}"
