@@ -5,8 +5,8 @@
 #include "load.h"
 
 using namespace std;
-map<string, vector<vector<double> > > get_average_ACGT_profile(map<string, vector<segment> > S, 
-	vector<PSSM *> PSSMS, int pad );
+void get_average_ACGT_profile(map<string, vector<segment> > S, 
+	vector<PSSM *> PSSMS, int pad ,map<string,  double  >   & NN, map<string, double [3000][4]> & G );
 
 
 #endif

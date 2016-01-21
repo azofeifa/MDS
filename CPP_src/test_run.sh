@@ -4,6 +4,6 @@ bed=~/Lab/gro_seq_files/Allen2014/EMG_out_files/test_Allen2014_DMSO2_3-19_diverg
 out=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/
 br=100
 pad=1500
-log_out=XX
+log_out=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/
 
 ./SE -DB $DB -fasta $fasta -bed $bed -o $out -br $br -pad $pad -log_out $log_out

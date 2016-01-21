@@ -47,8 +47,8 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 }
 
 
-vector<double> get_sig_positions(int * forward, 
-	int * reverse, int N, PSSM * p, vector<double> background){
+vector<double> get_sig_positions(int forward[3000], 
+	int reverse[3000], int N, PSSM * p, vector<double> background){
 
 	vector<double> locs_pvs;
 	int length 	= p->frequency_table.size();
@@ -88,7 +88,7 @@ vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, vector<double>
 	vector<vector<double>> sig_positions(PSSMS.size());
 	#pragma omp parallel for
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		sig_positions[p]= get_sig_positions(S.forward, S.reverse, S.N, PSSMS[p], background);
+		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 3000, PSSMS[p], background);
 	}
 	return sig_positions;
 }
