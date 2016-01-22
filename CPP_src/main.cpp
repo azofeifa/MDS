@@ -53,15 +53,23 @@ int main(int argc,char* argv[]){
 	FHW.flush();
 
 
-	DP_pvalues(PSSMS,bins, background);
+	PSSMS 	= DP_pvalues(PSSMS,bins, background);
 	FHW<<"computed p_values"<<endl;
 	FHW.flush();
+	printf("scanning intervals...");
+	cout.flush();
 	intervals 	= run_accross(intervals, PSSMS,background);
+	printf("done\n");
+	cout.flush();
 	FHW<<"ran across intervals"<<endl;
 	FHW.flush();
 	map<string, double> NN;
 	map<string, double [3000][4]> G;
-	get_average_ACGT_profile(intervals, PSSMS,pad, NN, G);
+	printf("gathering GC content profiles...");
+	cout.flush();
+	G 	= get_average_ACGT_profile(intervals, PSSMS,pad, NN, G);
+	printf("done\n");
+	cout.flush();
 	FHW<<"gathered ACGT profiles for each motif"<<endl;
 	FHW.flush();
 
@@ -69,7 +77,10 @@ int main(int argc,char* argv[]){
 	// //map<string, vector<vector<segment> >  > SIMS 	=  run_sims(G , NN, pad );
 
 
+	printf("writing out stats...");
 	write_observation_stats(intervals, out_dir, job_ID, PSSMS, G, pad);
+	printf("done\n");
+	cout.flush();
 	FHW<<"DONE :)"<<endl;
 	FHW.flush();
 

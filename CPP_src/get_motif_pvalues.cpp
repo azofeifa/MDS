@@ -83,6 +83,7 @@ vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int 
 	int N 	= p->frequency_table.size(); //number of positions in the PSSM
 	double min_score 	= get_order_stat(p->frequency_table, background, true);
 	double max_score 	= get_order_stat(p->frequency_table, background, false);
+
 	vector<vector<double>> A 	= p->frequency_table;
 	vector<double> counts,edges;
 	for (int i = 0 ; i < N; i++){
@@ -118,23 +119,25 @@ vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int 
 		current[0] 	= edges[i], current[1] = double(S)/double(NN);
 		p_values.push_back(current);
 	}
+
 	return p_values;
 }
 
 
-void DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
+vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	double current 				= 0.0;
 	string stars 				= "";
 	string white_space 			= "";
-	double val 					= 0.01;
+	double val 					= 0.1;
 	int  ws_counter 			= 1.0/val;
 	for (int i = 0 ; i < P.size(); i++){
 		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,200);
-		for (int i = 0 ; i < 200; i++){
-			for (int j = 0 ; j < 4;j++){
-				P[i]->pvalues[i][j] 	= p_values[i][j];
+		for (int k = 0 ; k < 200; k++){
+			for (int j = 0 ; j < 2;j++){
+				P[i]->pvalues[k][j]  	= p_values[k][j];
 			}
 		}
+
 		P[i]->SN 							= p_values.size();
 		if (double(i)/P.size() >= current){
 			white_space 	= "";
@@ -152,5 +155,6 @@ void DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	stars 		+= "*";
 	printf("\rcalculating LLRs|%s%s| done\n", stars.c_str(), "");
 	cout.flush();
+	return P;
 
 }

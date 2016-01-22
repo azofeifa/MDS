@@ -10,7 +10,7 @@ public:
 	int N;
 	int SN;
 	vector<vector<double>> frequency_table;
-	double pvalues[200][4];
+	double pvalues[200][2];
 	PSSM();
 	PSSM(string);
 	void transform_ft();

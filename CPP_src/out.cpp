@@ -48,7 +48,8 @@ void collect_stats(map<string, vector<segment> > intervals, int p, double & mean
 
 
 void write_observation_stats(map<string, vector<segment> > intervals, 
-	string out_dir, string job_ID , vector<PSSM *>PSSMS,map<string, vector<vector<double> > > G, int pad){
+	string out_dir, string job_ID , vector<PSSM *>PSSMS,
+	map<string, double [3000][4]> G, int pad){
 	ofstream FHW;
 	FHW.open(out_dir+ job_ID+ "_" + "observed_statistics.tsv" );
 
@@ -66,14 +67,14 @@ void write_observation_stats(map<string, vector<segment> > intervals,
 	}
 
 	FHW<<"#ACGT Frequency Distributions per motif\n";
-	typedef map<string, vector<vector<double> > >::iterator it_type;
+	typedef map<string, double [3000][4]>::iterator it_type;
 	for (it_type m = G.begin(); m!=G.end(); m++){
 		FHW<<m->first+"\t";
 		string line="";
 		string temp="";
-		for (int i = 0; i < m->second.size(); i++){
+		for (int i = 0; i < 3000; i++){
 			temp = "";
-			for (int j = 0; j < m->second[i].size(); j++){
+			for (int j = 0; j < 4; j++){
 				temp+=to_string(m->second[i][j])+",";
 			}
 			line+=temp.substr(0,temp.size()-1) + "\t";
