@@ -129,8 +129,12 @@ void DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	double val 					= 0.01;
 	int  ws_counter 			= 1.0/val;
 	for (int i = 0 ; i < P.size(); i++){
-		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,bins);
-		P[i]->pvalues 						= p_values;
+		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,200);
+		for (int i = 0 ; i < 200; i++){
+			for (int j = 0 ; j < 4;j++){
+				P[i]->pvalues[i][j] 	= p_values[i][j];
+			}
+		}
 		P[i]->SN 							= p_values.size();
 		if (double(i)/P.size() >= current){
 			white_space 	= "";

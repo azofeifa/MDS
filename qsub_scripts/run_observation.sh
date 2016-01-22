@@ -27,7 +27,7 @@ fasta=/Users/azofeifa/Lab/genome_files/hg19.fa
 out=/Users/azofeifa/
 br=500
 pad=1500
-log_out=XX
+log_out=/Users/azofeifa/
 #================================================================
 #calling command
 cmd="mpirun -np $PBS_NUM_NODES -hosts ${hostlist}"

@@ -35,11 +35,10 @@ bool segment::transform(){
 	table['A'] 	= 0, table['C']=1, table['G']=2, table['T']=3;
 	table['a'] 	= 0, table['c']=1, table['g']=2, table['t']=3;
 	flip[0] 	=3, flip[3] = 0, flip[1]=2, flip[2]=1;
-	forward 	= new int[seq.size()];
-	reverse 	= new int[seq.size()];
 	N 			= seq.size();
 	bool keep 	= true;
 	for (int j = 0 ; j < seq.size(); j++){
+
 		if (table.find(seq[j]) != table.end()){
 			forward[j] 	= table[seq[j]];
 			reverse[j] 	= flip[table[seq[j]]];
@@ -83,7 +82,6 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad){
 	}else{
 		printf("couldn't open %s \n", FILE.c_str() );
 	}
-
 
 	return S;	
 }
@@ -217,7 +215,7 @@ double find_closest(double obs, vector<vector<double>> x  ){
 double PSSM::get_pvalue(double obs){
 	int k;
 	int a 	= 0;
-	int b 	= SN;
+	int b 	= 200;
 	while ((b-a)>2){
 		k 	= (b+a)/2;
 		if ( obs < pvalues[k][0]   ){
