@@ -8,8 +8,8 @@ params::params(){
 	p["-o"] 			= "";
 	p["-ID"] 			= "1";
 	p["-log_out"] 		= "";
-	p["-pad"] 			= "1500";
 	p["-br"] 			= "100";
+	p["-pv"] 			= "0.0000001";
 }
 bool params::check(){
 	typedef map<string, string >::iterator it_type; 

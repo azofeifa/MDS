@@ -27,8 +27,9 @@ int main(int argc,char* argv[]){
 	string job_ID 				= P->p["-ID"];
 	ofstream FHW;
 	FHW.open(log_out + job_ID + "-gTFI_log_file.txt");
-	int pad 					= 1500;
+	int pad 					= 1000;
 	int bins 					= stoi(P->p["-br"]);
+	double pv 					= stod(P->p["-pv"]);
 	map<string, vector<segment>> intervals 	= load_bed_file(bed_file, pad);
 	FHW<<"loaded bed_file"<<endl;
 	FHW.flush();
@@ -58,13 +59,13 @@ int main(int argc,char* argv[]){
 	FHW.flush();
 	printf("scanning intervals...");
 	cout.flush();
-	intervals 	= run_accross(intervals, PSSMS,background);
+	intervals 	= run_accross(intervals, PSSMS,background, pv);
 	printf("done\n");
 	cout.flush();
 	FHW<<"ran across intervals"<<endl;
 	FHW.flush();
 	map<string, double> NN;
-	map<string, double [3000][4]> G;
+	map<string, double [2000][4]> G;
 	printf("gathering GC content profiles...");
 	cout.flush();
 	G 	= get_average_ACGT_profile(intervals, PSSMS,pad, NN, G);
@@ -78,6 +79,7 @@ int main(int argc,char* argv[]){
 
 
 	printf("writing out stats...");
+	cout.flush();
 	write_observation_stats(intervals, out_dir, job_ID, PSSMS, G, pad);
 	printf("done\n");
 	cout.flush();

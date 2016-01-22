@@ -47,8 +47,8 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 }
 
 
-vector<double> get_sig_positions(int forward[3000], 
-	int reverse[3000], int N, PSSM * p, vector<double> background){
+vector<double> get_sig_positions(int forward[2000], 
+	int reverse[2000], int N, PSSM * p, vector<double> background, double pv){
 
 	vector<double> locs_pvs;
 	int length 	= p->frequency_table.size();
@@ -70,10 +70,10 @@ vector<double> get_sig_positions(int forward[3000],
 		}
 		pvaluef 	= 1.0-p->get_pvalue(llf*2);
 		pvaluer 	= 1.0-p->get_pvalue(llr*2);
-		if (pvaluef < pow(10,-6)){
+		if (pvaluef < pv){
 			locs_pvs.push_back(i);
 		}
-		if (pvaluer < pow(10,-6)){
+		if (pvaluer < pv){
 			locs_pvs.push_back(i);
 		}
 		i++;
@@ -81,11 +81,13 @@ vector<double> get_sig_positions(int forward[3000],
 	return locs_pvs;
 }
 
-vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, vector<double> background){
+vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
+	vector<double> background, double pv){
 	vector<vector<double>> sig_positions(PSSMS.size());
 	#pragma omp parallel for
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 3000, PSSMS[p], background);
+		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 2000, 
+			PSSMS[p], background, pv);
 	}
 	return sig_positions;
 }
@@ -93,7 +95,8 @@ vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, vector<double>
 
 
 
-map<string, vector<segment> > run_accross(map<string, vector<segment>> S , vector<PSSM *> PSSMS, vector<double> background){
+map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
+ vector<PSSM *> PSSMS, vector<double> background, double pv){
 	typedef map<string, vector<segment>>::iterator it_type; 
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
@@ -108,7 +111,7 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S , vecto
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
-			c->second[i].motif_positions = wrapper(c->second[i], PSSMS,background);
+			c->second[i].motif_positions = wrapper(c->second[i], PSSMS,background, pv);
 			newS[c->first].push_back(c->second[i]);
 		}
 	}

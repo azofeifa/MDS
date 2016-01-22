@@ -57,7 +57,8 @@ void sort_xy(vector<double>& x, vector<double>& y){
 
 }
 
-void histogram(vector<double> x, vector<double> y, int bins, double min_x, double max_x, vector<double>& edges,vector<double>& counts ){
+void histogram(vector<double> x, vector<double> y, int bins, 
+	double min_x, double max_x, vector<double>& edges,vector<double>& counts ){
 	double delta 	= (max_x - min_x) / double(bins);
 	sort_xy(x,y);
 
@@ -131,8 +132,10 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	double val 					= 0.1;
 	int  ws_counter 			= 1.0/val;
 	for (int i = 0 ; i < P.size(); i++){
-		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,200);
-		for (int k = 0 ; k < 200; k++){
+		int BINS 							= P[i]->frequency_table.size()*bins;
+		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,BINS);
+		for (int k = 0 ; k < BINS; k++){
+			P[i]->pvalues.push_back(vector<double>(2));
 			for (int j = 0 ; j < 2;j++){
 				P[i]->pvalues[k][j]  	= p_values[k][j];
 			}

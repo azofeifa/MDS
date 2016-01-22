@@ -10,7 +10,7 @@ public:
 	int N;
 	int SN;
 	vector<vector<double>> frequency_table;
-	double pvalues[200][2];
+	vector<vector<double>> pvalues;
 	PSSM();
 	PSSM(string);
 	void transform_ft();
@@ -23,8 +23,8 @@ class segment{
 public:
 	string chrom; 
 	int start, stop; 
-	int forward[3000];
-	int reverse[3000];
+	int forward[2000];
+	int reverse[2000];
 	string seq; 
 	int N;
 	vector<vector< double>> motif_positions;
