@@ -6,5 +6,5 @@
 using namespace std;
 void write_observation_stats(map<string, vector<segment>>,
 	string, string, vector<PSSM *>,
-	map<string, double [3000][4]>, int);
+	map<string, double [2000][4]>, int);
 #endif
