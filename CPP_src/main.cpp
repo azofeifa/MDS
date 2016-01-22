@@ -69,9 +69,9 @@ int main(int argc,char* argv[]){
 	// //map<string, vector<vector<segment> >  > SIMS 	=  run_sims(G , NN, pad );
 
 
-	// write_observation_stats(intervals, out_dir, job_ID, PSSMS, G, pad);
-	// FHW<<"DONE :)"<<endl;
-	// FHW.flush();
+	write_observation_stats(intervals, out_dir, job_ID, PSSMS, G, pad);
+	FHW<<"DONE :)"<<endl;
+	FHW.flush();
 
 
 	return 0;
