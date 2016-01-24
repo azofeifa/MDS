@@ -8,11 +8,13 @@ class PSSM{
 public:
 	string name;
 	int N;
+	int ID;
 	int SN;
 	vector<vector<double>> frequency_table;
 	vector<vector<double>> pvalues;
 	PSSM();
 	PSSM(string);
+	PSSM(int);
 	void transform_ft();
 	double get_pvalue(double);
 	string get_consensus();
@@ -27,7 +29,7 @@ public:
 	int reverse[2000];
 	string seq; 
 	int N;
-	vector<vector< double>> motif_positions;
+	map<int, vector<double>> motif_positions;
 	segment();
 	segment(string, int, int);
 	bool transform();
@@ -40,4 +42,8 @@ vector<PSSM *> load_PSSM_DB(string);
 map<string, vector<segment>> load_bed_file(string, int) ;
 
 map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > );
+
+vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
+	vector<int>, vector<int>);
+
 #endif

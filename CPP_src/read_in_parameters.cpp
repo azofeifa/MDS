@@ -10,6 +10,7 @@ params::params(){
 	p["-log_out"] 		= "";
 	p["-br"] 			= "100";
 	p["-pv"] 			= "0.0000001";
+	p["-simN"] 			= "10";
 }
 bool params::check(){
 	typedef map<string, string >::iterator it_type; 

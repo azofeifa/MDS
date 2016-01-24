@@ -4,85 +4,123 @@
 #include <fstream>
 #include <cmath>
 using namespace std;
-void collect_stats(map<string, vector<segment> > intervals, int p, double & mean, 
-	double & var, double & se, double & NN, double & NNN, int pad){
-	typedef map<string, vector<segment> >::iterator it_type;
-	vector<double> distances;
-	for (it_type c = intervals.begin(); c!=intervals.end(); c++){
-		for (int i =0; i < c->second.size(); i++){
-			if (c->second[i].motif_positions[p].size()){
-				NNN+=1.0;
-			}
-			for (int d = 0; d < c->second[i].motif_positions[p].size(); d++ ){
-				distances.push_back(c->second[i].motif_positions[p][d]);
+vector<double> sort(vector<double> X){
+	if (X.size()<2){
+		return X;
+	}
+	bool changed 	= true;
+	while (changed){
+		changed = false;
+		for (int i = 1 ; i < X.size(); i++){
+			if (X[i-1]  > X[i] ){
+				changed 		= true;
+				double copy 	= X[i-1];
+				X[i-1] 	= X[i];
+				X[i] 	= copy;
 			}
 		}
 	}
-	double S 	= 0;
-	double SE 	= 0;
-	double S2 	= 0;
-	double N 	= 0;
-	double d 	= 0.0;
-	for (int j = 0; j< distances.size(); j++){
-		d 		= distances[j] - pad;
+	return X;
+}
 
-		S+=abs(d);
-		S2+=pow(d,2);
-		if (abs(d) < 200){
-			SE++;
+
+double get_pvalue(double obs, vector<double> null){
+	double N 	= float(null.size());
+	double S 	= 0.0;
+	for (int i = 0 ; i < null.size();i++){
+		S++;
+		if (null[i] > obs){
+
+			return S/N;
 		}
-		N++;
 	}
-	if (N==0){
-		se = 0.0, mean 	= 0.0, var = 0.0, NN =0.0;
-
-	}else{
-		se = SE / N, mean 	= S/N, var = sqrt(S2 / N), NN = N ;
-
-	}
-
-
-
+	return 1.0;
 }
 
 
 
-void write_observation_stats(map<string, vector<segment> > intervals, 
-	string out_dir, string job_ID , vector<PSSM *>PSSMS,
-	map<string, double [2000][4]> G, int pad){
+
+void write_out(string out_dir,map<int, vector< vector <double> >> collections, 
+	vector<PSSM *>PSSMS ){
 	ofstream FHW;
-	FHW.open(out_dir+ job_ID+ "_" + "observed_statistics.tsv" );
+	FHW.open(out_dir + "motif_enrichment_statistics.tsv");
+	typedef map<int, vector< vector <double> >>::iterator it_type;
+	string name;
+	for (it_type m = collections.begin(); m!=collections.end(); m++){
+		name 	= PSSMS[m->first]->name;
+		vector<double> observed_info 	= m->second[0];
+		vector<double> null_stats 		= m->second[1];
+		int step 						= null_stats.size()/4;
+		vector<double> displacements 	= m->second[2];
 
-	FHW<<"#TF name\tSE ratio\tdisplacement mean\tdisplacement dispersion(0)\tnumber of motif locations\tNumber of Bidirections with motif\n";
-	string motif 	= "";
-
-
-
-	for (int p = 0; p < PSSMS.size(); p++){
-		motif 		= PSSMS[p]->name;
-		double mean =0, var=0, se=0, NN=0, NNN=0;
-		collect_stats(intervals, p, mean, var, se,NN, NNN, pad);
-		FHW<<(motif+"\t" + to_string(se) + "\t" + to_string(mean) + "\t" + to_string(var)+ "\t" + to_string(NN)+ "\t" + to_string(NNN)+ "\n");
-
-	}
-
-	FHW<<"#ACGT Frequency Distributions per motif\n";
-	typedef map<string, double [2000][4]>::iterator it_type;
-	for (it_type m = G.begin(); m!=G.end(); m++){
-		FHW<<m->first+"\t";
-		string line="";
-		string temp="";
-		for (int i = 0; i < 2000; i++){
-			temp = "";
-			for (int j = 0; j < 4; j++){
-				temp+=to_string(m->second[i][j])+",";
+		
+		
+		FHW<<name+"\t" ;
+		string line 	= "";
+		string pvals 	= "";
+		int start, stop;
+		if (observed_info[observed_info.size()-1]>0){
+			for (int i =0; i < observed_info.size();i++){
+				start 	= i*step, stop = (i+1)*step;
+				line+=to_string(observed_info[i])+"\t";
+				vector<double> current(null_stats.begin() + start, null_stats.begin()+stop);
+				current 	= sort(current);
+				pvals+=to_string(get_pvalue(observed_info[i], current) ) + "\t";
 			}
-			line+=temp.substr(0,temp.size()-1) + "\t";
+			pvals=pvals.substr(0,pvals.size()-1);
+			FHW<<line<<pvals<<endl;
+		}else{
+			FHW<<"0\t0\t0\t0\t0\t0\t0\t0"<<endl;	
+		}
+	}
+	FHW<<"#null statistics"<<endl;
+	for (it_type m = collections.begin(); m!=collections.end(); m++){
+		name 	= PSSMS[m->first]->name;
+		vector<double> observed_info 	= m->second[0];
+		vector<double> null_stats 		= m->second[1];
+		int step 						= null_stats.size()/4;
+		vector<double> displacements 	= m->second[2];
+
+		
+		
+		FHW<<name+"\t" ;
+		string line 	= "";
+		string pvals 	= "";
+		int start, stop;
+		if (observed_info[observed_info.size()-1]>0){
+			for (int i =0; i < observed_info.size();i++){
+				start 	= i*step, stop = (i+1)*step;
+				vector<double> current(null_stats.begin() + start, null_stats.begin()+stop);
+				current 	= sort(current);
+				for (int j = 0; j < current.size();j++){
+					line+=to_string(current[j])+",";
+				}
+				line=line.substr(0,line.size()-1) + "\t";
+			}
+			line=line.substr(0,line.size()-1) ;
+			FHW<<line<<endl;
+		}else{
+			FHW<<"0\t0\t0\t0\t0\t0\t0\t0"<<endl;	
+		}
+	}
+	FHW<<"#displacement data"<<endl;
+	for (it_type m = collections.begin(); m!=collections.end(); m++){
+		name 	= PSSMS[m->first]->name;
+		FHW<<name + "\t";
+		vector<double> displacements 	= m->second[2];
+		string line = "";
+		for (int i = 0; i < displacements.size();i++){
+			line+=to_string(displacements[i]) + ",";
+
 		}
 		line=line.substr(0,line.size()-1);
 		FHW<<line<<endl;
 
 	}
+	
+
+
+
 
 
 }

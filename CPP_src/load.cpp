@@ -11,6 +11,9 @@ segment::segment(string chr, int st, int sp){
 	seq 	= "";
 }
 
+
+
+
 vector<segment> sort(vector<segment> segments){
 	bool changed 	= true;
 	while (changed){
@@ -104,13 +107,11 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-				//	break;
+					break;
 				}
 				counter+=1;
 				stars+="*";
-				printf("\rinserting fasta|%s%s|", stars.c_str(), white_space.substr(0,white_space.size()-counter).c_str());
 				chrom 	= line.substr(1,line.size());
-				cout.flush();
 				start 	= 0, i = 0;
 				N 	= S[chrom].size();
 				current 	= S[chrom];
@@ -148,7 +149,6 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 		
 
 		}
-		printf("\rinserting fasta|%s%s|done\n", stars.c_str(),  "");
 		typedef map<string, vector<segment> >::iterator it_type;
 		int LOSS 	= 0;
 		for (it_type i = S.begin(); i!=S.end(); i++){
@@ -175,6 +175,10 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 PSSM::PSSM(){};
 PSSM::PSSM(string ID){
 	name 	= ID;
+};
+PSSM::PSSM(int  id){
+	ID 	= id;
+
 };
 
 
@@ -243,8 +247,7 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 				P 			= NULL;
 				line_array 	= split_by_ws(line, " ");
 				if (line_array.size()>1){
-					line_array 	= split_by_us(line_array[1], " ");
-					MOTIF  	= line_array[0];			
+					MOTIF  	= line_array[1];			
 					P 		= new PSSM(MOTIF);
 				}
 
@@ -276,6 +279,26 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 	}
 	return all_motifs;
 }
+
+
+vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> streamed,vector<int> IDS,
+	vector<int> NS){
+	int N 	= IDS.size();
+	vector<PSSM *> PSSMS;
+	for (int i = 0 ; i < N; i++){
+		PSSM * current 	= new PSSM(IDS[i]);
+		current->frequency_table 	= streamed[i];
+		current->N 	= NS[i];
+		PSSMS.push_back(current);
+	}
+	return PSSMS;
+
+}
+
+
+
+
+
 
 
 

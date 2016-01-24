@@ -20,8 +20,6 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 	typedef map<string, vector<segment>>::iterator it_type; 
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		
-		printf("\rcomputing ACGT Frequency|%s%s|", stars.c_str(), white_space.substr(0,white_space.size()-counter).c_str());
-		cout.flush();
 		for (int i = 0 ; i < c->second.size(); i++ ){
 			string seq 	= c->second[i].seq;
 			for (int j = 0 ; j < seq.size(); j++){
@@ -37,12 +35,9 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 	for (int i = 0 ; i < ATGC.size(); i++){
 		SUM+=ATGC[i];
 	}
-	printf("\rcomputing ACGT Frequency|%s%s|done, ", stars.c_str(), white_space.substr(0,white_space.size()-counter).c_str());
 	for (int i = 0 ; i < ATGC.size(); i++){
 		ATGC[i]/=SUM;
-		printf("%f, ",ATGC[i] );
 	}
-	printf("\n");
 	return ATGC;
 }
 
@@ -81,7 +76,7 @@ vector<double> get_sig_positions(int forward[2000],
 	return locs_pvs;
 }
 
-vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
+map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
 	vector<double> background, double pv){
 	vector<vector<double>> sig_positions(PSSMS.size());
 	#pragma omp parallel for
@@ -89,14 +84,22 @@ vector<vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS,
 		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 2000, 
 			PSSMS[p], background, pv);
 	}
-	return sig_positions;
+	map<int, vector<double>> sig_positions_map;
+	for (int i = 0 ; i < PSSMS.size();i++){
+		sig_positions_map[PSSMS[i]->ID]=sig_positions[i];
+	}
+	return sig_positions_map;
 }
 
 
 
 
+
+
+
+
 map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
- vector<PSSM *> PSSMS, vector<double> background, double pv){
+ vector<PSSM *> PSSMS, vector<double> background, double pv, int rank){
 	typedef map<string, vector<segment>>::iterator it_type; 
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
@@ -107,6 +110,7 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 	}	
 	for (int b = 0 ; b < background.size(); b++){
 		background[b] 	= log(background[b]);
+
 	}
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
@@ -117,3 +121,69 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 	}
 	return newS;
 }
+
+
+
+int PSSM_index(int i, vector<PSSM *> P){
+	for (int j = 0 ; j < P.size(); j++){
+		if (P[j]->ID==i){
+			return j;
+		}
+	}
+	printf("what???\n");
+	return 0;
+}
+
+map<int, map<int, vector<segment> >> scan_simulations(map<int, map<int, vector<segment> >> S,
+	vector<PSSM *> P, vector<double> background,double pv ){
+	for (int b = 0 ; b < background.size(); b++){
+		background[b] 	= log(background[b]);
+	}
+	typedef map<int, map<int, vector<segment> >>::iterator it_type; 
+	typedef map<int, vector<segment> >::iterator it_type_2; 
+	
+	map<int, map<int, vector<segment> >> newS;
+	for (it_type s = S.begin(); s!=S.end(); s++ ){
+		int p_index 		= PSSM_index(s->first, P);
+
+		for (it_type_2 cn 	= s->second.begin(); cn!=s->second.end(); cn++){
+			vector<segment> currents(cn->second.size());
+			#pragma omp parallel for
+			for (int i = 0 ; i < cn->second.size(); i++){
+				cn->second[i].motif_positions[s->first]=get_sig_positions(cn->second[i].forward,
+					cn->second[i].reverse, 2000,P[p_index], background, pv );
+				currents[i] 	= cn->second[i];
+			}
+
+			newS[s->first][cn->first]= currents;
+
+		}
+	}
+	return newS;
+	
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

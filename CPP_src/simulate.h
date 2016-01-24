@@ -5,6 +5,6 @@
 #include <vector>
 #include "load.h"
 using namespace std;
-map<string, vector<vector<segment> >  > run_sims(map<string, vector<vector<double> > > ,
- map<string, double>, int );
+map<int, map<int, vector<segment> >> run_sims(map<int, double [2000][4]> ,
+ map<int, double>,  vector<PSSM *> , int,int );
 #endif

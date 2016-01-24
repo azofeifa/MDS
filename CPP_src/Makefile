@@ -13,9 +13,9 @@ CPP_FLAGS_32  	= -D32_BIT
 CPP_FLAGS_64  	= -D64_BIT
 
 GCCVERSION 		= $(shell ${CXX} -dumpversion)
-SE: main.o  simulate.o load.o split.o read_in_parameters.o get_motif_pvalues.o scanner.o out.o ACGT_profile.o
+SE: main.o  simulate.o load.o split.o read_in_parameters.o get_motif_pvalues.o scanner.o out.o ACGT_profile.o MPI_comm.o collect_sample_statistics.o
 	@printf "linking           : "
-	@${CXX} ${CXXFLAGS} ${PWD}/simulate.o ${PWD}/scanner.o ${PWD}/ACGT_profile.o  ${PWD}/main.o ${PWD}/load.o ${PWD}/out.o ${PWD}/split.o ${PWD}/read_in_parameters.o ${PWD}/get_motif_pvalues.o -o ${EXEC}
+	@${CXX} ${CXXFLAGS} ${PWD}/collect_sample_statistics.o ${PWD}/simulate.o ${PWD}/scanner.o ${PWD}/ACGT_profile.o ${PWD}/MPI_comm.o  ${PWD}/main.o ${PWD}/load.o ${PWD}/out.o ${PWD}/split.o ${PWD}/read_in_parameters.o ${PWD}/get_motif_pvalues.o -o ${EXEC}
 	@printf "done\n"
 	@echo "========================================="
 	@printf "finished :)\n"
@@ -29,6 +29,17 @@ main.o:
 	@printf "main              : "
 	@${CXX} -c ${CXXFLAGS} ${PWD}/main.cpp 
 	@printf "done\n"
+collect_sample_statistics.o:
+	@printf "CSS               : "
+	@${CXX} -c ${CXXFLAGS} ${PWD}/collect_sample_statistics.cpp
+	@printf "done\n"
+
+MPI_comm.o:
+	@printf "MPI_comm          : "
+	@${CXX} -c ${CXXFLAGS} ${PWD}/MPI_comm.cpp
+	@printf "done\n"
+
+
 simulate.o:
 	@printf "simulate          : "
 	@${CXX} -c ${CXXFLAGS} ${PWD}/simulate.cpp 

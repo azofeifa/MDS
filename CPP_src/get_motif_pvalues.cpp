@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <omp.h>
 double get_order_stat(vector<vector<double>> X, vector<double> background, bool MIN){
 	double current;
 	double val 	= 0;
@@ -58,7 +59,8 @@ void sort_xy(vector<double>& x, vector<double>& y){
 }
 
 void histogram(vector<double> x, vector<double> y, int bins, 
-	double min_x, double max_x, vector<double>& edges,vector<double>& counts ){
+	double min_x, double max_x, vector<double>& edges,vector<double>& counts )
+{
 	double delta 	= (max_x - min_x) / double(bins);
 	sort_xy(x,y);
 
@@ -131,6 +133,7 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	string white_space 			= "";
 	double val 					= 0.1;
 	int  ws_counter 			= 1.0/val;
+	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
 		int BINS 							= P[i]->frequency_table.size()*bins;
 		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,BINS);
@@ -142,22 +145,8 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 		}
 
 		P[i]->SN 							= p_values.size();
-		if (double(i)/P.size() >= current){
-			white_space 	= "";
-			for (int d = 0; d < ws_counter; d++){
-				white_space+=" ";
-			}
-			ws_counter-=1;
-
-			current+=val;
-			stars 		+= "*";
-			printf("\rcalculating LLRs|%s%s|", stars.c_str(), white_space.c_str());
-			cout.flush();
-		}
+		
 	}
-	stars 		+= "*";
-	printf("\rcalculating LLRs|%s%s| done\n", stars.c_str(), "");
-	cout.flush();
 	return P;
 
 }
