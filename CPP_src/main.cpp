@@ -195,7 +195,7 @@ int main(int argc,char* argv[]){
 
 	if (rank==0){
 		t1=clock();
-		write_out(out_dir, collections, PSSMS);
+		write_out(out_dir, collections, PSSMS,job_ID);
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished writing results: %f seconds\n", t );

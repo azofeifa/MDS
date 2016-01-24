@@ -107,7 +107,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					break;
+//					break;
 				}
 				counter+=1;
 				stars+="*";

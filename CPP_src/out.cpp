@@ -41,9 +41,9 @@ double get_pvalue(double obs, vector<double> null){
 
 
 void write_out(string out_dir,map<int, vector< vector <double> >> collections, 
-	vector<PSSM *>PSSMS ){
+	vector<PSSM *>PSSMS,string ID ){
 	ofstream FHW;
-	FHW.open(out_dir + "motif_enrichment_statistics.tsv");
+	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
 	typedef map<int, vector< vector <double> >>::iterator it_type;
 	string name;
 	for (it_type m = collections.begin(); m!=collections.end(); m++){
