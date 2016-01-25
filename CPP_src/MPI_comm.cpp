@@ -134,6 +134,7 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 		for (int j = 1; j < nprocs; j++ ){
 			int S;
 			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+			printf("waiting to recieve from %d->%d\n",j,S );
 			for (int p =0; p < S; p++){ //S here is the number of PSSMS
 				int * info 	= new int[4];//info[0]=PSSM ID, info[1] number of observed statistics, info[2] number of flattened null statitics
 				MPI_Recv(&info[0], 4, MPI_INT, j, p, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
@@ -181,7 +182,10 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 		typedef map<int, vector<vector<double> >>::iterator it_type_2; 
 		int S;
 		S 	= observed_statistics.size();
+		printf("from %d sending ->%d\n",rank,S );
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
+		printf("from %d send ->%d\n",rank,S );
+
 		int p =0;
 		
 
