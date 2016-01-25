@@ -7,9 +7,8 @@
 using namespace std;
 
 void collect_sample_stats(map<string, vector<segment>>,
-	map<int, map<int, vector<segment> >>, vector<PSSM *>,
+ vector<PSSM *>,
 	map<int, vector<double> > &,
-	 map<int, vector<vector<double> >> &,
 	 map<int, vector<double>> &, int );
 
 #endif

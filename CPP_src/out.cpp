@@ -28,11 +28,11 @@ double get_pvalue(double obs, vector<double> null){
 	double N 	= float(null.size());
 	double S 	= 0.0;
 	for (int i = 0 ; i < null.size();i++){
-		S++;
-		if (null[i] > obs){
+		if (null[i] > obs || null[i] == obs ){
 
 			return S/N;
 		}
+		S++;
 	}
 	return 1.0;
 }

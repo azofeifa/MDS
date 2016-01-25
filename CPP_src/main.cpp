@@ -77,7 +77,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("loaded bed_file: %f seconds\n",(float(t2)-float(t1))/CLOCKS_PER_SEC  );
-		FHW<<"loaded bed_file: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"loaded bed_file: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();	
 	}
 	//============================================================
@@ -88,7 +88,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("loaded fasta file into bed file: %f seconds\n",(float(t2)-float(t1))/CLOCKS_PER_SEC );
-		FHW<<"loaded fasta file into bed file: "<<to_string(t)<<"seconds"<<endl; 
+		FHW<<"loaded fasta file into bed file: "<<to_string(t)<<" seconds"<<endl; 
 		FHW.flush();	
 	}
 	if (intervals.empty()){
@@ -103,7 +103,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("loaded background: %f seconds\n",t );
-		FHW<<"loaded background: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"loaded background: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 	vector<PSSM *> 	new_PSSMS 		= convert_streatmed_to_vector(streamed_PSSMS, PSSM_IDS, PSSM_N);
@@ -115,7 +115,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("computed p-values: %f seconds\n",(float(t2)-float(t1))/CLOCKS_PER_SEC );
-		FHW<<"computed p_values: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"computed p_values: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 	
@@ -127,7 +127,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("scanned intervals: %f seconds\n",t);
-		FHW<<"scanned intervals: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"scanned intervals: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 
@@ -142,54 +142,50 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("gathering ACGT frequency profiles: %f seconds\n",t);
-		FHW<<"gathered ACGT profiles for each motif: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"gathered ACGT profiles for each motif: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 	//============================================================
-	//....7.... run simulations, independent multinomial draw
+	//....7.... run simulations, independent multinomial draw, 
+	//collect stats on the fly, save on memory....
 
 	t1=clock();
-	map<int, map<int, vector<segment> >> S = run_sims(G , NN, new_PSSMS, simN,rank );
+	map<int, vector<vector<double> >> observed_null_statistics;
+	run_sims(G , NN, new_PSSMS, simN,rank, background,
+	pv, observed_null_statistics );
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished simulations: %f seconds\n", t );
-		FHW<<"finished simulations: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"finished simulations: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 	t1=clock();
-	//============================================================
-	//....8.... scan simulations for PSSM hits
-	S 	= scan_simulations(S,new_PSSMS, background, pv );
-	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("finished scanning simulations: %f seconds\n", t );
-		FHW<<"finished scanning simulations: "<<to_string(t)<<"seconds"<<endl;
-		FHW.flush();
-	}
+	
 	//========================================================================
-	//....9.... collect sample statistics on simulations and observations
+	//....9.... collect sample statistics on observations
 	map<int, vector<double> > observed_statistics;
-	map<int, vector<vector<double> >> observed_null_statistics;
 	map<int, vector<double>>  observed_displacements;
 	t1=clock();
-	collect_sample_stats(intervals, S, new_PSSMS,observed_statistics,observed_null_statistics,observed_displacements,rank);
+	collect_sample_stats(intervals, new_PSSMS,observed_statistics,
+		observed_displacements,rank);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished collecting sample stats: %f seconds\n", t );
-		FHW<<"finished collecting sample stats: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"finished collecting sample stats: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 
 	t1=clock();
-	map<int, vector< vector <double> >> collections 	= collect_PSSM_hits(rank, nprocs, intervals, observed_statistics, observed_null_statistics,observed_displacements);
+	map<int, vector< vector <double> >> collections 	= collect_PSSM_hits(rank, 
+		nprocs, intervals, observed_statistics, 
+		observed_null_statistics,observed_displacements);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished gathering results from MPI jobs: %f seconds\n", t );
-		FHW<<"finished gathering results from MPI jobs: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"finished gathering results from MPI jobs: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
 
@@ -199,7 +195,7 @@ int main(int argc,char* argv[]){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished writing results: %f seconds\n", t );
-		FHW<<"finished writing results: "<<to_string(t)<<"seconds"<<endl;
+		FHW<<"finished writing results: "<<to_string(t)<<" seconds"<<endl;
 		printf("DONE :)\n");
 		FHW<<"DONE :)"<<endl;
 		FHW.flush();

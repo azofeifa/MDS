@@ -44,9 +44,9 @@ void get_stats(vector<double> displacements, vector<double> & stats    ){
 
 
 void collect_sample_stats(map<string, vector<segment>> observed,
-	map<int, map<int, vector<segment> >> simulated, vector<PSSM *> P,  
+	 vector<PSSM *> P,  
 	map<int, vector<double> > & observed_statistics,
-	map<int, vector<vector<double> >> & observed_null_statistics, map<int, vector<double>> & observed_displacements,
+	 map<int, vector<double>> & observed_displacements,
 	int rank ){
 
 	//through back three things
@@ -67,33 +67,12 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 	//this is PSSM_ID->to chuck->to displacements (to_chunk number gives you N_bidir)
 	map<int, map<int, vector<double>>> simulated_displacements; //
 	fill_displacements(observed_displacements, combinded);
-	for (it_type_2 i = simulated.begin(); i!=simulated.end(); i++){ //iterating over PSSM_ID
-		for (it_type_3 j = i->second.begin(); j!=i->second.end(); j++){ //iterating over chunk, i->second.size()==sim_N
-			bool FOUND=false;
-			for (int s 	= 0; s<j->second.size(); s++){//
-				if (!j->second[s].motif_positions[i->first].empty()){
-					for (int z=0; z< j->second[s].motif_positions[i->first].size();z++){
-						FOUND=true;
-						simulated_displacements[i->first][j->first].push_back(j->second[s].motif_positions[i->first][z]);
-					}
-				}
-			}
-			if (!FOUND){
-				simulated_displacements[i->first][j->first]={};			
-			}
-		}
-	}
+	
 	for (it_type_4 i = observed_displacements.begin(); i!=observed_displacements.end();i++){
 		vector<double> current_stats;
 		get_stats(i->second, current_stats);
 		observed_statistics[i->first]=current_stats;
 	}
-	for (it_type_5 i=simulated_displacements.begin(); i!=simulated_displacements.end();i++){
-		for (it_type_4 j =i->second.begin(); j!=i->second.end(); j++){
-			vector<double> current_stats;
-			get_stats(j->second, current_stats);
-			observed_null_statistics[i->first].push_back(current_stats)	;
-		}
-	}
+	
 
 }
