@@ -139,6 +139,7 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 			printf("waiting to recieve from %d->%d\n",j,S );
 			for (int p =0; p < S; p++){ //S here is the number of PSSMS
 				int * info 	= new int[4];//info[0]=PSSM ID, info[1] number of observed statistics, info[2] number of flattened null statitics
+
 				MPI_Recv(&info[0], 4, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 				tag++;
 				double * obs_stats 	= new double[info[1]];
@@ -229,24 +230,26 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 
 
 	}
-
 	return collections;
 
 }
 
 vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<string, vector<segment>> intervals){
 	typedef map<string, vector<segment>>::iterator it_type;
+	
 	int N 	= 0;
 	for (it_type i = intervals.begin(); i!=intervals.end();i++){
-		N+=i->second.size();
+		N+=int(i->second.size());
 	}
 	vector<segment> collapsed(N);
+	printf("A\n");	
 	for (it_type i = intervals.begin(); i!=intervals.end();i++){
 		for (int j = 0 ; j < i->second.size(); j++){
+			printf("%d,%d\n",i->second[j].position,  N);
 			collapsed[i->second[j].position] 	= i->second[j];
 		}
 	}
-	
+	printf("B\n");	
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++ ){
 			printf("collecting from %d\n",j );
