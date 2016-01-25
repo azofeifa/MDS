@@ -61,6 +61,7 @@ void run_sims(map<int, double [2000][4]> GC,
 	for (it_type g = GC.begin(); g!=GC.end(); g++){
 		//make rand generator
 		vector<discrete_distribution<int> > dists(2000);
+		#pragma omp parallel for
 		for (int f = 0; f < 2000; f++){
 			discrete_distribution<int> distribution{GC[g->first][f][0],GC[g->first][f][1],
 				GC[g->first][f][2],GC[g->first][f][3]  };
@@ -97,11 +98,9 @@ void run_sims(map<int, double [2000][4]> GC,
 				for (int c = 0; c < positions[i].size(); c++){
 					final_positions.push_back(positions[i][c]);
 				}
-
 				delete forwards[i];
 				delete reverses[i];
 			}
-
 			vector<double> stats 		= get_stats(final_positions);
 			observed_null_statistics[g->first].push_back(stats);
 		}
