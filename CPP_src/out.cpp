@@ -23,6 +23,33 @@ vector<double> sort(vector<double> X){
 	return X;
 }
 
+void sort2(vector<double> & X, vector<string> & Y, vector<double> & Z){
+	int t 	= 0;
+	if (X.size()!=2){
+
+	
+		bool changed 	= true;
+		while (changed){
+			changed = false;
+			t+=1;
+			for (int i = 1 ; i < X.size(); i++){
+				if (X[i-1]  > X[i] ){
+					changed 		= true;
+					double copy 	= X[i-1];
+					string cp_str 	= Y[i-1];
+					double a_cp 	= Z[i-1];
+					Y[i-1] 	= Y[i];
+					X[i-1] 	= X[i];
+					Z[i-1] 	= Z[i];
+					X[i] 	= copy;
+					Y[i] 	= cp_str;
+					Z[i] 	= a_cp;
+				}
+			}
+		}
+	}
+}
+
 
 double get_pvalue(double obs, vector<double> null){
 	double N 	= float(null.size());
@@ -41,7 +68,7 @@ double get_pvalue(double obs, vector<double> null){
 
 
 void write_out(string out_dir,map<int, vector< vector <double> >> collections, 
-	vector<PSSM *>PSSMS,string ID ){
+	vector<PSSM *>PSSMS,string ID, vector<segment> intervals ){
 	ofstream FHW;
 	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
 	typedef map<int, vector< vector <double> >>::iterator it_type;
@@ -115,8 +142,36 @@ void write_out(string out_dir,map<int, vector< vector <double> >> collections,
 		}
 		line=line.substr(0,line.size()-1);
 		FHW<<line<<endl;
+	}
+	ofstream FHW2;
+	FHW2.open(out_dir + ID+"-motif_hits.bed");
+	for (int c = 0 ; c < intervals.size();c++ ){
+		FHW2<<intervals[c].chrom<<"\t"<<to_string(intervals[c].start)<<"\t"<<to_string(intervals[c].stop)<<"\t";
+		string line 	= "";
+		vector<string> motif_names;
+		vector<double> motif_positions_abs;
+		vector<double> motif_positions_actual;
+
+		typedef map<int, vector<double>>::iterator it_type;
+		for (it_type cc=intervals[c].motif_positions.begin(); cc!=intervals[c].motif_positions.end(); cc++){
+			for (int d = 0; d < cc->second.size(); d++){
+				motif_names.push_back(PSSMS[cc->first]->name);
+				motif_positions_abs.push_back(abs(cc->second[d]-1000));
+				motif_positions_actual.push_back(cc->second[d]-1000);
+				
+			}
+		}
+		sort2(motif_positions_abs, motif_names,motif_positions_actual);
+		for (int i = 0 ; i < motif_names.size();i++){
+			line+=motif_names[i]+":"+to_string(int(motif_positions_actual[i])) + ",";
+		}
+		line=line.substr(0,line.size()-1);
+		FHW2<<line<<endl;
 
 	}
+
+
+
 	
 
 

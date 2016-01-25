@@ -13,6 +13,7 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int  , int  ,
 	map<int, vector<double>>  	   );
 
 
+vector<segment> gather_PSSM_hits_by_bidirectional(int , int , map<string, vector<segment>> intervals);
 
 
 

@@ -163,7 +163,7 @@ int main(int argc,char* argv[]){
 	t1=clock();
 	
 	//========================================================================
-	//....9.... collect sample statistics on observations
+	//....8.... collect sample statistics on observations
 	map<int, vector<double> > observed_statistics;
 	map<int, vector<double>>  observed_displacements;
 	t1=clock();
@@ -178,6 +178,8 @@ int main(int argc,char* argv[]){
 	}
 
 	t1=clock();
+	//========================================================================
+	//....9.... collect sample statistics from all MPI process send to root
 	map<int, vector< vector <double> >> collections 	= collect_PSSM_hits(rank, 
 		nprocs, intervals, observed_statistics, 
 		observed_null_statistics,observed_displacements);
@@ -188,10 +190,16 @@ int main(int argc,char* argv[]){
 		FHW<<"finished gathering results from MPI jobs: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
+	//========================================================================
+	//....10.... recover all the PSSM hits
+	vector<segment> c_intervals 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
+	
 
+	//========================================================================
+	//....11.... write out results
 	if (rank==0){
 		t1=clock();
-		write_out(out_dir, collections, PSSMS,job_ID);
+		write_out(out_dir, collections, PSSMS,job_ID, c_intervals);
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
 		printf("finished writing results: %f seconds\n", t );

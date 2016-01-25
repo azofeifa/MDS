@@ -6,9 +6,10 @@
 using namespace std;
 
 segment::segment(){};
-segment::segment(string chr, int st, int sp){
+segment::segment(string chr, int st, int sp, int ID){
 	chrom=chr, start=st, stop=sp;
 	seq 	= "";
+	position=ID;
 }
 
 
@@ -65,16 +66,18 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad){
 		vector<string> line_array;
 		int start, stop;
 		double x;
+		int i 	= 0;
 		while (getline(FH, line)){
 			if (line.substr(0,1)!="#"){
 				line_array=splitter(line, "\t");
 				chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
 				if (pad != 0){
 					x 	= (start + stop)/2.;
-					S[chrom].push_back(segment(chrom, x-pad, x+pad));
+					S[chrom].push_back(segment(chrom, x-pad, x+pad,i));
 				}else{
-					S[chrom].push_back(segment(chrom, start, stop));					
+					S[chrom].push_back(segment(chrom, start, stop,i));					
 				}
+				i++;
 			}
 		}
 		typedef map<string, vector<segment> >::iterator it_type;
@@ -107,14 +110,13 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					break;
+				//	break;
 				}
-				counter+=1;
-				stars+="*";
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
 				N 	= S[chrom].size();
 				current 	= S[chrom];
+				
 				if (!chrom.empty()){
 					collect 	= true;
 				}else{

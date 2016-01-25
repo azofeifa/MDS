@@ -16,7 +16,8 @@ double * allocated_PSSM_array(int rows, int cols, PSSM * p){
 
 
 void test_send_PSSMS(int rank, int nprocs, vector<PSSM *> PSSMS, 
-	vector<vector<vector<double>>> & streamed_PSSMS, vector<int>  & PSSM_IDS, vector<int> & PSSM_N){
+	vector<vector<vector<double>>> & streamed_PSSMS, 
+	vector<int>  & PSSM_IDS, vector<int> & PSSM_N){
 	int S;
 	if (rank==0){
 		int start, stop;
@@ -219,4 +220,84 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 	return collections;
 
 }
+
+vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<string, vector<segment>> intervals){
+	typedef map<string, vector<segment>>::iterator it_type;
+	int N 	= 0;
+	for (it_type i = intervals.begin(); i!=intervals.end();i++){
+		N+=i->second.size();
+	}
+	vector<segment> collapsed(N);
+	for (it_type i = intervals.begin(); i!=intervals.end();i++){
+		for (int j = 0 ; j < i->second.size(); j++){
+			collapsed[i->second[j].position] 	= i->second[j];
+		}
+	}
+	
+	if (rank==0){
+		for (int j = 1 ; j < nprocs; j++ ){
+			for (int s = 0; s < collapsed.size(); s++){
+				//want to recieve the number of PSSMS in motif positions 
+				int P;
+				MPI_Recv(&P, 1, MPI_INT, j, s, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				for (int p = 0; p < P; p++){
+					int x[3]; //want to recieve the positions to expcet
+					MPI_Recv(&(x), 3, MPI_INT, j, p, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+					for (int d = 0; d < x[1]; d++){
+						double DD;
+						MPI_Recv(&DD, 1, MPI_DOUBLE, j, d, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+						collapsed[x[2]].motif_positions[x[0]].push_back(DD);
+					}
+						
+				}
+			}
+		}
+
+
+
+
+	}else{
+		typedef map<int, vector<double>> ::iterator it_type_2;
+		for (int s = 0; s < collapsed.size();s++){
+			int P 	= collapsed[s].motif_positions.size();
+			MPI_Ssend(&P, 1, MPI_INT, 0,s, MPI_COMM_WORLD);
+			int p = 0;
+			for (it_type_2 m = collapsed[s].motif_positions.begin(); m!=collapsed[s].motif_positions.end(); m++){
+				int x[3];
+				x[0] 	= m->first, x[1] 	= m->second.size(), x[2]=collapsed[s].position;
+				MPI_Ssend(&x[0], 3, MPI_INT, 0,p, MPI_COMM_WORLD);
+				for (int d = 0; d< x[1];d++){
+					double DD 	= m->second[d];
+					MPI_Ssend(&DD, 1, MPI_DOUBLE, 0,d, MPI_COMM_WORLD);
+
+				}
+				p++;
+			}
+		}
+	}
+	return collapsed;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

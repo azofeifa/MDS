@@ -84,20 +84,25 @@ void run_sims(map<int, double [2000][4]> GC,
 				reverses[i] 			= reverse;
 				
 			}
-			vector<double> positions;
+			vector<vector<double>> positions(NNN);
+
+			#pragma omp parallel for
 			for (int i = 0 ; i < NNN; i++){
 				PSSM * p 	= P[PSSM_index_2(g->first, P) ];
-				vector<double> c_positions 	= get_sig_positions(forwards[i], 
-					reverses[i], 2000, p, background, pv);
-				for (int c = 0 ; c < c_positions.size(); c++){
-					positions.push_back(c_positions[c]);
+				positions[i] 	= get_sig_positions(forwards[i], 
+					reverses[i], 2000, p, background, pv);				
+			}
+			vector<double> final_positions;
+			for (int i = 0 ; i < NNN;i++){
+				for (int c = 0; c < positions[i].size(); c++){
+					final_positions.push_back(positions[i][c]);
 				}
+
 				delete forwards[i];
 				delete reverses[i];
-				
 			}
 
-			vector<double> stats 		= get_stats(positions);
+			vector<double> stats 		= get_stats(final_positions);
 			observed_null_statistics[g->first].push_back(stats);
 		}
 	}

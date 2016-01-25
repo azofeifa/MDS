@@ -27,11 +27,12 @@ public:
 	int start, stop; 
 	int forward[2000];
 	int reverse[2000];
+	int position;
 	string seq; 
 	int N;
 	map<int, vector<double>> motif_positions;
 	segment();
-	segment(string, int, int);
+	segment(string, int, int,int);
 	bool transform();
 
 
