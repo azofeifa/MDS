@@ -236,21 +236,27 @@ vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<stri
 	
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++ ){
+			printf("collecting from %d\n",j );
+			int tag = 0;
 			for (int s = 0; s < collapsed.size(); s++){
 				//want to recieve the number of PSSMS in motif positions 
 				int P;
-				MPI_Recv(&P, 1, MPI_INT, j, s, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				MPI_Recv(&P, 1, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				tag++;
 				for (int p = 0; p < P; p++){
 					int x[3]; //want to recieve the positions to expcet
-					MPI_Recv(&(x), 3, MPI_INT, j, p, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+					MPI_Recv(&(x), 3, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+					tag++;
 					for (int d = 0; d < x[1]; d++){
 						double DD;
-						MPI_Recv(&DD, 1, MPI_DOUBLE, j, d, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+						MPI_Recv(&DD, 1, MPI_DOUBLE, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
 						collapsed[x[2]].motif_positions[x[0]].push_back(DD);
+						tag++;
 					}
 						
 				}
 			}
+			printf("done with %d\n",j );
 		}
 
 
@@ -258,17 +264,22 @@ vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<stri
 
 	}else{
 		typedef map<int, vector<double>> ::iterator it_type_2;
+		int tag 	= 0;
+		printf("process %d sending %d\n", rank, collapsed.size() );
 		for (int s = 0; s < collapsed.size();s++){
 			int P 	= collapsed[s].motif_positions.size();
-			MPI_Ssend(&P, 1, MPI_INT, 0,s, MPI_COMM_WORLD);
+			MPI_Ssend(&P, 1, MPI_INT, 0,tag, MPI_COMM_WORLD);
 			int p = 0;
+			tag++;
 			for (it_type_2 m = collapsed[s].motif_positions.begin(); m!=collapsed[s].motif_positions.end(); m++){
 				int x[3];
 				x[0] 	= m->first, x[1] 	= m->second.size(), x[2]=collapsed[s].position;
-				MPI_Ssend(&x[0], 3, MPI_INT, 0,p, MPI_COMM_WORLD);
+				MPI_Ssend(&x[0], 3, MPI_INT, 0,tag, MPI_COMM_WORLD);
+				tag++;
 				for (int d = 0; d< x[1];d++){
 					double DD 	= m->second[d];
-					MPI_Ssend(&DD, 1, MPI_DOUBLE, 0,d, MPI_COMM_WORLD);
+					MPI_Ssend(&DD, 1, MPI_DOUBLE, 0,tag, MPI_COMM_WORLD);
+					tag++;
 
 				}
 				p++;
