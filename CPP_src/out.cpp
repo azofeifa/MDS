@@ -68,7 +68,7 @@ double get_pvalue(double obs, vector<double> null){
 
 
 void write_out(string out_dir,map<int, vector< vector <double> >> collections, 
-	vector<PSSM *>PSSMS,string ID, vector<segment> intervals ){
+	vector<PSSM *>PSSMS,string ID, map<int, segment> intervals ){
 	ofstream FHW;
 	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
 	typedef map<int, vector< vector <double> >>::iterator it_type;
@@ -145,15 +145,16 @@ void write_out(string out_dir,map<int, vector< vector <double> >> collections,
 	}
 	ofstream FHW2;
 	FHW2.open(out_dir + ID+"-motif_hits.bed");
-	for (int c = 0 ; c < intervals.size();c++ ){
-		FHW2<<intervals[c].chrom<<"\t"<<to_string(intervals[c].start)<<"\t"<<to_string(intervals[c].stop)<<"\t";
+	typedef map<int, segment>::iterator it_type_4;
+	for (it_type_4 c = intervals.begin() ; c != intervals.end();c++ ){
+		FHW2<<c->second.chrom<<"\t"<<to_string(c->second.start)<<"\t"<<to_string(c->second.stop)<<"\t";
 		string line 	= "";
 		vector<string> motif_names;
 		vector<double> motif_positions_abs;
 		vector<double> motif_positions_actual;
 
 		typedef map<int, vector<double>>::iterator it_type;
-		for (it_type cc=intervals[c].motif_positions.begin(); cc!=intervals[c].motif_positions.end(); cc++){
+		for (it_type cc=c->second.motif_positions.begin(); cc!=c->second.motif_positions.end(); cc++){
 			for (int d = 0; d < cc->second.size(); d++){
 				motif_names.push_back(PSSMS[cc->first]->name);
 				motif_positions_abs.push_back(abs(cc->second[d]-1000));

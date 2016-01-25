@@ -7,5 +7,5 @@ using namespace std;
 void write_out(string out_dir,
 	map<int, vector< vector <double> >>, 
 	vector<PSSM *>PSSMS,string,
-	vector<segment> );
+	map<int, segment> );
 #endif

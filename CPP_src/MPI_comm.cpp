@@ -136,7 +136,6 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 			int tag 	= 0;
 			MPI_Recv(&S, 1, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
 			tag++;
-			printf("waiting to recieve from %d->%d\n",j,S );
 			for (int p =0; p < S; p++){ //S here is the number of PSSMS
 				int * info 	= new int[4];//info[0]=PSSM ID, info[1] number of observed statistics, info[2] number of flattened null statitics
 
@@ -190,9 +189,7 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 		int S;
 		S 	= observed_statistics.size();
 		int tag = 0;
-		printf("from %d sending ->%d\n",rank,S );
 		MPI_Ssend(&S, 1, MPI_INT, 0,tag, MPI_COMM_WORLD);
-		printf("from %d send ->%d\n",rank,S );
 
 		int p =0;
 		
@@ -234,25 +231,19 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 
 }
 
-vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<string, vector<segment>> intervals){
+map<int, segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<string, vector<segment>> intervals){
 	typedef map<string, vector<segment>>::iterator it_type;
 	
-	int N 	= 0;
-	for (it_type i = intervals.begin(); i!=intervals.end();i++){
-		N+=int(i->second.size());
-	}
-	vector<segment> collapsed(N);
-	printf("A\n");	
+	map<int, segment> m_collapsed;
+	vector<segment> collapsed;
 	for (it_type i = intervals.begin(); i!=intervals.end();i++){
 		for (int j = 0 ; j < i->second.size(); j++){
-			printf("%d,%d\n",i->second[j].position,  N);
-			collapsed[i->second[j].position] 	= i->second[j];
+			collapsed.push_back(i->second[j]);
+			m_collapsed[i->second[j].position] 	= i->second[j];
 		}
 	}
-	printf("B\n");	
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++ ){
-			printf("collecting from %d\n",j );
 			int tag = 0;
 			for (int s = 0; s < collapsed.size(); s++){
 				//want to recieve the number of PSSMS in motif positions 
@@ -263,16 +254,16 @@ vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<stri
 					int x[3]; //want to recieve the positions to expcet
 					MPI_Recv(&(x), 3, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
 					tag++;
+
 					for (int d = 0; d < x[1]; d++){
 						double DD;
 						MPI_Recv(&DD, 1, MPI_DOUBLE, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
-						collapsed[x[2]].motif_positions[x[0]].push_back(DD);
+						m_collapsed[x[2]].motif_positions[x[0]].push_back(DD);
 						tag++;
 					}
 						
 				}
 			}
-			printf("done with %d\n",j );
 		}
 
 
@@ -281,7 +272,6 @@ vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<stri
 	}else{
 		typedef map<int, vector<double>> ::iterator it_type_2;
 		int tag 	= 0;
-		printf("process %d sending %d\n", rank, collapsed.size() );
 		for (int s = 0; s < collapsed.size();s++){
 			int P 	= collapsed[s].motif_positions.size();
 			MPI_Ssend(&P, 1, MPI_INT, 0,tag, MPI_COMM_WORLD);
@@ -302,7 +292,7 @@ vector<segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<stri
 			}
 		}
 	}
-	return collapsed;
+	return m_collapsed;
 
 }
 

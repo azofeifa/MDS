@@ -192,9 +192,8 @@ int main(int argc,char* argv[]){
 	}
 	//========================================================================
 	//....10.... recover all the PSSM hits
-	vector<segment> c_intervals 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
+	map<int, segment> c_intervals 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
 	
-
 	//========================================================================
 	//....11.... write out results
 	if (rank==0){
