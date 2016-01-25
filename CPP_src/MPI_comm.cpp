@@ -133,18 +133,24 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 	if (rank==0){//will be doing all the receiving
 		for (int j = 1; j < nprocs; j++ ){
 			int S;
-			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+			int tag 	= 0;
+			MPI_Recv(&S, 1, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+			tag++;
 			printf("waiting to recieve from %d->%d\n",j,S );
 			for (int p =0; p < S; p++){ //S here is the number of PSSMS
 				int * info 	= new int[4];//info[0]=PSSM ID, info[1] number of observed statistics, info[2] number of flattened null statitics
-				MPI_Recv(&info[0], 4, MPI_INT, j, p, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+				MPI_Recv(&info[0], 4, MPI_INT, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+				tag++;
 				double * obs_stats 	= new double[info[1]];
 				double * null_stats = new double[info[2]];
 				double * displacements = new double[info[3]];
 				
-				MPI_Recv(&obs_stats[0], info[1], MPI_DOUBLE, j, p+S, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
-				MPI_Recv(&null_stats[0], info[2], MPI_DOUBLE, j, p+2*S, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
-				MPI_Recv(&displacements[0], info[3], MPI_DOUBLE, j, p+3*S, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				MPI_Recv(&obs_stats[0], info[1], MPI_DOUBLE, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				tag++;
+				MPI_Recv(&null_stats[0], info[2], MPI_DOUBLE, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				tag++;
+				MPI_Recv(&displacements[0], info[3], MPI_DOUBLE, j, tag, MPI_COMM_WORLD,MPI_STATUS_IGNORE);//receiving number of PSSMs scanned
+				tag++;
 				collections[info[0]].push_back(transform_back(obs_stats, info[1]));
 				collections[info[0]].push_back(transform_back(null_stats,info[2]));
 				collections[info[0]].push_back(transform_back(displacements,info[3]));
@@ -182,13 +188,14 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 		typedef map<int, vector<vector<double> >>::iterator it_type_2; 
 		int S;
 		S 	= observed_statistics.size();
+		int tag = 0;
 		printf("from %d sending ->%d\n",rank,S );
-		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
+		MPI_Ssend(&S, 1, MPI_INT, 0,tag, MPI_COMM_WORLD);
 		printf("from %d send ->%d\n",rank,S );
 
 		int p =0;
 		
-
+		tag++;
 
 		for (it_type m = observed_statistics.begin(); m!=observed_statistics.end(); m++){
 			int * info 	= new int[4];
@@ -199,7 +206,8 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 
 			//info[0]=PSSM_ID, info[1]= # observed stats, info[2] = # number flattened, info[3]= # of motif hists
 			info[0] = m->first, info[1] = m->second.size(), info[2]=km, info[3]=od;
-			MPI_Ssend(&(info[0]), 4, MPI_INT, 0,p, MPI_COMM_WORLD);
+			MPI_Ssend(&(info[0]), 4, MPI_INT, 0,tag, MPI_COMM_WORLD);
+			tag++;
 			double * observed_info 	= new double[info[1]];
 			double * null_info 	= new double[info[2]];
 			double * displacements 	= new double[info[3]];
@@ -208,11 +216,12 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 			make_array_1D(observed_displacements[m->first], displacements);
 			make_array_2D(observed_null_statistics[m->first], null_info);
 
-			MPI_Ssend(&(observed_info[0]), m->second.size(), MPI_DOUBLE, 0,p+S, MPI_COMM_WORLD);
-			MPI_Ssend(&(null_info[0]), km, MPI_DOUBLE, 0,p+S*2, MPI_COMM_WORLD);
-			MPI_Ssend(&(displacements[0]), od, MPI_DOUBLE, 0,p+S*3, MPI_COMM_WORLD);
-
-
+			MPI_Ssend(&(observed_info[0]), m->second.size(), MPI_DOUBLE, 0,tag, MPI_COMM_WORLD);
+			tag++;
+			MPI_Ssend(&(null_info[0]), km, MPI_DOUBLE, 0,tag, MPI_COMM_WORLD);
+			tag++;
+			MPI_Ssend(&(displacements[0]), od, MPI_DOUBLE, 0,tag, MPI_COMM_WORLD);
+			tag++;
 
 			p++;
 			
