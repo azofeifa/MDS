@@ -192,7 +192,7 @@ int main(int argc,char* argv[]){
 	}
 	//========================================================================
 	//....10.... recover all the PSSM hits
-	vector<segment> c_intervals 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
+	vector<segment> c_intervals;// 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
 	
 
 	//========================================================================
