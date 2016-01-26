@@ -6,7 +6,7 @@ br=5
 pv=0.000001
 log_out=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/
 ID=test
-simN=5
+simN=0
 
 NP=2
 
