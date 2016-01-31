@@ -151,8 +151,14 @@ int main(int argc,char* argv[]){
 
 	t1=clock();
 	map<int, vector<vector<double> >> observed_null_statistics;
-	run_sims(G , NN, new_PSSMS, simN,rank, background,
-	pv, observed_null_statistics );
+	
+	// map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, 
+	// vector<double> background, double pv, 
+	// map<int, vector<vector<double> >> & observed_null_statistics
+
+	run_sims2(intervals, new_PSSMS, simN, rank, background, pv, observed_null_statistics);
+//	run_sims(G , NN, new_PSSMS, simN,rank, background,
+//	pv, observed_null_statistics );
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
