@@ -1,6 +1,7 @@
 #include "simulate.h"
 #include "scanner.h"
 #include <omp.h>
+#include <time.h>
 #include <random>
 using namespace std;
 
@@ -84,6 +85,7 @@ void run_sims(map<int, double [2000][4]> GC,
 				reverses[i] 			= reverse;
 				
 			}
+
 			vector<vector<double>> positions(NNN);
 
 			#pragma omp parallel for
@@ -110,10 +112,15 @@ void run_sims(map<int, double [2000][4]> GC,
 void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, 
 	vector<double> background, double pv, 
 	map<int, vector<vector<double> >> & observed_null_statistics){
+	for (int i = 0 ; i<P[0]->frequency_table.size(); i++){
+		for (int j = 0 ; j<P[0]->frequency_table[i].size(); j++){
+//			PSSMS[p]->frequency_table[i][j] 	= log(PSSMS[p]->frequency_table[i][j]);
+		}
+	
+	}
 	for (int b = 0 ; b < background.size(); b++){
 		background[b] 	= log(background[b]);
 	}
-	
 	vector<segment> data;
 	typedef map<string, vector<segment>>::iterator it_type;
 	typedef vector<segment>::iterator it_type_2;
@@ -132,24 +139,34 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 		forward_matrix[j] 		= new int[2000];
 		reverse_matrix[j] 		= new int[2000];
 	}
-	default_random_engine generator;
 	std::uniform_int_distribution<int> distribution(0,N-1);
+	typedef std::mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
+	uint32_t seed_val 	= time(NULL);           // populate somehow
+
+	MyRNG rng;                   // e.g. keep one global instance (per thread)
+	rng.seed(seed_val);
 	for (int s = 0; s < sim_N; s++){
 		//want to make new forward and reverse, bootstrapping? random shuffling
 		for (int j = 0 ; j < N; j++){ //iterate over sequences
 			for (int k = 0; k < 2000; k++){ //iterate over positions
 				//pick a random integer between 0,N-1
-				int l 					= distribution(generator);
+				int l 					= distribution(rng);
+				
 				forward_matrix[j][k] 	= data[l].forward[k];
 				reverse_matrix[j][k] 	= data[l].reverse[k];
+				
+				forward_matrix[l][k] 	= data[j].forward[k];
+				reverse_matrix[l][k] 	= data[j].reverse[k];
+				
 			}
 		}
+
 		//okay now scan over forward and reverse _matrix over all PSSMS
 		for (it_type_3 p = P.begin(); p!=P.end(); p++){
 
 			vector<vector<double>> positions(N);
 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for (int i = 0 ; i < N; i++){
 				positions[i] 	= get_sig_positions(forward_matrix[i], 
 					reverse_matrix[i], 2000, *p, background, pv);		

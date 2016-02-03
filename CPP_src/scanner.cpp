@@ -58,7 +58,7 @@ vector<double> get_sig_positions(int forward[2000],
 		llr 	= 0;
 		k 		= 0;
 		j 		= i;
-		l 		= i + length;
+		l 		= i + length-1;
 		for (k=0; k < length; k++){
 			f 	= forward[j], r 	= reverse[l];
 			llf+= (p->frequency_table[k][f]) - (background[f]);
@@ -81,7 +81,7 @@ vector<double> get_sig_positions(int forward[2000],
 map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
 	vector<double> background, double pv){
 	vector<vector<double>> sig_positions(PSSMS.size());
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 2000, 
 			PSSMS[p], background, pv);
@@ -112,8 +112,8 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 	}	
 	for (int b = 0 ; b < background.size(); b++){
 		background[b] 	= log(background[b]);
-
 	}
+
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
