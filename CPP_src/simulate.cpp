@@ -112,12 +112,6 @@ void run_sims(map<int, double [2000][4]> GC,
 void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, 
 	vector<double> background, double pv, 
 	map<int, vector<vector<double> >> & observed_null_statistics){
-	for (int i = 0 ; i<P[0]->frequency_table.size(); i++){
-		for (int j = 0 ; j<P[0]->frequency_table[i].size(); j++){
-//			PSSMS[p]->frequency_table[i][j] 	= log(PSSMS[p]->frequency_table[i][j]);
-		}
-	
-	}
 	for (int b = 0 ; b < background.size(); b++){
 		background[b] 	= log(background[b]);
 	}
@@ -154,7 +148,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 				
 				forward_matrix[j][k] 	= data[l].forward[k];
 				reverse_matrix[j][k] 	= data[l].reverse[k];
-				
+
 				forward_matrix[l][k] 	= data[j].forward[k];
 				reverse_matrix[l][k] 	= data[j].reverse[k];
 				
@@ -166,7 +160,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 
 			vector<vector<double>> positions(N);
 
-			//#pragma omp parallel for
+			#pragma omp parallel for
 			for (int i = 0 ; i < N; i++){
 				positions[i] 	= get_sig_positions(forward_matrix[i], 
 					reverse_matrix[i], 2000, *p, background, pv);		

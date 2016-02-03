@@ -81,7 +81,7 @@ vector<double> get_sig_positions(int forward[2000],
 map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
 	vector<double> background, double pv){
 	vector<vector<double>> sig_positions(PSSMS.size());
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 2000, 
 			PSSMS[p], background, pv);
