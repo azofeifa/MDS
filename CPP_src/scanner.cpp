@@ -51,17 +51,20 @@ vector<double> get_sig_positions(int forward[2000],
 	int k,j;
 	bool collect;
 	int BOUND 	= N-length;
-	int i 		= 0;
-	while (i < BOUND){
+	int i;
+	int f, r, l;
+	for (i =0 ; i  < BOUND; i++){
 		llf 	= 0;
 		llr 	= 0;
 		k 		= 0;
 		j 		= i;
-		while (k < length){
-			llf+= (p->frequency_table[k][forward[j]]) - (background[forward[j]]);
-			llr+= (p->frequency_table[k][reverse[j]]) - (background[reverse[j]]);
+		l 		= i + length;
+		for (k=0; k < length; k++){
+			f 	= forward[j], r 	= reverse[l];
+			llf+= (p->frequency_table[k][f]) - (background[f]);
+			llr+= (p->frequency_table[k][r]) - (background[r]);
 			j++;
-			k++;
+			l--;
 		}
 		pvaluef 	= 1.0-p->get_pvalue(llf*2);
 		pvaluer 	= 1.0-p->get_pvalue(llr*2);
@@ -71,7 +74,6 @@ vector<double> get_sig_positions(int forward[2000],
 		if (pvaluer < pv){
 			locs_pvs.push_back(i);
 		}
-		i++;
 	}
 	return locs_pvs;
 }

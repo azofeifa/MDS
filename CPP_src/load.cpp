@@ -221,7 +221,7 @@ double find_closest(double obs, vector<vector<double>> x  ){
 double PSSM::get_pvalue(double obs){
 	int k;
 	int a 	= 0;
-	int b 	= pvalues.size();
+	int b 	= SN;
 	while ((b-a)>2){
 		k 	= (b+a)/2;
 		if ( obs < pvalues[k][0]   ){
