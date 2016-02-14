@@ -44,6 +44,40 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 		}
 	}
 	return G;
+}
+
+void get_ACGT_profile_all(map<string, vector<segment> > S, 
+	vector<vector<double>> & background_forward,vector<vector<double>> & background_reverse, int rank){
+	for (int i = 0 ; i < 2000; i++){
+		vector<double> current 	= {1,1,1,1};
+		background_forward.push_back(current);
+		background_reverse.push_back(current);
+		
+	}
+
+	typedef map<string, vector<segment> >::iterator it_type;
+	typedef vector<segment>::iterator it_type_2;
+	double N 	= 0;
+	for (it_type c = S.begin(); c!=S.end(); c++){
+		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
+			for (int i = 0 ; i <2000 ; i++ ){
+				background_forward[i][s->forward[i]]++;
+				background_reverse[i][s->reverse[i]]++;
+			}
+		}
+	}
+	for (int i = 0 ; i < 2000; i ++){
+		double SUM_f= 0, SUM_r=0;
+		for (int j = 0; j < 4; j++ ){
+			SUM_f+=background_forward[i][j];
+			SUM_r+=background_reverse[i][j];
+		}
+		for (int j = 0; j < 4; j++ ){
+			background_forward[i][j]/=SUM_f;
+			background_reverse[i][j]/=SUM_f;
+		}
+	}
+
 
 
 }

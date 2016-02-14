@@ -51,24 +51,14 @@ int main(int argc,char* argv[]){
 
 	ofstream FHW; //progress log file
 
-
-	if (rank==0){ //load the PSSM table and send it out to everybody
+	PSSMS 		= load_PSSM_DB(PSSM_DB);
+	if (rank==0){
 		P->display();
 		FHW.open(log_out + job_ID + "-gTFI_log_file.txt");
-		
-		PSSMS 		= load_PSSM_DB(PSSM_DB);
-		if (PSSMS.empty()){
-			printf("PSSMs were not loaded, exiting...\n");
-			return 0;
-		}
 	
-		FHW<<"loaded PSSMS"<<endl;
-		FHW.flush();
-		test_send_PSSMS(rank, nprocs,PSSMS,streamed_PSSMS,PSSM_IDS,PSSM_N);
-	}else{
-		test_send_PSSMS(rank, nprocs, PSSMS,streamed_PSSMS,PSSM_IDS,PSSM_N);
 	}
-
+		
+	
 	//============================================================
 	//....1.... load intervals from user, currently each interval is set to 2kb long
 	t1=clock();
@@ -99,6 +89,11 @@ int main(int argc,char* argv[]){
 	//....3.... get generic GC content across intervals for background model
 	t1=clock();
 	vector<double> background  				= get_GC_content(intervals);
+
+	vector<vector<double>> background_forward, background_reverse;
+
+	
+	
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -106,11 +101,10 @@ int main(int argc,char* argv[]){
 		FHW<<"loaded background: "<<to_string(t)<<" seconds"<<endl;
 		FHW.flush();
 	}
-	vector<PSSM *> 	new_PSSMS 		= convert_streatmed_to_vector(streamed_PSSMS, PSSM_IDS, PSSM_N);
 	t1=clock();
 	//============================================================
 	//....4.... do the dynamic programming for pvalue calculations
-	new_PSSMS 	= DP_pvalues(new_PSSMS,bins, background);
+	PSSMS 	= DP_pvalues(PSSMS,bins, background);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -122,7 +116,7 @@ int main(int argc,char* argv[]){
 	//============================================================
 	//....5.... now scan for PSSM hits on provided intervals, <pv
 	t1=clock();
-	intervals 	= run_accross(intervals, new_PSSMS,background, pv,rank);
+	intervals 	= run_accross(intervals, PSSMS,background, pv,rank);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -135,30 +129,16 @@ int main(int argc,char* argv[]){
 	map<int, double [2000][4]> G;
 	cout.flush();
 	t1=clock();
-	//============================================================
-	//....6.... get the average ACGT profile according to each motif
-	G 	= get_average_ACGT_profile(intervals, new_PSSMS,pad, NN, G, rank);
-	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("gathering ACGT frequency profiles: %f seconds\n",t);
-		FHW<<"gathered ACGT profiles for each motif: "<<to_string(t)<<" seconds"<<endl;
-		FHW.flush();
-	}
+	
 	//============================================================
 	//....7.... run simulations, independent multinomial draw, 
 	//collect stats on the fly, save on memory....
 
 	t1=clock();
 	map<int, vector<vector<double> >> observed_null_statistics;
+	map<int, map<int, vector<int> > > null_co_occur;
 	
-	// map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, 
-	// vector<double> background, double pv, 
-	// map<int, vector<vector<double> >> & observed_null_statistics
-
-	run_sims2(intervals, new_PSSMS, simN, rank, background, pv, observed_null_statistics);
-//	run_sims(G , NN, new_PSSMS, simN,rank, background,
-//	pv, observed_null_statistics );
+	run_sims2(intervals, PSSMS, simN, rank, nprocs, background, pv, observed_null_statistics, null_co_occur);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -172,47 +152,28 @@ int main(int argc,char* argv[]){
 	//....8.... collect sample statistics on observations
 	map<int, vector<double> > observed_statistics;
 	map<int, vector<double>>  observed_displacements;
+	map<int, map<int, int> > observed_co_occurrences; 
+
+
 	t1=clock();
-	collect_sample_stats(intervals, new_PSSMS,observed_statistics,
-		observed_displacements,rank);
 	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("finished collecting sample stats: %f seconds\n", t );
-		FHW<<"finished collecting sample stats: "<<to_string(t)<<" seconds"<<endl;
-		FHW.flush();
+		collect_sample_stats(intervals, PSSMS,observed_statistics,
+			observed_displacements,observed_co_occurrences, rank);
+		if (rank==0){
+			t2=clock();
+			float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
+			printf("finished collecting sample stats: %f seconds\n", t );
+			FHW<<"finished collecting sample stats: "<<to_string(t)<<" seconds"<<endl;
+			FHW.flush();
+		}
+		//now write out results
+		write_out_2( out_dir, job_ID,  PSSMS ,	  observed_statistics, 
+		  observed_displacements,  observed_co_occurrences,
+			 observed_null_statistics,   null_co_occur);
 	}
 
 	t1=clock();
-	//========================================================================
-	//....9.... collect sample statistics from all MPI process send to root
-	map<int, vector< vector <double> >> collections 	= collect_PSSM_hits(rank, 
-		nprocs, intervals, observed_statistics, 
-		observed_null_statistics,observed_displacements);
-	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("finished gathering results from MPI jobs: %f seconds\n", t );
-		FHW<<"finished gathering results from MPI jobs: "<<to_string(t)<<" seconds"<<endl;
-		FHW.flush();
-	}
-	//========================================================================
-	//....10.... recover all the PSSM hits
-	map<int, segment> c_intervals 	= gather_PSSM_hits_by_bidirectional( rank, nprocs,  intervals);
 	
-	//========================================================================
-	//....11.... write out results
-	if (rank==0){
-		t1=clock();
-		write_out(out_dir, collections, PSSMS,job_ID, c_intervals);
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("finished writing results: %f seconds\n", t );
-		FHW<<"finished writing results: "<<to_string(t)<<" seconds"<<endl;
-		printf("DONE :)\n");
-		FHW<<"DONE :)"<<endl;
-		FHW.flush();
-	}
 
 	MPI::Finalize();
 

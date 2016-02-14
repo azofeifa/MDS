@@ -40,13 +40,26 @@ void get_stats(vector<double> displacements, vector<double> & stats    ){
 	}
 }
 
+double get_min_2(vector<double> X){
+	if (X.empty()){
+		return 3000;
+	}
+	double MIN 	= abs(X[0]-1000);
+	for (int xx = 1 ; xx < X.size(); xx++){
+		if (abs(X[xx]-1000) < MIN) {
+			MIN 	= abs(X[xx]-1000);
+		}
+	}
+	return MIN;
+}
+
 
 
 
 void collect_sample_stats(map<string, vector<segment>> observed,
 	 vector<PSSM *> P,  
 	map<int, vector<double> > & observed_statistics,
-	 map<int, vector<double>> & observed_displacements,
+	 map<int, vector<double>> & observed_displacements,map<int, map<int, int> > & observed_co_occurences,
 	int rank ){
 
 	//through back three things
@@ -62,10 +75,26 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 			combinded.push_back(i->second[j]);
 		}
 	}
-	
+	for (int p1 = 0 ; p1 < P.size(); p1++)	{
+		for (int p2= 0; p2 < P.size(); p2++){
+			observed_co_occurences[p1][p2] 	= 0;
+		}
+	}
+	for (int c = 0 ; c < combinded.size(); c++){
+		for (it_type_4 p1 = combinded[c].motif_positions.begin(); p1!=combinded[c].motif_positions.end(); p1++){
+			if ( get_min_2(p1->second) < 200 ){
+				for (it_type_4 p2 = combinded[c].motif_positions.begin(); p2!=combinded[c].motif_positions.end(); p2++){
+					if (get_min_2(p2->second) < 200){
+						observed_co_occurences[p1->first][p2->first]+=1;
+					}
+				}
+			}
+
+		}
+	}
+
 
 	//this is PSSM_ID->to chuck->to displacements (to_chunk number gives you N_bidir)
-	map<int, map<int, vector<double>>> simulated_displacements; //
 	fill_displacements(observed_displacements, combinded);
 	
 	for (it_type_4 i = observed_displacements.begin(); i!=observed_displacements.end();i++){

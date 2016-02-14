@@ -9,12 +9,14 @@ def compute_null(A,MC=False, N=10000, background=[0.25,0.25,0.25,0.25]):
 	lls 	= list()
 	G 		= {}
 	for i in range(N):
-		vls 	= [np.random.multinomial(1,[0.25,0.25,0.25,0.25],1).argmax() for k in range(length)] 
+		vls 	= [np.random.multinomial(1,background,1).argmax() for k in range(length)] 
 		seq 	= "".join([str(v) for v in vls ])
 		if seq not in G:
-			lls.append(2*((sum([  math.log(A[k,j])  for k,j in enumerate(vls) ]) )-sum([ math.log(background[j])  for j in vls ]  )))
+			lls.append(2*((sum([  math.log(A[k,j])  for k,j in enumerate(vls) ]) )))
 			G[seq] 	= 0
-	return lls
+	counts,edges 	= np.histogram(lls,bins=500)
+	edges 			= edges[1:]
+	return edges,counts
 def iterate_over_all(P):
 	for motif in P:
 		A 	= P[motif]
@@ -43,25 +45,60 @@ def get_pvals(A,background=[0.25,0.25,0.25,0.25],bins=100 ):
 			counts,edges 	= np.histogram(nvls,bins=bins, weights=weights,range=(min_score, max_score))
 			edges 			= edges[:-1]
 	return edges, counts
+def find_5(A, background, edges, counts,N=50000):
+	NN 	= float(sum(counts))
+	print "-----------------------------"
+	print background, 
+	length 	= A.shape[0]
+	t 		= 0
+	MAP 	= {0:"A",1:"C",2:"G",3:"T"}
+	scores 	= list()
+
+	for i in range(N):
+		vls 	= [np.random.multinomial(1,[0.25,0.25,0.25,0.25],1).argmax() for k in range(length)] 
+		seq 	= "".join([MAP[v] for v in vls ])
+		score 	= 2*((sum([  math.log(A[k,j])  for k,j in enumerate(vls) ]) ))
+		S 		= 0.0
+		for j in range(0,len(edges)):
+			if score < edges[j]:
+				break
+			S+=counts[j]
+	
+		if S/NN > 0.99:
+			scores.append(sum([  math.log(A[k,j])  for k,j in enumerate(vls) ]) )
+#			print seq, (sum([  math.log(A[k,j])  for k,j in enumerate(vls) ]) )
+			t+=1
+	print len(scores)
+	print 
+	return scores
+
 def across_all(P,background=[0.25,0.25,0.25,0.25]):
 	#check to see if background alread exists
 	src 	=  os.path.dirname(os.path.realpath(__file__))
-	pval_dir = "/".join(src.split("/")[:-1])+ "/exact_pvalues/"
-	FILE 	=pval_dir + "_".join([str(i) for i in background ]) + ".tsv"
-	if not os.path.exists(FILE):
-		FHW 	= open(FILE, "w")
-		for m in P:
-			print m
-			A 			= P[m]
-			vls,counts 	= get_pvals(A,background=background)
+	backgrounds  	= ([0.25,0.25,0.25,0.25], [0.15,0.35,0.35,0.15],[0.35,0.15,0.15,0.35])
+	for m in P:
+	#	print m
+		A 			= P[m]
+		if "CTCF" in m:
+			F 			= plt.figure()
+			ax 			= F.add_subplot(1,2,1)
+			ax2 		= F.add_subplot(1,2,2)
+			colors 		= ("r", "g", "b")
+
+			for  i,background in enumerate(backgrounds):
+#				vls,counts 	= get_pvals(A,background=background)
+				vls, counts = compute_null(A, background=background)
+				scores 		= find_5(A,background, vls,counts)
+				ax.bar(vls, counts,label=str(background),alpha=0.2, color=colors[i])
+				ax2.hist(scores, bins=30, color=colors[i],alpha=0.3)
+			ax.legend(loc="best")
+			plt.show()
 			counts 		= counts + [counts[-1]]
 			N 			= float(sum(counts))
-			FHW.write(m+"\t" + ",".join([str(x) + "_" + str(float(sum(counts[:i]))/N )for i,(x,y) in enumerate(zip(vls, counts))]) + "\n")
-	pass
 
 
 if __name__ == "__main__":
-	PSSM 	= "/Users/joazofeifa/Lab/gTFI/files/HOCOMOCOv10_HUMAN_mono_meme_format.meme"
+	PSSM 	= "/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/HOCOMOCOv10_HUMAN_mono_meme_format.meme"
 	P 		= load.load_PSSMs(PSSM)
 	across_all(P)
 	#iterate_over_all(P)

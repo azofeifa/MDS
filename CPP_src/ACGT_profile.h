@@ -9,5 +9,7 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 	vector<PSSM *> PSSMS, int pad ,map<int,  double  >   & NN,
 	 map<int, double [2000][4]> & G,int );
 
-
+void get_ACGT_profile_all(map<string, vector<segment> > , 
+	vector<vector<double>> &,
+vector<vector<double>> &,  int);
 #endif

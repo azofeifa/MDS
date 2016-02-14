@@ -3,6 +3,8 @@
 #include <omp.h>
 #include <time.h>
 #include <random>
+#include <mpi.h>
+
 using namespace std;
 
 int PSSM_index_2(int i, vector<PSSM *> P){
@@ -15,9 +17,9 @@ int PSSM_index_2(int i, vector<PSSM *> P){
 	return 0;
 }
 
-vector<double> get_stats(vector<double> displacements  ){
+vector<double> get_stats_2(vector<double> displacements  ){
 	double mean=0, var=0, se=0, N=0;
-	vector<double > stats; 
+	vector<double > STATS; 
 	for (int i = 0 ; i < displacements.size(); i++ ){
 		double d 	= displacements[i]-1000;
 		mean+=abs(d);
@@ -28,90 +30,80 @@ vector<double> get_stats(vector<double> displacements  ){
 		N+=1;
 	}
 	if (N>0){
-		stats.push_back(se/N);
-		stats.push_back(mean/N);
-		stats.push_back(sqrt(var/N));
-		stats.push_back(N);
+		STATS.push_back(se/N);
+		STATS.push_back(mean/N);
+		STATS.push_back(sqrt(var/N));
+		STATS.push_back(N);
 	}else{
-		stats.push_back(0);
-		stats.push_back(0);
-		stats.push_back(0);
-		stats.push_back(N);	
+		STATS.push_back(0);
+		STATS.push_back(0);
+		STATS.push_back(0);
+		STATS.push_back(N);	
 	}
-	return stats;
+	return STATS;
 
 }
 
-void run_sims(map<int, double [2000][4]> GC, 
-	map<int, double> NN, vector<PSSM *> P,int sim_N, int rank, 
-	vector<double> background, double pv, 
-	map<int, vector<vector<double> >> & observed_null_statistics){ 
-	
-	default_random_engine generator;
-	map<int, int>flip;
-	flip[0] 	=3, flip[3] = 0, flip[1]=2, flip[2]=1;
 
-	typedef map<int, double [2000][4]>::iterator it_type;
-	map<int, map<int, vector<segment> >> S;//PSSM key -> chunk number -> spec simulations
-	for (int b = 0 ; b < background.size(); b++){
-		background[b] 	= log(background[b]);
-	}
+int ** allocate_2D_array(int I,int J, int K){
+	int ** X 	= new int*[I];
+	for (int i = 0 ; i < I; i++){
+		X[i] 		= new int[J*K];
 		
-
-	for (it_type g = GC.begin(); g!=GC.end(); g++){
-		//make rand generator
-		vector<discrete_distribution<int> > dists(2000);
-		#pragma omp parallel for
-		for (int f = 0; f < 2000; f++){
-			discrete_distribution<int> distribution{GC[g->first][f][0],GC[g->first][f][1],
-				GC[g->first][f][2],GC[g->first][f][3]  };
-			dists[f] 	= distribution ;
-		}
-
-		for (int s = 0; s <  sim_N; s++){//simulate sim_N groups
-			vector<int *> forwards(int(NN[g->first]));
-			vector<int *> reverses(int(NN[g->first]));
-			
-			int NNN 		= int(NN[g->first]);
-			#pragma omp parallel for
-			for (int i = 0; i <NNN; i++){ //within each group number of times that motif was found in a bidirectional
-				int * forward 	= new int[2000];
-				int * reverse 	= new int[2000];
-				for (int j=0; j < 2000; j++){
-					forward[j] 	= dists[j](generator);
-					reverse[j] 	= flip[forward[j]];
-				}
-				forwards[i] 			= forward;
-				reverses[i] 			= reverse;
-				
-			}
-
-			vector<vector<double>> positions(NNN);
-
-			#pragma omp parallel for
-			for (int i = 0 ; i < NNN; i++){
-				PSSM * p 	= P[PSSM_index_2(g->first, P) ];
-				positions[i] 	= get_sig_positions(forwards[i], 
-					reverses[i], 2000, p, background, pv);				
-			}
-			vector<double> final_positions;
-			for (int i = 0 ; i < NNN;i++){
-				for (int c = 0; c < positions[i].size(); c++){
-					final_positions.push_back(positions[i][c]);
-				}
-				delete forwards[i];
-				delete reverses[i];
-			}
-			vector<double> stats 		= get_stats(final_positions);
-			observed_null_statistics[g->first].push_back(stats);
-		}
 	}
-
+	return X;
+	
 }
 
-void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, 
+
+double ** allocate_2D_array_double(int I,int J, int K){
+	double ** X 	= new double*[I];
+	for (int i = 0 ; i < I; i++){
+		X[i] 		= new double[J*K];
+	}
+	return X;
+	
+}
+
+
+
+double get_min(vector<double> X){
+	if (X.empty()){
+		return 3000;
+	}
+	double MIN 	= abs(X[0]-1000);
+	for (int xx = 1 ; xx < X.size(); xx++){
+		if (abs(X[xx]-1000) < MIN) {
+			MIN 	= abs(X[xx]-1000);
+		}
+	}
+	return MIN;
+}
+
+
+void FREE_int(int ** X, int I ){
+	for (int i = 0 ; i < I; i++){
+		delete [] X[i];
+	}
+	delete []  X;
+	
+}
+
+void FREE_double(double ** X, int I ){
+	for (int i = 0 ; i < I; i++){
+		delete [] X[i];
+	}
+	delete []  X;
+	
+}
+
+
+void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, int nprocs,
 	vector<double> background, double pv, 
-	map<int, vector<vector<double> >> & observed_null_statistics){
+	map<int, vector<vector<double> >> & observed_null_statistics,map<int, map<int, vector<int> >> & null_co_occur){
+
+
+
 	for (int b = 0 ; b < background.size(); b++){
 		background[b] 	= log(background[b]);
 	}
@@ -135,50 +127,129 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 	}
 	std::uniform_int_distribution<int> distribution(0,N-1);
 	typedef std::mt19937 MyRNG;  // the Mersenne Twister with a popular choice of parameters
-	uint32_t seed_val 	= time(NULL);           // populate somehow
+	uint32_t seed_val 	= time(NULL)*rank;           // populate somehow
 
 	MyRNG rng;                   // e.g. keep one global instance (per thread)
 	rng.seed(seed_val);
-	for (int s = 0; s < sim_N; s++){
+	//need to make co occurrence 3D matrix
+	
+	int PN 	= P.size();
+	//want to send out start and stops of PSSMS to scan ....
+	int count 	= sim_N / nprocs;
+	int ** all_co 	= allocate_2D_array(count, P.size(), P.size());
+	double ** stats = allocate_2D_array_double(count,P.size(),  4 );
+	for (int s = 0; s < count; s++){
 		//want to make new forward and reverse, bootstrapping? random shuffling
 		for (int j = 0 ; j < N; j++){ //iterate over sequences
 			for (int k = 0; k < 2000; k++){ //iterate over positions
 				//pick a random integer between 0,N-1
 				int l 					= distribution(rng);
-				
+			
 				forward_matrix[j][k] 	= data[l].forward[k];
 				reverse_matrix[j][k] 	= data[l].reverse[k];
 
 				forward_matrix[l][k] 	= data[j].forward[k];
 				reverse_matrix[l][k] 	= data[j].reverse[k];
-				
+
 			}
+
 		}
 
 		//okay now scan over forward and reverse _matrix over all PSSMS
-		for (it_type_3 p = P.begin(); p!=P.end(); p++){
+		map<int, vector<double> > null_positions;
+		vector<vector<vector<double>>> all_hits(N);
+		vector<vector<double>> positions_by_motif(P.size());
+		for (int i = 0 ; i < N ; i++){
 
-			vector<vector<double>> positions(N);
-
+			vector<vector<double>> hits(PN);
 			#pragma omp parallel for
-			for (int i = 0 ; i < N; i++){
-				positions[i] 	= get_sig_positions(forward_matrix[i], 
-					reverse_matrix[i], 2000, *p, background, pv);		
+			for (int p = 0; p<PN; p++){
+				vector<double> positions 	= get_sig_positions(forward_matrix[i], 
+					reverse_matrix[i], 2000, P[p], background, pv);		
+				hits[p] 		= positions;
 
-			}
-			vector<double> final_positions;
-			for (int i = 0 ; i < N;i++){
-				for (int c = 0; c < positions[i].size(); c++){
-					final_positions.push_back(positions[i][c]);
-				}
-			}
-			vector<double> stats 		= get_stats(final_positions);
-			observed_null_statistics[(*p)->ID].push_back(stats);
+			}			
+			all_hits[i] 	= hits;
 		}
+		for (int i = 0 ; i < N; i++){
+			for (int j = 0; j < P.size();j++ ){
+	
+				if ( get_min(all_hits[i][j])<100  ){
+					for (int k = 0; k < P.size();k++ ){
+						if (  get_min(all_hits[i][k])<100  ){
+							all_co[s][j*P.size() + k]+=1;
+						}
+					}
+				}
+				positions_by_motif[j].insert(positions_by_motif[j].end(), all_hits[i][j].begin(),all_hits[i][j].end() );
+			}
+		}
+		for (int i = 0 ; i < positions_by_motif.size(); i++){
+			vector<double> cs 	= get_stats_2(positions_by_motif[i]);
+			stats[s][i*4 + 0] 	=	 cs[0],stats[s][i*4 + 1] 	= cs[1],stats[s][i*4 + 2] 	= cs[2],stats[s][i*4 + 3] 	= cs[3];
+		}
+	}
 
+	//want to send the all_co and the positions_by_motifs to rank
+	vector<int **> all_co_final;
+	vector<double **> all_stats_final;
+	
+	if (rank==0){
+		
+		all_co_final.push_back(all_co);
+		all_stats_final.push_back(stats);
+		for (int j = 1; j < nprocs; j++){
+			int ** RR 					= allocate_2D_array(count, P.size(), P.size());
+			double ** current_stats 	= allocate_2D_array_double( count, P.size(), 4);
+			for (int u = 0 ; u < count; u++){
+				MPI_Recv(&RR[u][0], P.size()*P.size(), MPI_INT, j, u, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_Recv(&current_stats[u][0], 4*P.size(), MPI_DOUBLE, j, u+count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+			all_co_final.push_back(RR);
+			all_stats_final.push_back(current_stats);
+		}
+	}else{
+		for (int u = 0 ; u < count; u++){
+			MPI_Send(&all_co[u][0],  P.size()*P.size(), MPI_INT, 0,u, MPI_COMM_WORLD);
+			MPI_Send(&stats[u][0],4*P.size(), MPI_DOUBLE, 0,u+count, MPI_COMM_WORLD);
+		}
+	}
+	for (int p = 0; p < P.size(); p++){
+		vector<double> C1,C2,C3,C4;
+		observed_null_statistics[P[p]->ID].push_back(C1);
+		observed_null_statistics[P[p]->ID].push_back(C2);
+		observed_null_statistics[P[p]->ID].push_back(C3);
+		observed_null_statistics[P[p]->ID].push_back(C4);	
 	}
 
 
+	if (rank==0){
+		for (int ll = 0 ; ll < all_co_final.size(); ll++){
+			for (int p = 0; p < P.size(); p++){
+				for (int u = 0; u < count;u++){
+					observed_null_statistics[P[p]->ID][0].push_back(all_stats_final[ll][u][p*4+0]);
+					observed_null_statistics[P[p]->ID][1].push_back(all_stats_final[ll][u][p*4+1]);
+					observed_null_statistics[P[p]->ID][2].push_back(all_stats_final[ll][u][p*4+2]);
+					observed_null_statistics[P[p]->ID][3].push_back(all_stats_final[ll][u][p*4+3]);
+				}
+			}
+			for (int p1 = 0; p1 < P.size(); p1++){
+				for (int p2 = 0; p2 < P.size(); p2++){
+					for (int u = 0; u < count; u++){
+						null_co_occur[P[p1]->ID][P[p2]->ID].push_back(all_co_final[ll][u][p1*P.size() + p2]);
+					}
+				}
+			}
+			FREE_double(all_stats_final[ll], count);
+			FREE_int(all_co_final[ll], count);
+
+		}
+
+	}
+	else{
+		FREE_int(all_co, count);
+		FREE_double(stats, count);
+	}
 
 
 }

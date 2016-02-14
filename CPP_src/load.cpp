@@ -110,7 +110,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-				//	break;
+					break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -237,10 +237,12 @@ double PSSM::get_pvalue(double obs){
 vector<PSSM *> load_PSSM_DB(string FILE){
 	ifstream FH(FILE);
 	vector<PSSM *> all_motifs;
+	int i = 0;
 	if (FH){
 		string line;
 		vector<string>line_array;
 		string MOTIF 	= "";
+		int ID 			= 0;
 		PSSM * P 	= NULL;
 		while(getline(FH,line)){
 
@@ -251,6 +253,8 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 				if (line_array.size()>1){
 					MOTIF  	= line_array[1];			
 					P 		= new PSSM(MOTIF);
+					P->ID 	= ID;
+					ID+=1;
 				}
 
 			}else if (line.substr(0,6)=="letter" and P!=NULL){

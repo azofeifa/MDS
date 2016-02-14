@@ -9,6 +9,6 @@ using namespace std;
 void collect_sample_stats(map<string, vector<segment>>,
  vector<PSSM *>,
 	map<int, vector<double> > &,
-	 map<int, vector<double>> &, int );
+	 map<int, vector<double>> &, map<int, map<int, int> > &,int );
 
 #endif

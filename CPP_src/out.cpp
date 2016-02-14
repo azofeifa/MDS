@@ -52,6 +52,7 @@ void sort2(vector<double> & X, vector<string> & Y, vector<double> & Z){
 
 
 double get_pvalue(double obs, vector<double> null){
+	null 		= sort(null);
 	double N 	= float(null.size());
 	double S 	= 0.0;
 	for (int i = 0 ; i < null.size();i++){
@@ -64,6 +65,94 @@ double get_pvalue(double obs, vector<double> null){
 	return 1.0;
 }
 
+
+
+void write_out_2(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vector<double> > observed_statistics, 
+	map<int, vector<double>>  observed_displacements, map<int, map<int, int> > observed_co_occurrences,
+	map<int, vector<vector<double> >> observed_null_statistics, map<int, map<int, vector<int> > > null_co_occur
+	){
+	
+
+	ofstream FHW;
+	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
+	typedef map<int, vector<double> >::iterator it_type;
+	string line;
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= "";
+		line 	= PSSMS[s->first]->name + "\t";
+		line 	+= to_string(s->second[0]) + "\t" +to_string(s->second[1]) + "\t" +to_string(s->second[2]) + "\t" +to_string(s->second[3]); 
+		
+		line 	+= to_string(get_pvalue(s->second[0],observed_null_statistics[s->first][0] )) + "\t";
+		line 	+= to_string(get_pvalue(s->second[1],observed_null_statistics[s->first][1] )) + "\t";
+		line 	+= to_string(get_pvalue(s->second[2],observed_null_statistics[s->first][2] )) + "\t";
+		line 	+= to_string(get_pvalue(s->second[3],observed_null_statistics[s->first][3] )) + "\t";
+		line 	+= "\n";
+		FHW<<line;
+	}
+	FHW<<"#co-occurrence,sig\n";
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= PSSMS[s->first]->name + "\t";
+		for (it_type s2 = observed_statistics.begin(); s2!=observed_statistics.end(); s2++){
+			vector<double > null_current(null_co_occur[PSSMS[s->first]->ID][PSSMS[s2->first]->ID].begin(),null_co_occur[PSSMS[s->first]->ID][PSSMS[s2->first]->ID].end());
+			line+=to_string(get_pvalue(observed_co_occurrences[PSSMS[s->first]->ID][PSSMS[s2->first]->ID], 
+				null_current )) + "\t";
+		}	
+		line 	= line.substr(0,line.size()-1);
+		FHW<<line<<endl;
+	}
+	FHW<<"#co-occurrence,raw\n";
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= PSSMS[s->first]->name + "\t";
+		for (it_type s2 = observed_statistics.begin(); s2!=observed_statistics.end(); s2++){
+			line+=to_string(observed_co_occurrences[PSSMS[s->first]->ID][PSSMS[s2->first]->ID] ) + "\t";
+		}	
+		line 	= line.substr(0,line.size()-1);
+		FHW<<line<<endl;
+	}
+	FHW<<"#raw null stats\n";
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= "";
+		line 	= PSSMS[s->first]->name + "\t";
+		for (int u = 0; u < 4;u++){
+			vector<double> X 	=  sort(observed_null_statistics[s->first][u]);
+			for (int i = 0; i <X.size(); i++ ){
+				line+=to_string(X[i])+ ",";
+			}
+			line 				= line.substr(0,line.size()-1);
+			line+="\t";
+		}
+		line 	= line.substr(0,line.size()-1);
+		FHW<<line<<endl;
+	}	
+
+	FHW<<"#raw null co-occurrences\n";
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= PSSMS[s->first]->name + "\t";
+		for (it_type s2 = observed_statistics.begin(); s2!=observed_statistics.end(); s2++){
+			string SS 	= "";
+			vector<double > null_current(null_co_occur[PSSMS[s->first]->ID][PSSMS[s2->first]->ID].begin(),null_co_occur[PSSMS[s->first]->ID][PSSMS[s2->first]->ID].end());
+			null_current 	= sort(null_current);
+			for (int i = 0 ; i < null_current.size(); i++){
+				SS+=to_string(null_current[i]) + ",";
+			}
+			SS  	= SS.substr(0,SS.size()-1);
+			line+=SS + "\t";
+		}	
+		line 	= line.substr(0,line.size()-1);
+		FHW<<line<<endl;
+	}
+	FHW<<"#observed displacements\n";
+	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
+		line 	= PSSMS[s->first]->name + "\t";
+		for (int i = 0 ; i < observed_displacements[s->first].size();i++ ){
+			line+=to_string(observed_displacements[s->first][i])+",";
+		}
+		line 	= line.substr(0,line.size()-1);
+		FHW<<line<<endl;
+	}
+
+
+}
 
 
 
