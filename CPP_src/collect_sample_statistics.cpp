@@ -82,9 +82,9 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 	}
 	for (int c = 0 ; c < combinded.size(); c++){
 		for (it_type_4 p1 = combinded[c].motif_positions.begin(); p1!=combinded[c].motif_positions.end(); p1++){
-			if ( get_min_2(p1->second) < 200 ){
+			if ( get_min_2(p1->second) < 100 ){
 				for (it_type_4 p2 = combinded[c].motif_positions.begin(); p2!=combinded[c].motif_positions.end(); p2++){
-					if (get_min_2(p2->second) < 200){
+					if (get_min_2(p2->second) < 100){
 						observed_co_occurences[p1->first][p2->first]+=1;
 					}
 				}

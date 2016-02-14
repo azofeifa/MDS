@@ -80,7 +80,7 @@ void write_out_2(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vecto
 	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
 		line 	= "";
 		line 	= PSSMS[s->first]->name + "\t";
-		line 	+= to_string(s->second[0]) + "\t" +to_string(s->second[1]) + "\t" +to_string(s->second[2]) + "\t" +to_string(s->second[3]); 
+		line 	+= to_string(s->second[0]) + "\t" +to_string(s->second[1]) + "\t" +to_string(s->second[2]) + "\t" +to_string(s->second[3]) + "\t"; 
 		
 		line 	+= to_string(get_pvalue(s->second[0],observed_null_statistics[s->first][0] )) + "\t";
 		line 	+= to_string(get_pvalue(s->second[1],observed_null_statistics[s->first][1] )) + "\t";
