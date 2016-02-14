@@ -7,5 +7,5 @@
 using namespace std;
 void run_sims2(map<string, vector<segment>> , vector<PSSM *> ,int  , int  , 
 	int, vector<double>  , double, 
-	map<int, vector<vector<double> >> &,	map<int, map<int, vector<int> >> &  );
+	map<int, vector<vector<double> >> &,	map<int, map<int, vector<double> >> &  );
 #endif

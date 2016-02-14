@@ -68,8 +68,8 @@ double get_pvalue(double obs, vector<double> null){
 
 
 void write_out_2(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vector<double> > observed_statistics, 
-	map<int, vector<double>>  observed_displacements, map<int, map<int, int> > observed_co_occurrences,
-	map<int, vector<vector<double> >> observed_null_statistics, map<int, map<int, vector<int> > > null_co_occur
+	map<int, vector<double>>  observed_displacements, map<int, map<int, double> > observed_co_occurrences,
+	map<int, vector<vector<double> >> observed_null_statistics, map<int, map<int, vector<double> > > null_co_occur
 	){
 	
 

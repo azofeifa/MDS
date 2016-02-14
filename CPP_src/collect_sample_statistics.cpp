@@ -59,7 +59,7 @@ double get_min_2(vector<double> X){
 void collect_sample_stats(map<string, vector<segment>> observed,
 	 vector<PSSM *> P,  
 	map<int, vector<double> > & observed_statistics,
-	 map<int, vector<double>> & observed_displacements,map<int, map<int, int> > & observed_co_occurences,
+	 map<int, vector<double>> & observed_displacements,map<int, map<int, double> > & observed_co_occurences,
 	int rank ){
 
 	//through back three things
@@ -80,6 +80,7 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 			observed_co_occurences[p1][p2] 	= 0;
 		}
 	}
+	map<int,int> norms;
 	for (int c = 0 ; c < combinded.size(); c++){
 		for (it_type_4 p1 = combinded[c].motif_positions.begin(); p1!=combinded[c].motif_positions.end(); p1++){
 			if ( get_min_2(p1->second) < 100 ){
@@ -88,10 +89,24 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 						observed_co_occurences[p1->first][p2->first]+=1;
 					}
 				}
+				if (norms.find(p1->first)==norms.end()){
+					norms[p1->first]=0;
+				}
+				norms[p1->first]+=1;
 			}
 
 		}
 	}
+	typedef map<int, map<int, double> >::iterator it_type_7;
+	typedef  map<int, double> ::iterator it_type_8;
+
+	for (it_type_7 p1 = observed_co_occurences.begin(); p1!=observed_co_occurences.end(); p1++){
+		for (it_type_8 p2 = p1->second.begin(); p2!=p1->second.end(); p2++){
+			if (norms.find(p1->first)!=norms.end()){
+				observed_co_occurences[p1->first][p2->first]/=	float(norms[p1->first]);
+			}
+		}		
+	}	
 
 
 	//this is PSSM_ID->to chuck->to displacements (to_chunk number gives you N_bidir)

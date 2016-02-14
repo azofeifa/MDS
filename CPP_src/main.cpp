@@ -136,7 +136,7 @@ int main(int argc,char* argv[]){
 
 	t1=clock();
 	map<int, vector<vector<double> >> observed_null_statistics;
-	map<int, map<int, vector<int> > > null_co_occur;
+	map<int, map<int, vector<double> > > null_co_occur;
 	
 	run_sims2(intervals, PSSMS, simN, rank, nprocs, background, pv, observed_null_statistics, null_co_occur);
 	if (rank==0){
@@ -152,7 +152,7 @@ int main(int argc,char* argv[]){
 	//....8.... collect sample statistics on observations
 	map<int, vector<double> > observed_statistics;
 	map<int, vector<double>>  observed_displacements;
-	map<int, map<int, int> > observed_co_occurrences; 
+	map<int, map<int, double> > observed_co_occurrences; 
 
 
 	t1=clock();

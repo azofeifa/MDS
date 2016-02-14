@@ -100,7 +100,7 @@ void FREE_double(double ** X, int I ){
 
 void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_N, int rank, int nprocs,
 	vector<double> background, double pv, 
-	map<int, vector<vector<double> >> & observed_null_statistics,map<int, map<int, vector<int> >> & null_co_occur){
+	map<int, vector<vector<double> >> & observed_null_statistics,map<int, map<int, vector<double> >> & null_co_occur){
 
 
 
@@ -136,7 +136,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 	int PN 	= P.size();
 	//want to send out start and stops of PSSMS to scan ....
 	int count 	= sim_N / nprocs;
-	int ** all_co 	= allocate_2D_array(count, P.size(), P.size());
+	double ** all_co 	= allocate_2D_array_double(count, P.size(), P.size());
 	double ** stats = allocate_2D_array_double(count,P.size(),  4 );
 	for (int s = 0; s < count; s++){
 		//want to make new forward and reverse, bootstrapping? random shuffling
@@ -157,6 +157,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 
 		//okay now scan over forward and reverse _matrix over all PSSMS
 		map<int, vector<double> > null_positions;
+		map<int, int> 	norms;
 		vector<vector<vector<double>>> all_hits(N);
 		vector<vector<double>> positions_by_motif(P.size());
 		for (int i = 0 ; i < N ; i++){
@@ -180,10 +181,23 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 							all_co[s][j*P.size() + k]+=1;
 						}
 					}
+					if (norms.find(j)==norms.end()){
+						norms[j]=0;
+					}
+					norms[j]+=1;
 				}
 				positions_by_motif[j].insert(positions_by_motif[j].end(), all_hits[i][j].begin(),all_hits[i][j].end() );
 			}
 		}
+		for (int i = 0 ; i < P.size(); i++){
+			if (norms.find(i)!=norms.end()){
+				for (int j = 0 ; j < P.size(); j++){
+					all_co[s][i*P.size()+j]= all_co[s][i*P.size()+j]/float(norms[i]);
+				}
+			}
+		}
+
+
 		for (int i = 0 ; i < positions_by_motif.size(); i++){
 			vector<double> cs 	= get_stats_2(positions_by_motif[i]);
 			stats[s][i*4 + 0] 	=	 cs[0],stats[s][i*4 + 1] 	= cs[1],stats[s][i*4 + 2] 	= cs[2],stats[s][i*4 + 3] 	= cs[3];
@@ -191,7 +205,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 	}
 
 	//want to send the all_co and the positions_by_motifs to rank
-	vector<int **> all_co_final;
+	vector<double **> all_co_final;
 	vector<double **> all_stats_final;
 	
 	if (rank==0){
@@ -199,10 +213,10 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 		all_co_final.push_back(all_co);
 		all_stats_final.push_back(stats);
 		for (int j = 1; j < nprocs; j++){
-			int ** RR 					= allocate_2D_array(count, P.size(), P.size());
+			double ** RR 					= allocate_2D_array_double(count, P.size(), P.size());
 			double ** current_stats 	= allocate_2D_array_double( count, P.size(), 4);
 			for (int u = 0 ; u < count; u++){
-				MPI_Recv(&RR[u][0], P.size()*P.size(), MPI_INT, j, u, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_Recv(&RR[u][0], P.size()*P.size(), MPI_DOUBLE, j, u, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				MPI_Recv(&current_stats[u][0], 4*P.size(), MPI_DOUBLE, j, u+count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			}
 			all_co_final.push_back(RR);
@@ -210,7 +224,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 		}
 	}else{
 		for (int u = 0 ; u < count; u++){
-			MPI_Send(&all_co[u][0],  P.size()*P.size(), MPI_INT, 0,u, MPI_COMM_WORLD);
+			MPI_Send(&all_co[u][0],  P.size()*P.size(), MPI_DOUBLE, 0,u, MPI_COMM_WORLD);
 			MPI_Send(&stats[u][0],4*P.size(), MPI_DOUBLE, 0,u+count, MPI_COMM_WORLD);
 		}
 	}
@@ -241,13 +255,13 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 				}
 			}
 			FREE_double(all_stats_final[ll], count);
-			FREE_int(all_co_final[ll], count);
+			FREE_double(all_co_final[ll], count);
 
 		}
 
 	}
 	else{
-		FREE_int(all_co, count);
+		FREE_double(all_co, count);
 		FREE_double(stats, count);
 	}
 
