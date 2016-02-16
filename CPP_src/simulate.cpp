@@ -214,7 +214,7 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 		all_stats_final.push_back(stats);
 		for (int j = 1; j < nprocs; j++){
 			double ** RR 					= allocate_2D_array_double(count, P.size(), P.size());
-			double ** current_stats 	= allocate_2D_array_double( count, P.size(), 4);
+			double ** current_stats 		= allocate_2D_array_double( count, P.size(), 4);
 			for (int u = 0 ; u < count; u++){
 				MPI_Recv(&RR[u][0], P.size()*P.size(), MPI_DOUBLE, j, u, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				MPI_Recv(&current_stats[u][0], 4*P.size(), MPI_DOUBLE, j, u+count, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

@@ -110,7 +110,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					break;
+				//	break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
