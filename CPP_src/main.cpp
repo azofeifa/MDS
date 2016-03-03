@@ -92,8 +92,11 @@ int main(int argc,char* argv[]){
 
 	vector<vector<double>> background_forward, background_reverse;
 
+	get_ACGT_profile_all(intervals, 
+		background_forward,background_reverse, rank);
 	
-	
+	PSSMS 	=  construct_position_specific_pvalues(PSSMS, bins , background_forward  , background_reverse  );
+
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -102,21 +105,24 @@ int main(int argc,char* argv[]){
 		FHW.flush();
 	}
 	t1=clock();
-	//============================================================
-	//....4.... do the dynamic programming for pvalue calculations
-	PSSMS 	= DP_pvalues(PSSMS,bins, background);
-	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("computed p-values: %f seconds\n",(float(t2)-float(t1))/CLOCKS_PER_SEC );
-		FHW<<"computed p_values: "<<to_string(t)<<" seconds"<<endl;
-		FHW.flush();
-	}
+
+
+	// //============================================================
+	// //....4.... do the dynamic programming for pvalue calculations
+	// PSSMS 	= DP_pvalues(PSSMS,bins, background);
+	// if (rank==0){
+	// 	t2=clock();
+	// 	float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
+	// 	printf("computed p-values: %f seconds\n",(float(t2)-float(t1))/CLOCKS_PER_SEC );
+	// 	FHW<<"computed p_values: "<<to_string(t)<<" seconds"<<endl;
+	// 	FHW.flush();
+	// }
 	
 	//============================================================
 	//....5.... now scan for PSSM hits on provided intervals, <pv
 	t1=clock();
-	intervals 	= run_accross(intervals, PSSMS,background, pv,rank);
+	//intervals 	= run_accross(intervals, PSSMS,background, pv,rank);
+	intervals 	= run_accross2(intervals, PSSMS,background_forward, background_reverse, pv,rank);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -125,54 +131,57 @@ int main(int argc,char* argv[]){
 		FHW.flush();
 	}
 
-	map<int, double> NN;
-	map<int, double [2000][4]> G;
-	cout.flush();
-	t1=clock();
+	// map<int, double> NN;
+	// map<int, double [2000][4]> G;
+	// cout.flush();
+	// t1=clock();
 	
-	//============================================================
-	//....7.... run simulations, independent multinomial draw, 
-	//collect stats on the fly, save on memory....
+	// //============================================================
+	// //....7.... run simulations, independent multinomial draw, 
+	// //collect stats on the fly, save on memory....
 
-	t1=clock();
-	map<int, vector<vector<double> >> observed_null_statistics;
-	map<int, map<int, vector<double> > > null_co_occur;
+	// t1=clock();
+	// map<int, vector<vector<double> >> observed_null_statistics;
+	// map<int, map<int, vector<double> > > null_co_occur;
 	
-	run_sims2(intervals, PSSMS, simN, rank, nprocs, background, pv, observed_null_statistics, null_co_occur);
-	if (rank==0){
-		t2=clock();
-		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-		printf("finished simulations: %f seconds\n", t );
-		FHW<<"finished simulations: "<<to_string(t)<<" seconds"<<endl;
-		FHW.flush();
-	}
-	t1=clock();
+	// run_sims2(intervals, PSSMS, simN, rank, nprocs, background, pv, observed_null_statistics, null_co_occur);
+	// if (rank==0){
+	// 	t2=clock();
+	// 	float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
+	// 	printf("finished simulations: %f seconds\n", t );
+	// 	FHW<<"finished simulations: "<<to_string(t)<<" seconds"<<endl;
+	// 	FHW.flush();
+	// }
+	// t1=clock();
 	
-	//========================================================================
-	//....8.... collect sample statistics on observations
+	// //========================================================================
+	// //....8.... collect sample statistics on observations
 	map<int, vector<double> > observed_statistics;
 	map<int, vector<double>>  observed_displacements;
 	map<int, map<int, double> > observed_co_occurrences; 
 
+	collect_sample_stats(intervals, PSSMS,observed_statistics,
+		observed_displacements,observed_co_occurrences, rank);
 
-	t1=clock();
-	if (rank==0){
-		collect_sample_stats(intervals, PSSMS,observed_statistics,
-			observed_displacements,observed_co_occurrences, rank);
-		if (rank==0){
-			t2=clock();
-			float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
-			printf("finished collecting sample stats: %f seconds\n", t );
-			FHW<<"finished collecting sample stats: "<<to_string(t)<<" seconds"<<endl;
-			FHW.flush();
-		}
-		//now write out results
-		write_out_2( out_dir, job_ID,  PSSMS ,	  observed_statistics, 
-		  observed_displacements,  observed_co_occurrences,
-			 observed_null_statistics,   null_co_occur);
-	}
+	write_out_3(out_dir, job_ID,  PSSMS ,observed_statistics, observed_displacements);
+	// t1=clock();
+	// if (rank==0){
+	// 	collect_sample_stats(intervals, PSSMS,observed_statistics,
+	// 		observed_displacements,observed_co_occurrences, rank);
+	// 	if (rank==0){
+	// 		t2=clock();
+	// 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
+	// 		printf("finished collecting sample stats: %f seconds\n", t );
+	// 		FHW<<"finished collecting sample stats: "<<to_string(t)<<" seconds"<<endl;
+	// 		FHW.flush();
+	// 	}
+	// 	//now write out results
+	// 	write_out_2( out_dir, job_ID,  PSSMS ,	  observed_statistics, 
+	// 	  observed_displacements,  observed_co_occurrences,
+	// 		 observed_null_statistics,   null_co_occur);
+	// }
 
-	t1=clock();
+	// t1=clock();
 	
 
 	MPI::Finalize();

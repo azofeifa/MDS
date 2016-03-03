@@ -77,6 +77,41 @@ vector<double> get_sig_positions(int forward[2000],
 	}
 	return locs_pvs;
 }
+vector<double> get_sig_positions2(int forward[2000], 
+	int reverse[2000], int N, PSSM * p, vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv){
+
+	vector<double> locs_pvs;
+	int length 	= p->frequency_table.size();
+	double pvaluef, pvaluer,llr,llf;
+	int k,j;
+	bool collect;
+	int BOUND 	= N-length;
+	int i;
+	int f, r, l;
+	for (i =0 ; i  < BOUND; i++){
+		llf 	= 0;
+		llr 	= 0;
+		k 		= 0;
+		j 		= i;
+		l 		= i + length-1;
+		for (k=0; k < length; k++){
+			f 	= forward[j], r 	= reverse[l];
+			llf+= (p->frequency_table[k][f] - backgroundf[i][f])  ;
+			llr+= (p->frequency_table[k][r] - backgroundr[i][f])  ;
+			j++;
+			l--;
+		}
+		pvaluef 	= 1.0-p->get_pvalue2(2*llf,i,1);
+		pvaluer 	= 1.0-p->get_pvalue2(2*llr,i,-1);
+		if (pvaluef < pv){
+			locs_pvs.push_back(i);
+		}
+		if (pvaluer < pv){
+			locs_pvs.push_back(i);
+		}
+	}
+	return locs_pvs;
+}
 
 map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
 	vector<double> background, double pv){
@@ -94,6 +129,20 @@ map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS,
 }
 
 
+map<int, vector<double>> wrapper2(segment & S, vector<PSSM *> PSSMS, 
+	vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv){
+	vector<vector<double>> sig_positions(PSSMS.size());
+	#pragma omp parallel for
+	for (int p = 0 ; p < PSSMS.size(); p++){
+		sig_positions[p]= get_sig_positions2(S.forward, S.reverse, 2000, 
+			PSSMS[p], backgroundf,backgroundr, pv);
+	}
+	map<int, vector<double>> sig_positions_map;
+	for (int i = 0 ; i < PSSMS.size();i++){
+		sig_positions_map[PSSMS[i]->ID]=sig_positions[i];
+	}
+	return sig_positions_map;
+}
 
 
 
@@ -124,6 +173,32 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 	return newS;
 }
 
+map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
+ vector<PSSM *> PSSMS, vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv, int rank){
+	typedef map<string, vector<segment>>::iterator it_type; 
+	for (int p = 0 ; p < PSSMS.size(); p++){
+		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
+			for (int j = 0 ; j<PSSMS[p]->frequency_table[i].size(); j++){
+				PSSMS[p]->frequency_table[i][j] 	= log(PSSMS[p]->frequency_table[i][j]);
+			}
+		}
+	}	
+	for (int b = 0 ; b < backgroundf.size(); b++){
+		for (int j = 0 ; j < backgroundf[b].size(); j++){
+			backgroundf[b][j] 	= log(backgroundf[b][j]);
+			backgroundr[b][j] 	= log(backgroundr[b][j]);
+		}
+	}
+
+	map<string, vector<segment> > newS;
+	for (it_type c = S.begin(); c!=S.end(); c++){
+		for (int i = 0 ; i < c->second.size(); i++){
+			c->second[i].motif_positions = wrapper2(c->second[i], PSSMS,backgroundf,backgroundr, pv);
+			newS[c->first].push_back(c->second[i]);
+		}
+	}
+	return newS;
+}
 
 
 int PSSM_index(int i, vector<PSSM *> P){

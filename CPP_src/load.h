@@ -12,11 +12,15 @@ public:
 	int SN;
 	vector<vector<double>> frequency_table;
 	vector<vector<double>> pvalues;
+	map<int, vector<vector<double>>> position_specific_pvalues_forward;
+	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
 	PSSM();
 	PSSM(string);
 	PSSM(int);
 	void transform_ft();
 	double get_pvalue(double);
+	double get_pvalue2(double,int, int);
+	double get_position_specific_pvalue(int , double);
 	string get_consensus();
 
 };

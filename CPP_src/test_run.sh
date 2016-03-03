@@ -8,7 +8,7 @@ log_out=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/
 ID=test
 simN=10
 
-NP=2
+NP=1
 
 
 mpirun -np $NP ./SE -DB $DB -fasta $fasta -bed $bed -o $out -br $br  -log_out $log_out -pv $pv -ID $ID -simN $simN

@@ -49,7 +49,7 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 void get_ACGT_profile_all(map<string, vector<segment> > S, 
 	vector<vector<double>> & background_forward,vector<vector<double>> & background_reverse, int rank){
 	for (int i = 0 ; i < 2000; i++){
-		vector<double> current 	= {1,1,1,1};
+		vector<double> current 	= {10,10,10,10};
 		background_forward.push_back(current);
 		background_reverse.push_back(current);
 		

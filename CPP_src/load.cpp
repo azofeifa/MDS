@@ -110,7 +110,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-				//	break;
+					//break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -234,6 +234,47 @@ double PSSM::get_pvalue(double obs){
 
 }
 
+
+double PSSM::get_pvalue2(double obs, int i, int s){
+	int k;
+	int a 	= 0;
+	int b 	= SN;
+	vector<vector<double>> PVALS ;
+	if (s==1){
+		PVALS 	= position_specific_pvalues_forward[i];
+		b 		= PVALS.size();
+	}else{
+		PVALS 	= position_specific_pvalues_reverse[i];
+		b 		= PVALS.size();
+	}
+	k 	= (b+a)/2;
+	int prevk 	= -1;
+	while (true){
+		k 	= (b+a)/2;
+		if (k==prevk){
+			break;
+		}
+		if ( obs < PVALS[k][0]   ){
+			b 	= k;
+		}else{
+			a 	= k;
+		}
+		prevk 	= k;
+	}
+	if (k==PVALS.size()){
+		return PVALS[PVALS.size()-1][1];
+	}
+
+	return PVALS[k][1];
+}
+
+
+
+
+
+
+
+
 vector<PSSM *> load_PSSM_DB(string FILE){
 	ifstream FH(FILE);
 	vector<PSSM *> all_motifs;
@@ -245,7 +286,7 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 		int ID 			= 0;
 		PSSM * P 	= NULL;
 		while(getline(FH,line)){
-
+			
 			if (line.substr(0,5)=="MOTIF"){
 				MOTIF 		= "";
 				P 			= NULL;
@@ -255,6 +296,7 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 					P 		= new PSSM(MOTIF);
 					P->ID 	= ID;
 					ID+=1;
+
 				}
 
 			}else if (line.substr(0,6)=="letter" and P!=NULL){

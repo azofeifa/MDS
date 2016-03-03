@@ -1,6 +1,8 @@
 #include "get_motif_pvalues.h"
 #include <iostream>
+#include <random>
 #include <cmath>
+#include <chrono>
 #include <algorithm>
 #include <omp.h>
 double get_order_stat(vector<vector<double>> X, vector<double> background, bool MIN){
@@ -81,7 +83,6 @@ void histogram(vector<double> x, vector<double> y, int bins,
 }
 
 vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int bins){
-	smooth_frequence_table(p);
 	vector<vector<double>>p_values;
 	int N 	= p->frequency_table.size(); //number of positions in the PSSM
 	double min_score 	= get_order_stat(p->frequency_table, background, true);
@@ -135,18 +136,150 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	int  ws_counter 			= 1.0/val;
 	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
+		smooth_frequence_table(P[i]);
+	
 		int BINS 							= P[i]->frequency_table.size()*bins;
 		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,BINS);
+
 		for (int k = 0 ; k < BINS; k++){
 			P[i]->pvalues.push_back(vector<double>(2));
 			for (int j = 0 ; j < 2;j++){
 				P[i]->pvalues[k][j]  	= p_values[k][j];
 			}
 		}
-
 		P[i]->SN 							= p_values.size();
-		
 	}
+	return P;
+}
+
+int get_random_multinomial(vector<double> frequencies, double U ){
+	int I 			= 0;
+	while (I < frequencies.size() and U > frequencies[I]){
+		I+=1;
+	}
+	if (I==4){
+		I=3;
+	}
+	return I;
+}
+
+double get_score(vector<vector<double>> frequency_table, vector<int> obs ){
+	double SCORE 	= 0;
+	for (int o = 0 ; o < obs.size(); o++){
+		SCORE+=log(frequency_table[o][obs[o]]);
+	}
+	return SCORE;
+}
+
+vector<double> bs_sort(vector<double> X){
+	bool changed 	= true;
+	while (changed){
+		changed 	= false;
+		for (int i = 1 ; i < X.size(); i++){
+			if (X[i-1] > X[i] ){
+				double cp 	= X[i];
+				X[i] 		= X[i-1];
+				X[i-1] 		= cp;
+				changed 	= true;
+			}
+		}
+	}
+	return X;
+
+}
+
+
+
+
+vector<vector<double>> BIN(vector<double> X, int bins){
+	vector<vector<double>> BINNED ;
+//	X 				= bs_sort(X);
+	double min_x 	= X[0];
+	double max_x 	= X[X.size()-1];
+	double step 	= (max_x-min_x) / bins;
+	int j 			= 0;
+	for (int b = 0 ; b < bins; b++){
+		vector<double> current(2);
+		current[0] 	= min_x + step*b;
+		current[1] 	= 0.0;
+		BINNED.push_back(current);
+	}
+	for (int i = 0 ; i< X.size(); i++){
+		while ( j < BINNED.size() and BINNED[j][0] < X[i] ){
+			j++;
+		}
+		if (j < BINNED.size()){
+			BINNED[j][1]+=1;
+		}else{
+			BINNED[j-1][1]+=1;	
+		}
+	}
+	for (int b = 0 ; b < BINNED.size();b++){
+		BINNED[b][1]=BINNED[b][1]/X.size();
+	}
+	double S 	= 0.0;
+	for (int b = 0 ; b < BINNED.size(); b++){
+		S 				+= 	BINNED[b][1];
+		BINNED[b][1] 	=  	S;
+	}
+	return BINNED;
+}
+
+void insert(double x, vector<double> & array){
+	int a 	= 0, b = array.size();
+	int i 	= b+a/2, previ 	= -1000;
+	if (i){
+		while (true){ 
+			i 	= (b+a)/2;
+			if (i==previ){
+				break;
+			}
+			if (x >= array[i]){
+				a 	= i;
+			}else if (x <= array[i]){
+				b 	= i;
+			}
+			previ 	= i;
+		}
+		i 	= (b+a)/2;
+		if (x > array[i]){
+			i++;
+		}
+		array.insert(array.begin()+i, x);
+	}else{
+		array.push_back(x);
+	}
+	
+}
+
+
+void compute_pvalues_simulation(PSSM * p, vector<vector<double>> background, int bins, int simN, int s){
+	smooth_frequence_table(p);
+	for (int b = 0 ; b < background.size(); b++){
+		int BINS 							= p->frequency_table.size()*bins;
+		if (s==1){
+			p->position_specific_pvalues_forward[b] = compute_pvalues(p, background[b], BINS);
+		}else{
+			p->position_specific_pvalues_reverse[b] = compute_pvalues(p, background[b], BINS);
+		
+		}
+		p->SN 							= 0;		
+	}
+}
+
+
+vector<PSSM *> construct_position_specific_pvalues(vector<PSSM * > P, int bins, 
+	vector<vector<double>> background_forward, vector<vector<double>> background_reverse){
+	
+
+	//#pragma omp parallel for
+	for (int i = 0 ; i < P.size(); i++){
+		compute_pvalues_simulation(P[i], background_forward, bins, 1000,1);
+		compute_pvalues_simulation(P[i], background_reverse, bins, 1000,-1);
+
+
+	}
+
 	return P;
 
 }
