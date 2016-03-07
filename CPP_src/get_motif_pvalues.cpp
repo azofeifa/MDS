@@ -272,8 +272,9 @@ vector<PSSM *> construct_position_specific_pvalues(vector<PSSM * > P, int bins,
 	vector<vector<double>> background_forward, vector<vector<double>> background_reverse){
 	
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
+		printf("%d\n",i );
 		compute_pvalues_simulation(P[i], background_forward, bins, 1000,1);
 		compute_pvalues_simulation(P[i], background_reverse, bins, 1000,-1);
 
