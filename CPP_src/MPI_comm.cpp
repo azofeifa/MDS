@@ -296,6 +296,54 @@ map<int, segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<st
 
 }
 
+map<int, vector<double> > send_collect_observed_statistics(int rank, int nprocs, vector<PSSM *> PSSMS, 
+	map<int, vector<double>>  observed_displacements){
+	map<int, vector<double> > G ;
+	if (rank==0){
+		for (int j = 1 ; j < nprocs ; j ++ ){
+			int S; 
+			MPI_Recv(&S, 1, MPI_INT, j, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE); 
+			for (int p = 0 ; p < S; p++){
+				//(1) want to receive size of data displacement array
+				//(1) want to receive PSSMs[p]->ID as well
+				//(2) then want to receive the array
+				int ID, S2;
+				MPI_Recv(&S2, 1, MPI_INT, j, p+1,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+				MPI_Recv(&ID, 1, MPI_INT, j, p+1+S,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+				double * displacement 	= new double[S2];
+				MPI_Recv(&displacement[0], S2, MPI_DOUBLE, j, p+1+S*2, MPI_COMM_WORLD,MPI_STATUS_IGNORE); 
+				G[ID] 		= transform_back(displacement, S2);
+			}
+		}
+		for (int p = 0 ; p < PSSMS.size(); p++){
+			G[PSSMS[p]->ID] 	= observed_displacements[PSSMS[p]->ID];
+		}
+	}else{
+		//want to send size of PSSMs
+		int S 	= PSSMS.size();
+		MPI_Ssend(&S, 1, MPI_INT, 0,0, MPI_COMM_WORLD);
+		for (int p = 0; p < PSSMS.size(); p++){
+			//(1) want to send the PSSM[p]->ID
+			//(2) want to send the displacement data observed
+			int S2 	= observed_displacements[PSSMS[p]->ID].size();
+			MPI_Ssend(&S2, 1, MPI_INT, 0,p+1, MPI_COMM_WORLD);
+			int S3 	= PSSMS[p]->ID;
+			MPI_Ssend(&S3, 1, MPI_INT, 0,p+1+S, MPI_COMM_WORLD);
+			
+			double * displacement 	= new double[S2];
+			make_array_1D(observed_displacements[PSSMS[p]->ID], displacement   );
+			MPI_Ssend(&(displacement[0]), S2, MPI_DOUBLE, 0,p+1+S*2, MPI_COMM_WORLD);
+
+
+		}
+	}
+	return G;
+
+
+}	
+
+
+
 
 
 

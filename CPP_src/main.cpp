@@ -43,6 +43,8 @@ int main(int argc,char* argv[]){
 	string log_out 				= P->p["-log_out"];
 	string PSSM_DB 				= P->p["-DB"];
 	string job_ID 				= P->p["-ID"];
+	string bed_out 				= P->p["-bed_out"];
+	int site_br 				= stoi(P->p["-site_br"]);
 	int simN 					= stoi(P->p["-simN"]);
 	int pad 					= 1000;
 	int bins 					= stoi(P->p["-br"]);
@@ -51,12 +53,13 @@ int main(int argc,char* argv[]){
 
 	ofstream FHW; //progress log file
 
-	PSSMS 		= load_PSSM_DB(PSSM_DB);
+	PSSMS 		= load_PSSM_DB(PSSM_DB, nprocs, rank);
 	if (rank==0){
 		P->display();
 		FHW.open(log_out + job_ID + "-gTFI_log_file.txt");
 	
 	}
+
 		
 	
 	//============================================================
@@ -94,8 +97,8 @@ int main(int argc,char* argv[]){
 
 	get_ACGT_profile_all(intervals, 
 		background_forward,background_reverse, rank);
-	
-	PSSMS 	=  construct_position_specific_pvalues(PSSMS, bins , background_forward  , background_reverse  );
+		
+	PSSMS 	=  construct_position_specific_pvalues(PSSMS, bins , background_forward  , background_reverse, site_br  );
 
 	if (rank==0){
 		t2=clock();
@@ -105,7 +108,6 @@ int main(int argc,char* argv[]){
 		FHW.flush();
 	}
 	t1=clock();
-
 
 	// //============================================================
 	// //....4.... do the dynamic programming for pvalue calculations
@@ -122,7 +124,8 @@ int main(int argc,char* argv[]){
 	//....5.... now scan for PSSM hits on provided intervals, <pv
 	t1=clock();
 	//intervals 	= run_accross(intervals, PSSMS,background, pv,rank);
-	intervals 	= run_accross2(intervals, PSSMS,background_forward, background_reverse, pv,rank, FHW);
+	intervals 	= run_accross2(intervals, PSSMS,background_forward, 
+		background_reverse, pv,rank, bed_out, job_ID);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
@@ -163,7 +166,14 @@ int main(int argc,char* argv[]){
 	collect_sample_stats(intervals, PSSMS,observed_statistics,
 		observed_displacements,observed_co_occurrences, rank);
 
-	write_out_3(out_dir, job_ID,  PSSMS ,observed_statistics, observed_displacements);
+	map<int, vector<double> > GGG =  send_collect_observed_statistics( rank,  nprocs, PSSMS, observed_displacements);
+
+	if (rank==0){
+		map<int, string> 	 AA;
+		load_PSSM_ID_names_only(PSSM_DB, AA);
+
+		write_out_3(out_dir, job_ID,  AA, GGG);
+	}
 	// t1=clock();
 	// if (rank==0){
 	// 	collect_sample_stats(intervals, PSSMS,observed_statistics,

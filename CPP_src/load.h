@@ -29,6 +29,7 @@ class segment{
 public:
 	string chrom; 
 	int start, stop; 
+	int rstart, rstop;
 	int forward[2000];
 	int reverse[2000];
 	int position;
@@ -36,13 +37,13 @@ public:
 	int N;
 	map<int, vector<double>> motif_positions;
 	segment();
-	segment(string, int, int,int);
+	segment(string, int, int,int, int, int);
 	bool transform();
 
 
 };
 
-vector<PSSM *> load_PSSM_DB(string);
+vector<PSSM *> load_PSSM_DB(string, int, int);
 
 map<string, vector<segment>> load_bed_file(string, int) ;
 
@@ -50,5 +51,6 @@ map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<
 
 vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
 	vector<int>, vector<int>);
+void load_PSSM_ID_names_only(string , map<int, string> &  );
 
 #endif

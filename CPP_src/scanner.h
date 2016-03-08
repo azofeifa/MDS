@@ -15,7 +15,7 @@ map<int, map<int, vector<segment> >> scan_simulations(map<int, map<int, vector<s
 	vector<PSSM *> , vector<double> ,double );
 
 map<string, vector<segment> > run_accross2(map<string, vector<segment>>   ,
- vector<PSSM *>  , vector<vector<double>>,vector<vector<double>>  , double  , int, ofstream &  );
+ vector<PSSM *>  , vector<vector<double>>,vector<vector<double>>  , double  , int, string,string  );
 
 vector<double> get_sig_positions(int [2000], 
 	int [2000], int, PSSM * , 

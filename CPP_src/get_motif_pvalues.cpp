@@ -253,32 +253,61 @@ void insert(double x, vector<double> & array){
 }
 
 
-void compute_pvalues_simulation(PSSM * p, vector<vector<double>> background, int bins, int simN, int s){
+void compute_pvalues_simulation(PSSM * p, vector<vector<double>> & background, int bins, int site_br, int s){
 	smooth_frequence_table(p);
+
+	map<int,vector<vector<double>> > binned_positions_specific;
+	int delta 		= background.size()/site_br;
+	for (int b = 0 ; b < site_br; b++){
+		int st 	= b*delta, sp = (b+1)*delta;
+		vector<double> background_current(4);
+		double NN 				= 0.0;
+		background_current[0] 	= 0,background_current[1] 	= 0,background_current[2] 	= 0,background_current[3] 	= 0;
+		for (int i = st ; i < sp; i++ ){
+			for (int s = 0 ; s < 4; s++){
+				background_current[s]+=background[i][s];
+			}
+			NN++;
+		}
+		for (int s = 0 ; s < 4; s++){
+			background_current[s]/=NN;
+		}	
+		for (int i = st ; i < sp; i++ ){
+			background[i] 		= background_current;
+		}
+		
+		binned_positions_specific[b] 			= compute_pvalues(p, background_current, bins);
+
+	}
+	int current_stop 	= delta;
+	int B 				= 0;
 	for (int b = 0 ; b < background.size(); b++){
 		int BINS 							= p->frequency_table.size()*bins;
+		if (b > delta){
+			delta+=delta;
+			B++;
+		}
+
+
 		if (s==1){
-			p->position_specific_pvalues_forward[b] = compute_pvalues(p, background[b], BINS);
+			p->position_specific_pvalues_forward[b] = binned_positions_specific[B];
 		}else{
-			p->position_specific_pvalues_reverse[b] = compute_pvalues(p, background[b], BINS);
+			p->position_specific_pvalues_reverse[b] = binned_positions_specific[B];
 		
 		}
-		p->SN 							= 0;		
+		p->SN 							= p->position_specific_pvalues_forward[b].size();		
 	}
 }
 
 
 vector<PSSM *> construct_position_specific_pvalues(vector<PSSM * > P, int bins, 
-	vector<vector<double>> background_forward, vector<vector<double>> background_reverse){
+	vector<vector<double>> & background_forward, vector<vector<double>> & background_reverse, int site_br){
 	
 
 	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
-		printf("%d\n",i );
-		compute_pvalues_simulation(P[i], background_forward, bins, 1000,1);
-		compute_pvalues_simulation(P[i], background_reverse, bins, 1000,-1);
-
-
+		compute_pvalues_simulation(P[i], background_forward, bins, site_br,1);
+		compute_pvalues_simulation(P[i], background_reverse, bins, site_br,-1);
 	}
 
 	return P;

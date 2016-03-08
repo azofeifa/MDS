@@ -154,27 +154,18 @@ void write_out_2(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vecto
 
 }
 
-void write_out_3(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vector<double> > observed_statistics, 
-	map<int, vector<double>>  observed_displacements){
+void write_out_3(string out_dir,string ID, map<int, string> IDS, map<int, vector<double> > observed_displacements){
 	ofstream FHW;
 	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
 	typedef map<int, vector<double> >::iterator it_type;
 	string line;
-	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
-		line 	= "";
-		line 	= PSSMS[s->first]->name + "\t";
-		line 	+= to_string(s->second[0]) + "\t" +to_string(s->second[1]) + "\t" +to_string(s->second[2]) + "\t" +to_string(s->second[3]) + "\t"; 
-		
-		line 	+= to_string(0.0) + "\t";
-		line 	+= to_string(0.0) + "\t";
-		line 	+= to_string(0.0) + "\t";
-		line 	+= to_string(0.0) + "\t";
-		line 	+= "\n";
-		FHW<<line;
-	}
+	
 	FHW<<"#observed displacements\n";
-	for (it_type s = observed_statistics.begin(); s!=observed_statistics.end(); s++){
-		line 	= PSSMS[s->first]->name + "\t";
+	
+
+
+	for (it_type s = observed_displacements.begin(); s!=observed_displacements.end(); s++){
+		line 	= IDS[s->first] + "\t";
 		for (int i = 0 ; i < observed_displacements[s->first].size();i++ ){
 			line+=to_string(observed_displacements[s->first][i])+",";
 		}

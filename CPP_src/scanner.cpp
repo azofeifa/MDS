@@ -70,8 +70,10 @@ vector<double> get_sig_positions(int forward[2000],
 		}
 		pvaluef 	= 1.0-p->get_pvalue(llf*2);
 		pvaluer 	= 1.0-p->get_pvalue(llr*2);
+
 		if (pvaluef < pv){
 			locs_pvs.push_back(i);
+			
 		}
 		if (pvaluer < pv){
 			locs_pvs.push_back(i);
@@ -99,7 +101,7 @@ vector<double> get_sig_positions2(int forward[2000],
 		for (k=0; k < length; k++){
 			f 	= forward[j], r 	= reverse[l];
 			llf+= (p->frequency_table[k][f] - backgroundf[i][f])  ;
-			llr+= (p->frequency_table[k][r] - backgroundr[i][f])  ;
+			llr+= (p->frequency_table[k][r] - backgroundr[i][r])  ;
 			j++;
 			l--;
 		}
@@ -107,9 +109,10 @@ vector<double> get_sig_positions2(int forward[2000],
 		pvaluer 	= 1.0-p->get_pvalue2(2*llr,i,-1);
 		if (pvaluef < pv){
 			locs_pvs.push_back(i);
+			
 		}
 		if (pvaluer < pv){
-			locs_pvs.push_back(i);
+			locs_pvs.push_back(-i);
 		}
 	}
 	return locs_pvs;
@@ -150,7 +153,22 @@ map<int, vector<double>> wrapper2(segment & S, vector<PSSM *> PSSMS,
 
 
 
+double get_MIN(vector<double> X, int & S){
+	double M 	= 100000;
+	for (int i = 0 ;  i < X.size(); i++){
+		if ((abs(abs(X[i]) - 1000)) < M  ){
+			M 	= abs(abs(X[i]) - 1000);
+			if (X[i] < 0){
+				S=-1;
+			}else{
+				S=1;
+			}
+		}
+	}
+	return M;
 
+
+}
 map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
  vector<PSSM *> PSSMS, vector<double> background, double pv, int rank){
 	typedef map<string, vector<segment>>::iterator it_type; 
@@ -177,7 +195,7 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 
 map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
  vector<PSSM *> PSSMS, vector<vector<double>> backgroundf,
- vector<vector<double>> backgroundr, double pv, int rank, ofstream & FHW){
+ vector<vector<double>> backgroundr, double pv, int rank, string bed_out, string job_Name){
 	typedef map<string, vector<segment>>::iterator it_type; 
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
@@ -196,12 +214,50 @@ map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
-			FHW<<to_string(i)<<endl;
-			FHW.flush();
 			c->second[i].motif_positions = wrapper2(c->second[i], PSSMS,backgroundf,backgroundr, pv);
 			newS[c->first].push_back(c->second[i]);
 		}
 	}
+
+	if (!bed_out.empty()){
+		for (int p = 0 ; p < PSSMS.size(); p++){
+			ofstream FHW;
+			FHW.open(bed_out + job_Name+ "-" + PSSMS[p]->name+ ".bed");
+			string line 	= "track namespace=\"Motif: " + PSSMS[p]->name +  "\"" +  " visibility=2 useScore=2 cgGrades=50 cgColour1=white cgColour2=yellow cgColour3=red height=30\n";
+			FHW<<line;
+			for (it_type c = S.begin(); c!=S.end(); c++){
+				for (int i = 0 ; i < c->second.size(); i++){
+					if (c->second[i].motif_positions.find(PSSMS[p]->ID)!= c->second[i].motif_positions.end() and 
+							!c->second[i].motif_positions[PSSMS[p]->ID].empty() )	{
+						int S ;
+						double MIN 	= get_MIN(c->second[i].motif_positions[PSSMS[p]->ID], S);
+						if (abs(MIN) < 200){
+							double x 	= (c->second[i].start + c->second[i].stop) / 2.;
+							int y 	= x + MIN;
+							int START 	= x-300;
+							int STOP 	= x+300;
+							int d 		= PSSMS[p]->frequency_table.size();
+							string strand 	= "-";
+							string color 	= "255,0,0";
+
+							if (S == 1){	
+								strand 		= "+";
+								color 		= "0,0,255";
+							}
+
+							FHW<<c->second[i].chrom<<"\t" << to_string(START)<<"\t"<<to_string(y)<<"\t.\t"<<"500"<<"\t.\t"<< to_string(START)<<"\t"<<to_string(y)<<"\t0,255,0\t.\n";
+							FHW<<c->second[i].chrom<<"\t" << to_string(y)<<"\t"<<to_string(y+d)<<"\t"<<to_string(int(abs(MIN))) <<"\t"<<"100"<<"\t"<<strand<<"\t"<< to_string(y)<<"\t"<<to_string(y+d)<<"\t"<<color<<"\t.\n";
+							FHW<<c->second[i].chrom<<"\t" << to_string(y+d)<<"\t"<<to_string(STOP)<<"\t.\t"<<"500"<<"\t.\t"<< to_string(y+d)<<"\t"<<to_string(STOP)<<"\t0,255,0\t.\n";							
+						}
+					}
+				}
+			}
+			FHW.close();
+		}
+	}
+
+
+
 	return newS;
 }
 

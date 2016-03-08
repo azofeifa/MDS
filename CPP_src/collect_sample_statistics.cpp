@@ -19,7 +19,7 @@ void fill_displacements(map<int, vector<double>> & displacements, vector<segment
 void get_stats(vector<double> displacements, vector<double> & stats    ){
 	double mean=0, var=0, se=0, N=0;
 	for (int i = 0 ; i < displacements.size(); i++ ){
-		double d 	= displacements[i]-1000;
+		double d 	= abs(displacements[i])-1000;
 		mean+=abs(d);
 		var+=pow(d,2);
 		if (abs(d) <100){

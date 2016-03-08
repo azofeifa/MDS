@@ -6,10 +6,11 @@
 using namespace std;
 
 segment::segment(){};
-segment::segment(string chr, int st, int sp, int ID){
+segment::segment(string chr, int st, int sp, int ID, int rst, int rsp){
 	chrom=chr, start=st, stop=sp;
 	seq 	= "";
 	position=ID;
+	rstart = rst, rstop = rsp;
 }
 
 
@@ -73,9 +74,9 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad){
 				chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
 				if (pad != 0){
 					x 	= (start + stop)/2.;
-					S[chrom].push_back(segment(chrom, x-pad, x+pad,i));
+					S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
 				}else{
-					S[chrom].push_back(segment(chrom, start, stop,i));					
+					S[chrom].push_back(segment(chrom, start, stop,i, start, stop));					
 				}
 				i++;
 			}
@@ -110,7 +111,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					//break;
+					break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -239,33 +240,20 @@ double PSSM::get_pvalue2(double obs, int i, int s){
 	int k;
 	int a 	= 0;
 	int b 	= SN;
-	vector<vector<double>> PVALS ;
-	if (s==1){
-		PVALS 	= position_specific_pvalues_forward[i];
-		b 		= PVALS.size();
-	}else{
-		PVALS 	= position_specific_pvalues_reverse[i];
-		b 		= PVALS.size();
-	}
-	k 	= (b+a)/2;
 	int prevk 	= -1;
 	while (true){
 		k 	= (b+a)/2;
 		if (k==prevk){
 			break;
 		}
-		if ( obs < PVALS[k][0]   ){
+		if ( obs < position_specific_pvalues_forward[i][k][0]   ){
 			b 	= k;
 		}else{
 			a 	= k;
 		}
 		prevk 	= k;
 	}
-	if (k==PVALS.size()){
-		return PVALS[PVALS.size()-1][1];
-	}
-
-	return PVALS[k][1];
+	return position_specific_pvalues_forward[i][k][1];
 }
 
 
@@ -275,12 +263,37 @@ double PSSM::get_pvalue2(double obs, int i, int s){
 
 
 
-vector<PSSM *> load_PSSM_DB(string FILE){
+vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank){
 	ifstream FH(FILE);
 	vector<PSSM *> all_motifs;
 	int i = 0;
+	int N = 0; //number of PSSM models
+	string line ;
 	if (FH){
-		string line;
+		while(getline(FH,line)){
+			if (line.substr(0,5)=="MOTIF"){
+				N++;
+			}		
+		}
+	}
+	int start, stop;
+	int count 	= N / nprocs;
+	if (count == 0){
+		count 	= 1;
+	}
+	start 	= rank*count;
+	stop 	= (rank+1)*count;
+	stop 		= min(stop, N);
+	if (rank == nprocs-1){
+		stop 	= N;
+	}
+	if (start > stop){
+		stop 	= start; //in this case there are more nodes than segments...so
+	}
+	N 	= 0;
+	FH.clear();
+	FH.seekg(0, std::ios::beg);
+	if (FH){
 		vector<string>line_array;
 		string MOTIF 	= "";
 		int ID 			= 0;
@@ -291,13 +304,18 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 				MOTIF 		= "";
 				P 			= NULL;
 				line_array 	= split_by_ws(line, " ");
-				if (line_array.size()>1){
+
+				if (line_array.size()>1 and start <= N and N < stop  ){
 					MOTIF  	= line_array[1];			
 					P 		= new PSSM(MOTIF);
-					P->ID 	= ID;
+					P->ID 	= N;
 					ID+=1;
+					if (ID > 2){
+						break;
+					}
 
 				}
+				N++;
 
 			}else if (line.substr(0,6)=="letter" and P!=NULL){
 				line_array 	= split_by_ws(line, " ");
@@ -327,6 +345,30 @@ vector<PSSM *> load_PSSM_DB(string FILE){
 	}
 	return all_motifs;
 }
+
+void load_PSSM_ID_names_only(string FILE, map<int, string> & G){
+	ifstream FH(FILE);
+	if (FH){
+		vector<string>line_array;
+		int N 	= 0;
+		string MOTIF, line;
+
+		while(getline(FH,line)){
+			if (line.substr(0,5)=="MOTIF"){
+				line_array 	= split_by_ws(line, " ");
+				if (line_array.size()>1){
+					MOTIF  	= line_array[1];			
+					G[N] 	= MOTIF;
+					N++;
+				}
+			}
+		}
+	}else{
+
+	}
+
+}
+
 
 
 vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> streamed,vector<int> IDS,
