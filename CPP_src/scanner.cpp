@@ -1,5 +1,7 @@
 #include "scanner.h"
 #include <iostream>
+#include <fstream>
+
 #include <cmath>
 #include <omp.h>
 using namespace std;
@@ -174,7 +176,8 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 }
 
 map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
- vector<PSSM *> PSSMS, vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv, int rank){
+ vector<PSSM *> PSSMS, vector<vector<double>> backgroundf,
+ vector<vector<double>> backgroundr, double pv, int rank, ofstream & FHW){
 	typedef map<string, vector<segment>>::iterator it_type; 
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
@@ -193,6 +196,8 @@ map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
+			FHW<<to_string(i)<<endl;
+			FHW.flush();
 			c->second[i].motif_positions = wrapper2(c->second[i], PSSMS,backgroundf,backgroundr, pv);
 			newS[c->first].push_back(c->second[i]);
 		}

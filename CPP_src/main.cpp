@@ -122,7 +122,7 @@ int main(int argc,char* argv[]){
 	//....5.... now scan for PSSM hits on provided intervals, <pv
 	t1=clock();
 	//intervals 	= run_accross(intervals, PSSMS,background, pv,rank);
-	intervals 	= run_accross2(intervals, PSSMS,background_forward, background_reverse, pv,rank);
+	intervals 	= run_accross2(intervals, PSSMS,background_forward, background_reverse, pv,rank, FHW);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;
