@@ -111,7 +111,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					break;
+					//break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -310,9 +310,9 @@ vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank){
 					P 		= new PSSM(MOTIF);
 					P->ID 	= N;
 					ID+=1;
-					if (ID > 2){
-						break;
-					}
+					// if (ID > 2){
+					// 	break;
+					// }
 
 				}
 				N++;
