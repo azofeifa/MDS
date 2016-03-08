@@ -223,7 +223,7 @@ map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
 		for (int p = 0 ; p < PSSMS.size(); p++){
 			ofstream FHW;
 			FHW.open(bed_out + job_Name+ "-" + PSSMS[p]->name+ ".bed");
-			string line 	= "track namespace=\"Motif: " + PSSMS[p]->name +  "\"" +  " visibility=2 useScore=2 cgGrades=50 cgColour1=white cgColour2=yellow cgColour3=red height=30\n";
+			string line 	= "track name=\"" + PSSMS[p]->name +  "\"" +  " visibility=1 useScore=2 cgGrades=50 cgColour1=white cgColour2=yellow cgColour3=red height=30\n";
 			FHW<<line;
 			for (it_type c = S.begin(); c!=S.end(); c++){
 				for (int i = 0 ; i < c->second.size(); i++){
