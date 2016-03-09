@@ -258,12 +258,15 @@ void compute_pvalues_simulation(PSSM * p, vector<vector<double>> & background, i
 
 	map<int,vector<vector<double>> > binned_positions_specific;
 	int delta 		= background.size()/site_br;
+
+
 	for (int b = 0 ; b < site_br; b++){
 		int st 	= b*delta, sp = (b+1)*delta;
 		vector<double> background_current(4);
 		double NN 				= 0.0;
 		background_current[0] 	= 0,background_current[1] 	= 0,background_current[2] 	= 0,background_current[3] 	= 0;
 		for (int i = st ; i < sp; i++ ){
+
 			for (int s = 0 ; s < 4; s++){
 				background_current[s]+=background[i][s];
 			}
@@ -271,11 +274,11 @@ void compute_pvalues_simulation(PSSM * p, vector<vector<double>> & background, i
 		}
 		for (int s = 0 ; s < 4; s++){
 			background_current[s]/=NN;
-		}	
-		for (int i = st ; i < sp; i++ ){
-			background[i] 		= background_current;
 		}
-
+		for (int i = st ; i < sp ; i++)	{
+			background[i] 						= background_current;
+		}
+		
 		binned_positions_specific[b] 			= compute_pvalues(p, background_current, bins);
 
 	}
@@ -302,7 +305,33 @@ void compute_pvalues_simulation(PSSM * p, vector<vector<double>> & background, i
 
 vector<PSSM *> construct_position_specific_pvalues(vector<PSSM * > P, int bins, 
 	vector<vector<double>> & background_forward, vector<vector<double>> & background_reverse, int site_br){
-	
+	//smooth background
+	for (int b = 0 ; b < background_forward.size(); b++){
+		vector<double> background_current(4);
+		background_current[0] 	= 0,background_current[1] 	= 0,background_current[2] 	= 0,background_current[3] 	= 0;
+		vector<double> background_current_r(4);
+		background_current_r[0] 	= 0,background_current_r[1] 	= 0,background_current_r[2] 	= 0,background_current_r[3] 	= 0;
+		double N 	= 0;
+		int SP 		= b+20;
+		if ((b + 20) > background_forward.size()){
+			SP  	= background_forward.size();
+		}
+		for (int j = b; j < SP; j++){
+			for (int s = 0 ; s < 4; s++){
+				background_current[s]+=background_forward[j][s];
+				background_current_r[s]+=background_reverse[j][s];
+			}
+			N++;
+		}
+		for (int s = 0 ; s < 4; s++){
+			background_current[s]/=N;
+			background_current_r[s]/=N;
+		}	
+		background_forward[b] 	= background_current;
+		background_reverse[b] 	= background_current_r;
+
+	}
+
 
 	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){

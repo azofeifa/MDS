@@ -44,6 +44,7 @@ int main(int argc,char* argv[]){
 	string PSSM_DB 				= P->p["-DB"];
 	string job_ID 				= P->p["-ID"];
 	string bed_out 				= P->p["-bed_out"];
+	int test 					= stoi(P->p["-test"]);
 	int site_br 				= stoi(P->p["-site_br"]);
 	int simN 					= stoi(P->p["-simN"]);
 	int pad 					= 1000;
@@ -53,7 +54,7 @@ int main(int argc,char* argv[]){
 
 	ofstream FHW; //progress log file
 
-	PSSMS 		= load_PSSM_DB(PSSM_DB, nprocs, rank);
+	PSSMS 		= load_PSSM_DB(PSSM_DB, nprocs, rank,test);
 	if (rank==0){
 		P->display();
 		FHW.open(log_out + job_ID + "-gTFI_log_file.txt");
@@ -76,7 +77,7 @@ int main(int argc,char* argv[]){
 	//============================================================
 	//....2.... insert the fasta sequnece into the provided intervals
 	t1=clock();
-	intervals 								= insert_fasta_sequence(fasta_file, intervals);
+	intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
 	if (rank==0){
 		t2=clock();
 		float t 	= (float(t2)-float(t1))/CLOCKS_PER_SEC ;

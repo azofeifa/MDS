@@ -13,6 +13,7 @@ params::params(){
 	p["-simN"] 			= "10";
 	p["-site_br"] 		= "10";
 	p["-bed_out"] 		= "";
+	p["-test"] 			= "0";
 }
 bool params::check(){
 	typedef map<string, string >::iterator it_type; 

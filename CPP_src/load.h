@@ -44,11 +44,11 @@ public:
 
 };
 
-vector<PSSM *> load_PSSM_DB(string, int, int);
+vector<PSSM *> load_PSSM_DB(string, int, int, int);
 
 map<string, vector<segment>> load_bed_file(string, int) ;
 
-map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > );
+map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > , int);
 
 vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
 	vector<int>, vector<int>);

@@ -92,7 +92,7 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad){
 
 	return S;	
 }
-map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<string, vector<segment> > S){
+map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<string, vector<segment> > S, int test){
 	ifstream FH(fasta_file);
 	map<string, vector<segment> > newS;
 	if (FH){
@@ -110,8 +110,9 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 			if (line.substr(0,1)==">"){
 				if (!current.empty()){
 					S[chrom] 	= current;
-					
-					//break;
+					if (test){
+						break;
+					}
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -273,7 +274,7 @@ double PSSM::get_pvalue2_r(double obs, int i, int s){
 
 
 
-vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank){
+vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank,int test){
 	ifstream FH(FILE);
 	vector<PSSM *> all_motifs;
 	int i = 0;
@@ -320,9 +321,9 @@ vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank){
 					P 		= new PSSM(MOTIF);
 					P->ID 	= N;
 					ID+=1;
-					// if (ID > 2){
-					// 	break;
-					// }
+					if (ID > 2 and test){
+						break;
+					}
 
 				}
 				N++;

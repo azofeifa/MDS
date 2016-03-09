@@ -9,6 +9,6 @@ ID=test
 simN=10
 bed_out=/Users/joazofeifa/Lab/motif_distances/test_bed_motif_files/
 NP=5
-site_br=1
-
-mpirun -np $NP ./SE -DB $DB -fasta $fasta -bed $bed -o $out -br $br -bed_out $bed_out  -log_out $log_out -pv $pv -ID $ID -simN $simN -site_br $site_br
+site_br=10
+test=1
+mpirun -np $NP ./SE -DB $DB -fasta $fasta -bed $bed -o $out -br $br -bed_out $bed_out  -log_out $log_out -pv $pv -ID $ID -simN $simN -site_br $site_br -test $test
