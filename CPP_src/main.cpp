@@ -173,7 +173,7 @@ int main(int argc,char* argv[]){
 		map<int, string> 	 AA;
 		load_PSSM_ID_names_only(PSSM_DB, AA);
 
-		write_out_3(out_dir, job_ID,  AA, GGG);
+		write_out_3(out_dir, job_ID,  AA, GGG,background_forward,background_reverse);
 	}
 	// t1=clock();
 	// if (rank==0){

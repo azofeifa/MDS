@@ -154,7 +154,8 @@ void write_out_2(string out_dir,string ID, vector<PSSM *>PSSMS ,	 map<int, vecto
 
 }
 
-void write_out_3(string out_dir,string ID, map<int, string> IDS, map<int, vector<double> > observed_displacements){
+void write_out_3(string out_dir,string ID, map<int, string> IDS, 
+	map<int, vector<double> > observed_displacements,vector<vector<double>> bf, vector<vector<double>> br){
 	ofstream FHW;
 	FHW.open(out_dir + ID+"-motif_enrichment_statistics.tsv");
 	typedef map<int, vector<double> >::iterator it_type;
@@ -172,6 +173,15 @@ void write_out_3(string out_dir,string ID, map<int, string> IDS, map<int, vector
 		line 	= line.substr(0,line.size()-1);
 		FHW<<line<<endl;
 	}
+	FHW<<"#background data, forward\n";
+	for (int i = 0 ; i < bf.size(); i++ ){
+		FHW<<to_string(bf[i][0]) + "," +to_string(bf[i][1]) + "," +to_string(bf[i][2]) + "," +to_string(bf[i][3]) + "\n";
+	}
+	FHW<<"#background data, reverse\n";
+	for (int i = 0 ; i < br.size(); i++ ){
+		FHW<<to_string(br[i][0]) + "," +to_string(br[i][1]) + "," +to_string(br[i][2]) + "," +to_string(br[i][3]) + "\n";
+	}
+	
 
 }
 
