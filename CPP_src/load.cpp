@@ -111,7 +111,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				if (!current.empty()){
 					S[chrom] 	= current;
 					
-					//break;
+					break;
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
@@ -236,24 +236,34 @@ double PSSM::get_pvalue(double obs){
 }
 
 
-double PSSM::get_pvalue2(double obs, int i, int s){
+double PSSM::get_pvalue2_f(double obs, int i, int s){
 	int k;
 	int a 	= 0;
 	int b 	= SN;
-	int prevk 	= -1;
-	while (true){
+	while ((b-a) > 2 ){
 		k 	= (b+a)/2;
-		if (k==prevk){
-			break;
-		}
 		if ( obs < position_specific_pvalues_forward[i][k][0]   ){
 			b 	= k;
 		}else{
 			a 	= k;
 		}
-		prevk 	= k;
 	}
 	return position_specific_pvalues_forward[i][k][1];
+}
+
+double PSSM::get_pvalue2_r(double obs, int i, int s){
+	int k;
+	int a 	= 0;
+	int b 	= SN;
+	while ((b-a) > 2 ){
+		k 	= (b+a)/2;
+		if ( obs < position_specific_pvalues_reverse[i][k][0]   ){
+			b 	= k;
+		}else{
+			a 	= k;
+		}
+	}
+	return position_specific_pvalues_reverse[i][k][1];
 }
 
 
@@ -310,9 +320,9 @@ vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank){
 					P 		= new PSSM(MOTIF);
 					P->ID 	= N;
 					ID+=1;
-					// if (ID > 2){
-					// 	break;
-					// }
+					if (ID > 2){
+						break;
+					}
 
 				}
 				N++;

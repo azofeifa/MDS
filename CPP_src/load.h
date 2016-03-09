@@ -19,7 +19,8 @@ public:
 	PSSM(int);
 	void transform_ft();
 	double get_pvalue(double);
-	double get_pvalue2(double,int, int);
+	double get_pvalue2_f(double,int, int);
+	double get_pvalue2_r(double,int, int);
 	double get_position_specific_pvalue(int , double);
 	string get_consensus();
 

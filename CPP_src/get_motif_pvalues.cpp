@@ -275,7 +275,7 @@ void compute_pvalues_simulation(PSSM * p, vector<vector<double>> & background, i
 		for (int i = st ; i < sp; i++ ){
 			background[i] 		= background_current;
 		}
-		
+
 		binned_positions_specific[b] 			= compute_pvalues(p, background_current, bins);
 
 	}
@@ -306,8 +306,8 @@ vector<PSSM *> construct_position_specific_pvalues(vector<PSSM * > P, int bins,
 
 	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
-		compute_pvalues_simulation(P[i], background_forward, bins, site_br,1);
-		compute_pvalues_simulation(P[i], background_reverse, bins, site_br,-1);
+		compute_pvalues_simulation(P[i], background_forward,  P[i]->frequency_table.size()*bins, site_br,1);
+		compute_pvalues_simulation(P[i], background_reverse, P[i]->frequency_table.size()*bins, site_br,-1);
 	}
 
 	return P;

@@ -105,11 +105,10 @@ vector<double> get_sig_positions2(int forward[2000],
 			j++;
 			l--;
 		}
-		pvaluef 	= 1.0-p->get_pvalue2(2*llf,i,1);
-		pvaluer 	= 1.0-p->get_pvalue2(2*llr,i,-1);
+		pvaluef 	= 1.0-p->get_pvalue2_f(2*llf,i,1);
+		pvaluer 	= 1.0-p->get_pvalue2_r(2*llr,i,-1);
 		if (pvaluef < pv){
 			locs_pvs.push_back(i);
-			
 		}
 		if (pvaluer < pv){
 			locs_pvs.push_back(-i);
