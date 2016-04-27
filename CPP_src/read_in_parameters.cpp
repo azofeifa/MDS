@@ -2,18 +2,20 @@
 #include <iostream>
 using namespace std;
 params::params(){
-	p["-bed"] 			= "";
-	p["-fasta"] 		= "";
-	p["-DB"] 			= "";
-	p["-o"] 			= "";
-	p["-ID"] 			= "1";
-	p["-log_out"] 		= "";
-	p["-br"] 			= "100";
-	p["-pv"] 			= "0.0000001";
-	p["-simN"] 			= "10";
-	p["-site_br"] 		= "10";
-	p["-bed_out"] 		= "";
-	p["-test"] 			= "0";
+	p["-o"] 	= "";
+	p["-bed"] 	= "";
+	p["-fasta"] = "";
+	p["-DB"] 	= "";
+	p["-null"] 	= "1";
+	p["-pv"] 	= "0.0000001";
+	p["-ID"] 	= "gTFI";
+	p["-sim_N"] = "10";
+	p["-br"] 	= "10";
+	p["-bsn"] 	= "100";
+
+	module 		= "";
+	EXIT 		= false;
+
 }
 bool params::check(){
 	typedef map<string, string >::iterator it_type; 
@@ -48,6 +50,17 @@ void fill_in_options(char* argv[],params * P, int rank){
 	string F 		= "";
 	char * COM 		= "-";
 	string current 	= "";
+	argv++;
+	if (*argv){
+		P->module  = string(*argv);
+		if (P->module!= "DB" and P->module!="EVAL"){
+			printf("do not under module, either DB or EVAL\n");
+			P->EXIT 	= true;
+		}
+	}else{
+		printf("No module specified\n");
+		P->EXIT 		= true;
+	}
 	while (*argv){
 		F 	= string(*argv); 
 		if(!current.empty()){

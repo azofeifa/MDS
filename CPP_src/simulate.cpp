@@ -1,5 +1,6 @@
 #include "simulate.h"
 #include "scanner.h"
+
 #include <omp.h>
 #include <time.h>
 #include <random>
@@ -264,9 +265,113 @@ void run_sims2(map<string, vector<segment>> intervals, vector<PSSM *> P,int sim_
 		FREE_double(all_co, count);
 		FREE_double(stats, count);
 	}
-
-
 }
+
+mt19937  get_rand_seq(vector<int> & seq,  discrete_distribution<int> B, mt19937 g){
+	for (int i = 0 ; i < seq.size(); i++){
+		seq[i] 	= B(g);
+	}
+	return g;
+}
+
+
+int get_pvalue_llr(vector<int> seq, vector<double> background, double threshold, PSSM * p){
+	int length 	= seq.size();
+	double ll 	= 0;
+	for ( int k=0; k < length; k++){
+		ll+= p->frequency_table[k][seq[k]];
+	}
+	double pvalue 	= 1.0-p->get_pvalue(ll*2);
+	if (pvalue < threshold){
+		return 1;
+	}
+	return 0; 
+}
+
+
+void run_sim3(map<string, vector<segment>> intervals, 
+		vector<PSSM *> P, int sim_N,
+		vector<vector<double>> background_forward, vector<vector<double>>  background_reverse,
+		vector<double> background, double threshold)
+{
+	for (int i =0 ; i < 4; i++){
+		background[i] 	= log(background[i]);
+	}
+	vector<discrete_distribution<int>> D_forward;
+	vector<discrete_distribution<int>> D_reverse;
+	for (int i = 0 ; i < background_forward.size(); i++){
+		discrete_distribution<int> Df {background_forward[i][0],background_forward[i][1],background_forward[i][2],background_forward[i][3]};
+		discrete_distribution<int> Dr {background_reverse[i][0],background_reverse[i][1],background_reverse[i][2],background_reverse[i][3]};
+		D_forward.push_back(Df);
+		D_reverse.push_back(Dr);
+	}
+
+	random_device rd;
+
+	// Initialize Mersenne Twister pseudo-random number generator
+	mt19937 gen(rd());
+	#pragma omp parallel for
+	for (int p = 0 ; p < P.size(); p++){
+		int S 	= P[p]->frequency_table.size(), hit=0;
+		vector<int> seqf(S);
+		vector<int> seqr(S);
+		vector<vector<int>> DD;
+		for (int s = 0 ; s < sim_N; s++){//number of random samples
+			vector<int> 	D;
+			for (int d 	= 0 ; d < background_forward.size(); d++ ){
+				gen 	= get_rand_seq(seqf,D_forward[d], gen );
+				gen 	= get_rand_seq(seqr,D_reverse[d], gen );
+				hit 	= get_pvalue_llr(seqf, background,threshold, P[p] );
+				if (hit){
+					D.push_back(d);
+				}
+				hit 	= get_pvalue_llr(seqr, background,threshold, P[p] );
+				if (hit){
+					D.push_back(d);
+				}
+			}
+			DD.push_back(D);
+		}
+		P[p]->null_displacements 	= DD;
+	}
+	for (int p = 0; p < P.size(); p++){
+		for (int i = 0; i < P[p]->frequency_table.size(); i++){
+			for (int j = 0 ; j < 4;j++){
+				P[p]->frequency_table[i][j]+=(background[j]);
+				P[p]->frequency_table[i][j]=exp(P[p]->frequency_table[i][j]);
+			}
+		}
+	}
+
+}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

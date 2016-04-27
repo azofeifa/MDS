@@ -1,5 +1,7 @@
 #include "collect_sample_statistics.h"
 #include <cmath>
+#include <random>
+
 using namespace std;
 void fill_displacements(map<int, vector<double>> & displacements, vector<segment> segments ){
 	typedef map<int, vector<double>>::iterator it_type;
@@ -120,3 +122,121 @@ void collect_sample_stats(map<string, vector<segment>> observed,
 	
 
 }
+double get_MD_score(vector<int> D, int window, bool NORM){
+	double N 	= 0, S 	= 0, center 	= 1000; //this is assumed
+	double a 	= center-window, b = center + window;
+	for (int i = 0 ; i < D.size();i++){
+		if ( D[i] >  a and D[i] < b){
+			S++;
+		}
+		N++;
+	
+	}
+	if (N>0 and NORM){
+		return S/ N;
+	}
+	return S;
+}
+
+vector<double> bubble_sort(vector<double> X){
+	bool changed 	= true;
+	while (changed){
+		changed 	= false;
+		for (int i = 1 ; i < X.size(); i++){
+			if (X[i-1] > X[i] ){
+				double cp 	= X[i];
+				X[i] 		= X[i-1];
+				X[i-1] 		= cp;
+				changed 	= true;
+			}
+		}
+	}
+	return X;
+
+}
+
+
+
+vector<vector<double> > make_CDF(vector<double> X){
+	X 	= bubble_sort(X);
+	double N 	= X.size();
+	vector<vector<double>> Y;
+	for (int i = 0 ; i < X.size(); i++) {
+		vector<double> x 	= {X[i], i/N};
+		Y.push_back(x);
+	}
+	return Y;
+}
+
+
+void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
+	random_device rd;
+	// Initialize Mersenne Twister pseudo-random number generator
+	mt19937 gen(rd());
+	
+	vector<vector<int>> displacements 			= P->null_displacements;
+	vector<int> total_hits;
+	for (int i = 0 ; i < displacements.size(); i++){
+		for (int j = 0 ; j < displacements[i].size(); j++){
+			if (displacements[i][j]>-1){
+				total_hits.push_back(displacements[i][j]);
+			}
+		}
+	}
+
+	int collection_n 							= min(int(displacements.size()), int(displacements.size()*0.5));
+	uniform_int_distribution<int> distribution(0,displacements.size()-1);
+	uniform_int_distribution<int> distribution_2(0,total_hits.size()-1);
+	vector<double> MD_scores;
+	vector<double> ENRICHMENT;
+	for (int b = 0 ; b < bsn; b++){//make this number of random collections
+		vector<int> current_collection;
+		vector<int> current_collection_spec;
+		int spec_N 	= 0;
+		int NN 		= total_hits.size();
+		int ccN 	= 0, k =0;
+		while (spec_N < interval_size and NN > 0){
+			if (ccN < hit_size){
+				k 	= distribution_2(gen);
+				current_collection_spec.push_back(total_hits[k]);
+
+				ccN++;
+			}
+			k 	= distribution(gen);
+			current_collection.insert(current_collection.end(), displacements[k].begin(), displacements[k].end());
+
+			spec_N++;
+
+		}
+		double MD_score 	= get_MD_score(current_collection_spec, 100,true);
+		double enriched 	= get_MD_score(current_collection, 100,false);
+		MD_scores.push_back(MD_score);
+		ENRICHMENT.push_back(enriched);
+
+	}
+	P->MD_CDF 		= make_CDF(MD_scores);
+	P->ENRICH_CDF 	= make_CDF(ENRICHMENT);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

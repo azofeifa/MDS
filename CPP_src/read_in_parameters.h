@@ -6,6 +6,8 @@ using namespace std;
 class params{
 public:
 	map<string, string> p;
+	string module;
+	bool EXIT;
 	params();
 	bool check();
 	void help();

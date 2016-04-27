@@ -2,6 +2,9 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <stdio.h>
+#include <time.h>
+
 #include "split.h"
 using namespace std;
 
@@ -58,7 +61,7 @@ bool segment::transform(){
 
 
 
-map<string, vector<segment>> load_bed_file(string FILE, int pad){
+map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N){
 	map<string, vector<segment>> S ;
 	ifstream FH(FILE);
 
@@ -72,6 +75,7 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad){
 			if (line.substr(0,1)!="#"){
 				line_array=splitter(line, "\t");
 				chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
+				N++;
 				if (pad != 0){
 					x 	= (start + stop)/2.;
 					S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
@@ -176,13 +180,16 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 	}
 	return newS;
 }
-PSSM::PSSM(){};
+PSSM::PSSM(){
+	ENRICH_score=0,MD_score=0;
+};
 PSSM::PSSM(string ID){
 	name 	= ID;
+	ENRICH_score=0,MD_score=0;
 };
 PSSM::PSSM(int  id){
 	ID 	= id;
-
+	ENRICH_score=0,MD_score=0;
 };
 
 
@@ -267,95 +274,202 @@ double PSSM::get_pvalue2_r(double obs, int i, int s){
 	return position_specific_pvalues_reverse[i][k][1];
 }
 
-
-
-
-
-
-
-
-vector<PSSM *> load_PSSM_DB(string FILE, int nprocs, int rank,int test){
-	ifstream FH(FILE);
-	vector<PSSM *> all_motifs;
-	int i = 0;
-	int N = 0; //number of PSSM models
-	string line ;
-	if (FH){
-		while(getline(FH,line)){
-			if (line.substr(0,5)=="MOTIF"){
-				N++;
-			}		
+void PSSM::get_pvalue_stats(){
+	int i 	= 0;
+	while (i < MD_CDF.size()-1){
+		if (MD_CDF[i][0] > MD_score){
+			break;
 		}
+		i++;
 	}
-	int start, stop;
-	int count 	= N / nprocs;
-	if (count == 0){
-		count 	= 1;
+	pv_MD_score 	= 1.0-MD_CDF[i][1];
+	i 				= 0;
+	while (i < ENRICH_CDF.size()-1){
+		if (ENRICH_CDF[i][0] > ENRICH_score){
+			break;
+		}
+		i++;
 	}
-	start 	= rank*count;
-	stop 	= (rank+1)*count;
-	stop 		= min(stop, N);
-	if (rank == nprocs-1){
-		stop 	= N;
-	}
-	if (start > stop){
-		stop 	= start; //in this case there are more nodes than segments...so
-	}
-	N 	= 0;
-	FH.clear();
-	FH.seekg(0, std::ios::beg);
+	pv_enrich_score 	= 1.0-ENRICH_CDF[i][1];
+
+}
+
+
+
+
+vector<PSSM *> load_PSSM_DB_new(string FILE, int test){
+	ifstream FH(FILE);
+	vector<PSSM *> 	PS;
+	PSSM * P 	= NULL;
+		
 	if (FH){
 		vector<string>line_array;
-		string MOTIF 	= "";
-		int ID 			= 0;
-		PSSM * P 	= NULL;
+		string MOTIF 	= "", line 	= "";
+		int ID 			= 0, t= 0;
+
 		while(getline(FH,line)){
-			
-			if (line.substr(0,5)=="MOTIF"){
-				MOTIF 		= "";
-				P 			= NULL;
-				line_array 	= split_by_ws(line, " ");
-
-				if (line_array.size()>1 and start <= N and N < stop  ){
-					MOTIF  	= line_array[1];			
-					P 		= new PSSM(MOTIF);
-					P->ID 	= N;
-					ID+=1;
-					if (ID > 2 and test){
-						break;
+			if (line.substr(0,1)==">"){
+				if (P!=NULL){
+					PS.push_back(P);
+				}
+				line_array 	= split_by_comma(line.substr(1,line.size()-1), " ");				
+				if (0<line_array.size() and line_array.size()<3){
+					if (test and t > 4){
+						return PS;	
 					}
-
-				}
-				N++;
-
-			}else if (line.substr(0,6)=="letter" and P!=NULL){
-				line_array 	= split_by_ws(line, " ");
-				if (line_array.size()>7){
-					P->N 	= stoi(line_array[7]);
+					
+					P 	= new PSSM(line_array[0]);
+					if (line_array.size()>1){
+						P->N 		= stod(line_array[1]);
+					}else{
+						P->N 		= 0.0;
+					}
+					t+=1;
 				}else{
-					P 		= NULL;
+					P 				= NULL;
 				}
-			}else if(P!=NULL and line.substr(0,3)!="URL"){
-				line_array 	= split_by_tab(line, " ");
-
-				if (line_array.size() == 4){
-				 	vector<double> x;
+			}else if (P!=NULL){
+				line_array 	= split_by_comma(line, " ");
+				if (line_array.size()==4){
+					vector<double> x;
 				 	for (int i = 0 ; i < 4; i++){
 				 		x.push_back(stod(line_array[i]));
 				 	}
-				 	P->frequency_table.push_back(x);
+				 	P->frequency_table.push_back(x);	
+				}else{
+					P 	= NULL;
 				}
 
-			}else if(line.substr(0,3)=="URL" and P!= NULL){
-				all_motifs.push_back(P);
-				P 	= NULL;
 			}
-		}	
+		}
 	}else{
-		printf("couldn't open %s\n",FILE.c_str() );
+		printf("Could not open %s\n",FILE.c_str() );
 	}
-	return all_motifs;
+	if (P!=NULL){
+		PS.push_back(P);
+	}
+	return PS; 
 }
+const std::string currentDateTime() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%m/%d/%Y %X", &tstruct);
+
+    return buf;
+}
+
+
+void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<double> background){
+	
+	string fasta_file 			= PP->p["-fasta"];
+	string bed_file 			= PP->p["-bed"];
+	string out_dir 				= PP->p["-o"];
+	string PSSM_DB 				= PP->p["-DB"];
+	string job_ID 				= PP->p["-ID"];
+	double window 				= 1000;
+	double pv 					= stof(PP->p["-pv"]);
+	int test 					= 1;
+	int sim_N 					= stoi(PP->p["-sim_N"]);
+	int bins 					= stoi(PP->p["-br"]);
+	
+
+	ofstream FHW(OUT);
+	FHW<<"#Database File, generated on "<<currentDateTime()<<endl;
+	FHW<<"#-window      "<<to_string(window)<<endl;
+	FHW<<"#-bed         "<<(bed_file)<<endl;
+	FHW<<"#-fasta       "<<(fasta_file)<<endl;
+	FHW<<"#-sim_N       "<<to_string(sim_N)<<endl;
+	FHW<<"#-bins        "<<to_string(bins)<<endl;
+	FHW<<"#-pv          "<<to_string(pv)<<endl;
+	FHW<<"#-background  "<<to_string(background[0])<<","<<to_string(background[1])<<","<<to_string(background[2])<<","<<to_string(background[3])<<endl;
+	
+	for (int p = 0 ; p < PSSMS.size(); p++){
+		FHW<<">" + PSSMS[p]->name <<endl;
+		for (int i = 0 ; i < PSSMS[p]->frequency_table.size(); i++){
+			string line;
+			for (int j = 0 ; j < 3; j++){
+				line+=to_string(PSSMS[p]->frequency_table[i][j])+",";
+			}
+			line+=to_string(PSSMS[p]->frequency_table[i][3])+"\n";
+			FHW<<line;
+		}
+		FHW<<"~";
+		for (int s = 0 ; s < PSSMS[p]->null_displacements.size(); s++){
+			string line 	= "";
+			for (int i = 0 ; i <PSSMS[p]->null_displacements[s].size() ; i++ ){
+				if (i+1 < PSSMS[p]->null_displacements[s].size()){
+					line+=to_string(PSSMS[p]->null_displacements[s][i])+",";
+				}else{
+					line+=to_string(PSSMS[p]->null_displacements[s][i]);
+				}
+
+			}
+			if (s+1 <PSSMS[p]->null_displacements.size() ){
+				FHW<<line+"|";	
+			}else{
+				FHW<<line+"|\n";	
+				
+			}
+		}
+	}
+}
+
+vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
+	bool switched	= true;
+	while (switched){
+		switched=false;
+		for (int i = 0 ; i < PSSMS.size()-1; i++){
+			if (PSSMS[i]->pv_MD_score > PSSMS[i+1]->pv_MD_score){
+				PSSM * copy 	= PSSMS[i];
+				PSSMS[i] 		= PSSMS[i+1];
+				PSSMS[i+1] 		= copy;
+				switched 		= true;
+			}
+		}
+	}
+	return PSSMS;
+
+}
+
+
+
+void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
+
+	ofstream FHW(OUT);
+	PSSMS 	= sort_PSSMS(PSSMS);
+	FHW<<"#Motif Identifier\tMD Score\tEnrichment Number\tMD Score p-value (adj)\tEnrichment Number p-value (adj)\n";
+	for (int p = 0 ; p < PSSMS.size(); p++){
+		FHW<<PSSMS[p]->name<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t"+to_string(PSSMS[p]->ENRICH_score)+"\t";
+		FHW<<to_string(PSSMS[p]->pv_MD_score)+"\t"+to_string(PSSMS[p]->pv_enrich_score)+"\n";
+	}
+	FHW<<"#Empiracle Bootstrapped Distribution\n";
+	FHW<<"#Motif Identifier\tMD Score\tEnrichment Number\n";
+	for (int p = 0 ; p < PSSMS.size(); p++){
+		string line = "", line2="";
+
+		FHW<<PSSMS[p]->name<<"\t";
+		for (int i = 0 ; i < PSSMS[p]->MD_CDF.size();i++){
+			if (i+1 < PSSMS[p]->MD_CDF.size()){
+				line+=to_string(PSSMS[p]->MD_CDF[i][0])+",";
+				line2+=to_string(PSSMS[p]->ENRICH_CDF[i][0])+",";
+			}else{
+				line+=to_string(PSSMS[p]->MD_CDF[i][0]);	
+				line2+=to_string(PSSMS[p]->ENRICH_CDF[i][0]);
+			}
+		}
+		FHW<<line+ "\t" + line2<<endl;
+	}	
+
+
+
+
+}
+
+
 
 void load_PSSM_ID_names_only(string FILE, map<int, string> & G){
 	ifstream FH(FILE);
@@ -394,6 +508,73 @@ vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> stream
 	}
 	return PSSMS;
 
+}
+
+vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & background){
+	vector<PSSM *> PSSMS;
+	ifstream FH(FILE);
+	PSSM * pssm 	= NULL;
+	if (FH){
+		string line;
+		vector<string> line_array;
+		vector<string> line_array_2;
+		
+		bool header 	= true;
+		while (getline(FH,line)){
+			if (line.substr(0,1)=="#" and not header){
+				//fill in P
+				line_array 	= split_by_ws(line.substr(1,line.size()-1), "");
+				string F 	= line_array[0];
+				string val 	= line_array[line_array.size()-1];
+				if (F.substr(0,F.size())=="-pv" or F.substr(0,F.size())=="-bins"){
+					P->p[F] = val;
+				}else if (F.substr(0,F.size())=="-background"){
+					line_array 	= split_by_comma(val, "");
+					for (int i = 0 ; i < 4;i++){
+						background.push_back(stod(line_array[i]));
+					}
+				}
+
+			}else if (line.substr(0,1)==">"){
+				if (pssm != NULL){
+					PSSMS.push_back(pssm);
+				}
+				pssm 	= new PSSM(line.substr(1,line.size()-1));
+			}else if(pssm != NULL and line.substr(0,1)!="~"){
+				line_array 	= split_by_comma(line, "");
+				vector<double> row;
+				for (int i = 0 ; i < 4;i++){
+					row.push_back(stod(line_array[i]));
+				}
+				pssm->frequency_table.push_back(row);
+				
+			}else if(line.substr(0,1)=="~" and pssm!=NULL){
+				line_array 	= split_by_bar(line.substr(1,line.size()-1), " ");
+				for (int i = 0 ; i < line_array.size(); i++){
+					if (!line_array[i].empty()){
+						line_array_2 	= split_by_comma(line_array[i], " ");
+						vector<int> x ;
+						for (int s = 0 ; s < line_array_2.size();s++){
+							x.push_back(stoi(line_array_2[s]));
+						}
+						pssm->null_displacements.push_back(x);
+					}else{
+						vector<int> x 	= {-1} ;
+						pssm->null_displacements.push_back(x);						
+					}
+				}
+			}
+			header 		= false;
+
+		}
+
+	}else{
+		printf("Could not open %s\n",FILE.c_str() );
+	}
+	if (pssm!=NULL){
+		PSSMS.push_back(pssm);
+	}
+	return PSSMS;
 }
 
 

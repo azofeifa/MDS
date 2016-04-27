@@ -128,7 +128,7 @@ vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int 
 }
 
 
-vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
+vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background, bool SMOOTH){
 	double current 				= 0.0;
 	string stars 				= "";
 	string white_space 			= "";
@@ -136,7 +136,9 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 	int  ws_counter 			= 1.0/val;
 	#pragma omp parallel for
 	for (int i = 0 ; i < P.size(); i++){
-		smooth_frequence_table(P[i]);
+		if (SMOOTH){
+			smooth_frequence_table(P[i]);
+		}
 	
 		int BINS 							= P[i]->frequency_table.size()*bins;
 		vector<vector<double>> p_values 	= compute_pvalues(P[i], background,BINS);
@@ -149,6 +151,16 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background){
 		}
 		P[i]->SN 							= p_values.size();
 	}
+
+	#pragma omp parallel for
+	for (int p = 0 ; p < P.size();p++){
+		for (int s = 0 ; s < P[p]->frequency_table.size();s++){
+			for (int i = 0 ; i < 4; i++){
+				P[p]->frequency_table[s][i] 	= log(P[p]->frequency_table[s][i]) - log(background[i]);
+			}
+		}
+	}
+
 	return P;
 }
 

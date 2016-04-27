@@ -1,7 +1,7 @@
 #include "scanner.h"
 #include <iostream>
 #include <fstream>
-
+#include "collect_sample_statistics.h"
 #include <cmath>
 #include <omp.h>
 using namespace std;
@@ -63,14 +63,13 @@ vector<double> get_sig_positions(int forward[2000],
 		l 		= i + length-1;
 		for (k=0; k < length; k++){
 			f 	= forward[j], r 	= reverse[l];
-			llf+= (p->frequency_table[k][f]) - (background[f]);
-			llr+= (p->frequency_table[k][r]) - (background[r]);
+			llf+= (p->frequency_table[k][f])  ;
+			llr+= (p->frequency_table[k][r]) ;
 			j++;
 			l--;
 		}
 		pvaluef 	= 1.0-p->get_pvalue(llf*2);
 		pvaluer 	= 1.0-p->get_pvalue(llr*2);
-
 		if (pvaluef < pv){
 			locs_pvs.push_back(i);
 			
@@ -127,7 +126,7 @@ map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS,
 	}
 	map<int, vector<double>> sig_positions_map;
 	for (int i = 0 ; i < PSSMS.size();i++){
-		sig_positions_map[PSSMS[i]->ID]=sig_positions[i];
+		sig_positions_map[i]=sig_positions[i];
 	}
 	return sig_positions_map;
 }
@@ -169,19 +168,8 @@ double get_MIN(vector<double> X, int & S){
 
 }
 map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
- vector<PSSM *> PSSMS, vector<double> background, double pv, int rank){
+ vector<PSSM *> PSSMS, vector<double> background, double pv, int interval_size, int bsn){
 	typedef map<string, vector<segment>>::iterator it_type; 
-	for (int p = 0 ; p < PSSMS.size(); p++){
-		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
-			for (int j = 0 ; j<PSSMS[p]->frequency_table[i].size(); j++){
-				PSSMS[p]->frequency_table[i][j] 	= log(PSSMS[p]->frequency_table[i][j]);
-			}
-		}
-	}	
-	for (int b = 0 ; b < background.size(); b++){
-		background[b] 	= log(background[b]);
-	}
-
 	map<string, vector<segment> > newS;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
@@ -189,6 +177,33 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 			newS[c->first].push_back(c->second[i]);
 		}
 	}
+	//=========================================
+	//get MD_scores, N for each PSSM
+	for (int p = 0 ; p < PSSMS.size(); p++) {
+		vector<int> displacements ;
+		for (it_type c = S.begin(); c!=S.end(); c++){ //over chromosomes
+			for (int i = 0 ; i < c->second.size(); i++){ // each interval
+				if (c->second[i].motif_positions.find(p)!=c->second[i].motif_positions.end()){
+					for (int s = 0 ; s<c->second[i].motif_positions[p].size(); s++ ){
+						int x 	= c->second[i].motif_positions[p][s];
+						displacements.push_back(x);
+					}
+
+				}
+			}
+		}	
+		double MD_score 		= get_MD_score(displacements,100,true);
+		double ENRICH_score 	= get_MD_score(displacements,100,false);
+		double NN 				= displacements.size();
+		PSSMS[p]->MD_score 		= MD_score;
+		PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+
+		build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
+
+		PSSMS[p]->get_pvalue_stats();
+
+	}
+
 	return newS;
 }
 
