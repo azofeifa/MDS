@@ -43,7 +43,7 @@ int main(int argc,char* argv[]){
 		string job_ID 				= P->p["-ID"];
 		double window 				= 1000;
 		double pv 					= stof(P->p["-pv"]);
-		int test 					= 1;
+		int test 					= 0;
 		int sim_N 					= stoi(P->p["-sim_N"]);
 		int bins 					= stoi(P->p["-br"]);
 		int interval_size 			= 0;
@@ -110,7 +110,7 @@ int main(int argc,char* argv[]){
 		string DB_file 				= P->p["-DB"];
 		string OUT 					= P->p["-o"]; 
 		int BSN 					= stoi(P->p["-bsn"]);
-		int test 					= 1;
+		int test 					= 0;
 		double window 				= 1000;
 		int interval_size 			= 0;
 		//the rest of the parameters will be in the DB file
