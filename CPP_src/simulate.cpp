@@ -4,8 +4,16 @@
 #include <time.h>
 #include <random>
 #include <mpi.h>
+#include <sys/time.h>
 
 using namespace std;
+double get_wall_time(){
+    struct timeval time;
+    if (gettimeofday(&time,NULL)){
+        //  Handle error
+        return 0;
+    }
+}
 
 
 
@@ -127,9 +135,11 @@ void run_simulations(map<string, vector<segment>> intervals,
 	mt19937 gen(rd()*rank);
 	
 	int ind_N 	= sim_N / nprocs;
-
+	clock_t t;
+	
 	for (int p = 0 ; p < P.size(); p++){//iterate over every PSSM model
 		int WN 	= max(int(44 - P[p]->name.size()), 1);	
+		t = clock();
 		LG->write(P[p]->name + get_dots(WN), 1);
 		int S 	= P[p]->frequency_table.size(), hit=0;
 		vector<int> seqf(S);
@@ -137,7 +147,10 @@ void run_simulations(map<string, vector<segment>> intervals,
 		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, D_forward, D_reverse, gen, background, P[p], threshold );
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		P[p]->null_displacements 	= DD;
-		LG->write("done\n", 1);
+		double wall1 = get_wall_time();
+		t = clock() - t;
+
+		LG->write("done: " + to_string(float(t)/CLOCKS_PER_SEC) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
 	//transform back to frequency space
 	for (int p = 0; p < P.size(); p++){ //
