@@ -44,7 +44,7 @@ int main(int argc,char* argv[]){
 		int job_ID 					= 1;
 		double window 				= 1000;
 		double pv 					= stof(P->p["-pv"]);
-		int test 					= 1;
+		int test 					= 0;
 		int sim_N 					= stoi(P->p["-sim_N"]);
 		int bins 					= stoi(P->p["-br"]);
 		int interval_size 			= 0;
@@ -91,9 +91,8 @@ int main(int argc,char* argv[]){
 
 		//============================================================
 		//....6.... perform simulations and get random MD scores
-		LG->write("running simulations for null................",verbose);
-		run_simulations(intervals,PSSMS, sim_N,background_forward, background_reverse,background, pv, rank, nprocs);
-		LG->write("done\n",verbose);
+		LG->write("\n     running simulations for null model\n\n",verbose);
+		run_simulations(intervals,PSSMS, sim_N,background_forward, background_reverse,background, pv, rank, nprocs, LG);
 		//============================================================
 		//....6....write out to DB file
 		if (rank==0){

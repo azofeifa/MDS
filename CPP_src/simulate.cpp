@@ -41,9 +41,7 @@ vector<vector<int>> make_random_draws(	int sim_N,
 	for (int s = 0 ; s < sim_N; s++){//number of random samples
 		vector<int> 	D;
 		for (int d 	= 0 ; d < D_forward.size(); d++ ){
-
 			gen 	= get_rand_seq(seqf,D_forward[d], gen );
-			
 			gen 	= get_rand_seq(seqr,D_reverse[d], gen );
 			hit 	= get_pvalue_llr(seqf, background,threshold, p );
 			if (hit){
@@ -94,14 +92,20 @@ void send_out_null_displacement_data(vector<vector<int>> & D, int rank,
 	}
 }
 
-
+string get_dots(int N){
+	string line="";
+	for (int i = 0 ; i < N; i++){
+		line+=".";
+	}
+	return line;
+}
 
 
 
 void run_simulations(map<string, vector<segment>> intervals, 
 		vector<PSSM *> P, int sim_N,
 		vector<vector<double>> background_forward, vector<vector<double>>  background_reverse,
-		vector<double> background, double threshold,int rank, int nprocs){
+		vector<double> background, double threshold,int rank, int nprocs,Log_File * LG){
 
 
 	for (int i =0 ; i < 4; i++){
@@ -123,13 +127,17 @@ void run_simulations(map<string, vector<segment>> intervals,
 	mt19937 gen(rd()*rank);
 	
 	int ind_N 	= sim_N / nprocs;
+
 	for (int p = 0 ; p < P.size(); p++){//iterate over every PSSM model
+		int WN 	= max(int(44 - P[p]->name.size()), 1);	
+		LG->write(P[p]->name + get_dots(WN), 1);
 		int S 	= P[p]->frequency_table.size(), hit=0;
 		vector<int> seqf(S);
 		vector<int> seqr(S);
 		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, D_forward, D_reverse, gen, background, P[p], threshold );
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		P[p]->null_displacements 	= DD;
+		LG->write("done\n", 1);
 	}
 	//transform back to frequency space
 	for (int p = 0; p < P.size(); p++){ //
