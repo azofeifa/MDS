@@ -378,7 +378,9 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 	
 
 	ofstream FHW(OUT);
-	FHW<<"#Database File, generated on "<<currentDateTime()<<endl;
+	FHW<<"#=====================================================================\n";
+	FHW<<"#Database File\n";
+	FHW<<"#Data/Time    "<<currentDateTime()<<endl;
 	FHW<<"#-window      "<<to_string(window)<<endl;
 	FHW<<"#-bed         "<<(bed_file)<<endl;
 	FHW<<"#-fasta       "<<(fasta_file)<<endl;
@@ -386,6 +388,7 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 	FHW<<"#-bins        "<<to_string(bins)<<endl;
 	FHW<<"#-pv          "<<to_string(pv)<<endl;
 	FHW<<"#-background  "<<to_string(background[0])<<","<<to_string(background[1])<<","<<to_string(background[2])<<","<<to_string(background[3])<<endl;
+	FHW<<"#=====================================================================\n";
 	
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		FHW<<">" + PSSMS[p]->name <<endl;
@@ -441,9 +444,10 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 
 	ofstream FHW(OUT);
 	PSSMS 	= sort_PSSMS(PSSMS);
-	FHW<<"#Motif Identifier\tMD Score\tEnrichment Number\tMD Score p-value (adj)\tEnrichment Number p-value (adj)\n";
+	FHW<<P->get_header();
+	FHW<<"#Motif Identifier\tTotal (2KB)\tMD Score\tEnrichment Number\tMD Score p-value (adj)\tEnrichment Number p-value (adj)\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		FHW<<PSSMS[p]->name<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t"+to_string(PSSMS[p]->ENRICH_score)+"\t";
+		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t"+to_string(PSSMS[p]->ENRICH_score)+"\t";
 		FHW<<to_string(PSSMS[p]->pv_MD_score)+"\t"+to_string(PSSMS[p]->pv_enrich_score)+"\n";
 	}
 	FHW<<"#Empiracle Bootstrapped Distribution\n";
@@ -509,6 +513,40 @@ vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> stream
 	return PSSMS;
 
 }
+void collect_all_tmp_files(string dir, string job_name, int nprocs, int job_ID){
+	int c 	= 0;
+	time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%m_%d_%H_%M", &tstruct);
+    string DT 	= buf;
+	string OUT 		= dir+ job_name + "-" + to_string(job_ID) +"_" + DT+ ".log";
+	ofstream FHW(OUT);
+	FHW<<"=======Application Error/Standard Out Log File=======\n\n\n";
+	for (int rank = 0; rank < nprocs; rank++){
+		string FILE 	= dir+"tmp_" + job_name+ "-" +to_string(job_ID) + "_" + to_string(rank) + ".log";
+		string line;
+		ifstream FH(FILE);
+		if (FH){
+			if (rank!=0){
+				FHW<<"=======MPI Call: " + to_string(rank) +"=======\n";
+			}
+			while (getline(FH, line)){
+				if ("#" != line.substr(0,1) or rank==0){
+					FHW<<line<<endl;
+				}
+			}
+
+			FH.close();
+			remove( FILE.c_str()) ;
+			c++;
+		}
+	}
+}
+
 
 vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & background){
 	vector<PSSM *> PSSMS;
@@ -569,7 +607,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 		}
 
 	}else{
-		printf("Could not open %s\n",FILE.c_str() );
+		printf("\n\nCould not open %s\n",FILE.c_str() );
 	}
 	if (pssm!=NULL){
 		PSSMS.push_back(pssm);

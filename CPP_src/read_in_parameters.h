@@ -12,6 +12,7 @@ public:
 	bool check();
 	void help();
 	void display();
+	string get_header();
 };
 void fill_in_options(char** ,params *  , int);
 

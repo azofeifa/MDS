@@ -197,7 +197,7 @@ map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
 		double NN 				= displacements.size();
 		PSSMS[p]->MD_score 		= MD_score;
 		PSSMS[p]->ENRICH_score 	= ENRICH_score;		
-
+		PSSMS[p]->total 		= NN;
 		build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 
 		PSSMS[p]->get_pvalue_stats();
