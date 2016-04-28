@@ -5,6 +5,7 @@
 #include "out.h"
 #include "ACGT_profile.h"
 #include "simulate.h"
+#include "error_stdo_logging.h"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -38,70 +39,72 @@ int main(int argc,char* argv[]){
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
 		string bed_file 			= P->p["-bed"];
-		string OUT 				= P->p["-o"];
+		string OUT 					= P->p["-o"];
 		string PSSM_DB 				= P->p["-DB"];
-		string job_ID 				= P->p["-ID"];
+		int job_ID 					= 1;
 		double window 				= 1000;
 		double pv 					= stof(P->p["-pv"]);
-		int test 					= 0;
+		int test 					= 1;
 		int sim_N 					= stoi(P->p["-sim_N"]);
 		int bins 					= stoi(P->p["-br"]);
 		int interval_size 			= 0;
-
+		int verbose 				= 1;
 		vector<PSSM *> PSSMS;
 		//============================================================
 
+	    Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
 
+	    LG->write(P->get_header(), verbose);
 		//============================================================
 		//....1.... Load PSSM Database
-		printf("loading PSSM DB.............................");
-		cout.flush();
+
+		LG->write("loading PSSM DB.............................", verbose);
 		PSSMS 		= load_PSSM_DB_new(PSSM_DB, test );
-		printf("done\n");
+		LG->write("done\n", verbose);
 		//============================================================
 		//....2.... Compute P-values, approximation error ~ 1.0 / bins
-		printf("computing p-values..........................");
-		cout.flush();
+		LG->write("computing p-values..........................",verbose);
 		vector<double> background 	= {0.25,0.25,0.25,0.25};
 		DP_pvalues(PSSMS,bins, background, true);
-		printf("done\n");
+		LG->write("done\n", verbose);
 		
 
 		//============================================================
 		//....3.... load intervals from user 
-		printf("loading intervals...........................");
-		cout.flush();
+		LG->write("loading intervals...........................", verbose);
 		map<string, vector<segment>> intervals 	= load_bed_file(bed_file, window,interval_size); 
-		printf("done\n");
+		LG->write("done\n", verbose);
 		
 		//============================================================
 		//....4.... insert the fasta sequnece into the provided intervals
-		printf("inserting fasta.............................");
-		cout.flush();
+		LG->write("inserting fasta.............................", verbose);
 		intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
-		printf("done\n");
+		LG->write("done\n", verbose);
 		
 		//============================================================
 		//....5.... get generic GC content across intervals for background model
 		vector<vector<double>> background_forward, background_reverse;
-		printf("computing ACGT profile......................");
-		cout.flush();
+		LG->write("computing ACGT profile......................", verbose);
 		get_ACGT_profile_all(intervals, 
 			background_forward,background_reverse, rank);
-		printf("done\n");
+		LG->write("done\n",verbose);
 
 		//============================================================
 		//....6.... perform simulations and get random MD scores
-		printf("running simulations for null................");
-		cout.flush();
-		run_sim3(intervals,PSSMS, sim_N,background_forward, background_reverse,background, pv);
-		printf("done\n");
+		LG->write("running simulations for null................",verbose);
+		run_simulations(intervals,PSSMS, sim_N,background_forward, background_reverse,background, pv, rank, nprocs);
+		LG->write("done\n",verbose);
 		//============================================================
 		//....6....write out to DB file
-		printf("writing out simulations.....................");
-		cout.flush();
-		write_out_null_stats( PSSMS,OUT,  P, background);
-		printf("done\n");
+		if (rank==0){
+			LG->write("writing out simulations.....................",verbose);
+			write_out_null_stats( PSSMS,OUT,  P, background);
+			LG->write("done\n",verbose);
+		}
+		if (rank==0){
+			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+		}
+
 	}else if (P->module=="EVAL"){
 		//============================================================
 		//necessary user input parameters for DB module
@@ -110,65 +113,67 @@ int main(int argc,char* argv[]){
 		string DB_file 				= P->p["-DB"];
 		string OUT 					= P->p["-o"]; 
 		int BSN 					= stoi(P->p["-bsn"]);
-		int test 					= 0;
+		int test 					= 1;
+		int job_ID 					= 1;
 		double window 				= 1000;
+		int verbose 				= 1;
 		int interval_size 			= 0;
 		//the rest of the parameters will be in the DB file
 		//============================================================
 
+		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+		LG->write(P->get_header(), verbose);
+		
 
 		//============================================================
 		//....1.... Load PSSM Database
-		printf("loading PSSM DB.............................");
-		cout.flush();
+		LG->write("loading PSSM DB.............................", verbose);
 		vector<double> background;
 		vector<PSSM *> PSSMS 					= load_personal_DB_file(DB_file, P,background);
-		printf("done\n");
+		LG->write("exiting...\n", verbose);
+		if (PSSMS.empty()){
+			if (rank==0){
+				collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+			}
+			MPI::Finalize();
+			return 0;
+		}
+		LG->write("done\n",verbose);
+		
 		int bins 		= stoi(P->p["-bins"]);
 		double pv 		= stod(P->p["-pv"]);
 
 		//============================================================
 		//....2.... Load user provided intervals
-		printf("loading intervals...........................");
-		cout.flush();
+		LG->write("loading intervals...........................", verbose);
 		map<string, vector<segment>> intervals 	= load_bed_file(bed_file, window,interval_size); 
-		printf("done\n");
+		LG->write("done\n", verbose);
 		
 		//============================================================
 		//....3.... Computed LLR distribution for motifs
-		printf("computing p-values..........................");
-		cout.flush();
+		LG->write("computing p-values..........................", verbose);
 		DP_pvalues(PSSMS,bins, background,false);
-		printf("done\n");
+		LG->write("done\n", verbose);
 
 
 		
 		//============================================================
 		//....5.... insert the fasta sequnece into the provided intervals
-		printf("inserting fasta.............................");
-		cout.flush();
-		intervals 								= insert_fasta_sequence(fasta_file, intervals,0);
-		printf("done\n");
+		LG->write("inserting fasta.............................", verbose);
+		intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
+		LG->write("done\n",verbose);
 		
 		//============================================================
 		//....6.... scan the provided intervals
-		printf("scanning intervals..........................");
-		cout.flush();
+		LG->write("scanning intervals..........................", verbose);
 		run_accross(intervals , PSSMS,  background, pv, interval_size, BSN);
-		printf("done\n");
+		LG->write("done\n", verbose);
 		
 		//============================================================
 		//....7.... assess significance
 		write_out_stats(PSSMS, OUT, P);
-
-
-
-
-
-
 	}
 	
-
 
 
 	MPI::Finalize();

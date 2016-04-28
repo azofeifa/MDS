@@ -21,7 +21,7 @@ public:
 	vector<vector<double> > ENRICH_CDF;
 	double ENRICH_score;
 	double MD_score;
-	double pv_enrich_score, pv_MD_score;
+	double pv_enrich_score, pv_MD_score,total;
 	PSSM();
 	PSSM(string);
 	PSSM(int);
@@ -66,4 +66,9 @@ vector<PSSM *> load_PSSM_DB_new(string, int);
 void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> );
 vector<PSSM *> load_personal_DB_file(string , params *, vector<double> & );
 void write_out_stats(vector<PSSM *>, string, params *);
+
+void collect_all_tmp_files(string , string , int  , int );
+
+
+
 #endif
