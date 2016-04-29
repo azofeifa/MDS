@@ -4,7 +4,7 @@
 #include <map>
 #include <iostream>
 #include <fstream>
-
+#include "error_stdo_logging.h"
 #include "load.h"
 using namespace std;
 void run_scanner();
@@ -17,9 +17,11 @@ map<int, map<int, vector<segment> >> scan_simulations(map<int, map<int, vector<s
 map<string, vector<segment> > run_accross2(map<string, vector<segment>>   ,
  vector<PSSM *>  , vector<vector<double>>,vector<vector<double>>  , double  , int, string,string  );
 
-vector<double> get_sig_positions(int [2000], 
+vector<int> get_sig_positions(int [2000], 
 	int [2000], int, PSSM * , 
 	vector<double> , double );
+void scan_intervals(map<string, vector<segment>> ,vector<PSSM *>  , vector<double> , double  , int  , int  , 
+ 						int  , int  , Log_File *);
 
 
 #endif

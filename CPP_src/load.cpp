@@ -276,21 +276,35 @@ double PSSM::get_pvalue2_r(double obs, int i, int s){
 
 void PSSM::get_pvalue_stats(){
 	int i 	= 0;
+	int J=0, K = 0;
+
 	while (i < MD_CDF.size()-1){
-		if (MD_CDF[i][0] > MD_score){
-			break;
+		if (MD_CDF[i][0] >= MD_score  ){
+			J++;
+			
 		}
+		if (MD_CDF[i][0] <=  MD_score ){
+			K++;
+		}
+
+		
 		i++;
 	}
-	pv_MD_score 	= 1.0-MD_CDF[i][1];
+	pv_MD_score_rt 	= float(J) / MD_CDF.size();
+	pv_MD_score_lt 	= float(K) / MD_CDF.size();
 	i 				= 0;
+	J=0, K = 0;
 	while (i < ENRICH_CDF.size()-1){
-		if (ENRICH_CDF[i][0] > ENRICH_score){
-			break;
+		if (ENRICH_CDF[i][0] >= ENRICH_score  ){
+			J++;
+		}
+		if (ENRICH_CDF[i][0] <= ENRICH_score  ){
+			K++;
 		}
 		i++;
 	}
-	pv_enrich_score 	= 1.0-ENRICH_CDF[i][1];
+	pv_enrich_score_rt 	= float(J) / ENRICH_CDF.size();
+	pv_enrich_score_lt 	= float(K) / ENRICH_CDF.size();
 
 }
 
@@ -426,7 +440,7 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 	while (switched){
 		switched=false;
 		for (int i = 0 ; i < PSSMS.size()-1; i++){
-			if (PSSMS[i]->pv_MD_score > PSSMS[i+1]->pv_MD_score){
+			if (PSSMS[i]->pv_MD_score_rt > PSSMS[i+1]->pv_MD_score_rt){
 				PSSM * copy 	= PSSMS[i];
 				PSSMS[i] 		= PSSMS[i+1];
 				PSSMS[i+1] 		= copy;
@@ -445,10 +459,29 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 	ofstream FHW(OUT);
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
-	FHW<<"#Motif Identifier\tTotal (2KB)\tMD Score\tEnrichment Number\tMD Score p-value (adj)\tEnrichment Number p-value (adj)\n";
+	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
+	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tenrichment score\tMD score p-value (left, right tail)\tenrichment score p-value (left, right tail)\tMD score significance (left, right adj)\tenrichment score significance (left, right adj)\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t"+to_string(PSSMS[p]->ENRICH_score)+"\t";
-		FHW<<to_string(PSSMS[p]->pv_MD_score)+"\t"+to_string(PSSMS[p]->pv_enrich_score)+"\n";
+		FHW<<to_string(PSSMS[p]->pv_MD_score_lt)+ "," +to_string(PSSMS[p]->pv_MD_score_rt) +"\t"+to_string(PSSMS[p]->pv_enrich_score_lt)+ "," +to_string(PSSMS[p]->pv_enrich_score_rt)+"\t";
+		int MDL	= 0, MDR=0, ENL=0, ENR=0;
+
+
+
+		if (PSSMS[p]->pv_MD_score_lt < (0.01/PSSMS.size())){
+			MDL=-1;
+		}
+		if (PSSMS[p]->pv_MD_score_rt <  (0.01/PSSMS.size() )){
+			MDR=1;
+		}
+	
+		if (PSSMS[p]->pv_enrich_score_lt < (0.01/PSSMS.size())){
+			ENL=-1;
+		}
+		if (PSSMS[p]->pv_enrich_score_rt <  (0.01/PSSMS.size() )){
+			ENR=1;
+		}
+		FHW<<to_string(MDL) + "," + to_string(MDR) + "\t" + to_string(ENL) + "," + to_string(ENR)+"\n";
 	}
 	FHW<<"#Empiracle Bootstrapped Distribution\n";
 	FHW<<"#Motif Identifier\tMD Score\tEnrichment Number\n";

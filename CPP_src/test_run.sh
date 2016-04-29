@@ -12,8 +12,12 @@ simN=100
 bed_out=/Users/joazofeifa/Lab/motif_distances/test_bed_motif_files/
 NP=3
 site_br=10
-boot_strap_number=100
+boot_strap_number=1000
 test=1
 #mpirun -np $NP ./SE DB -DB $DB -fasta $fasta -bed $bed -o $out -sim_N $simN -br $br -pv $pv -log_out $log_out
 
+<<<<<<< HEAD
 mpirun -np $NP ./SE EVAL -DB $DB2 -fasta $fasta -bed $bed -o $out2 -bsn $boot_strap_number
+=======
+mpirun -np $NP ./SE EVAL -DB $DB2 -fasta $fasta -bed $bed -o $out2 -bsn $boot_strap_number -log_out $log_out -ID $ID
+>>>>>>> c95d6cf3a565a19bcf205af1c6caffca3200e2b1
