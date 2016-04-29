@@ -114,9 +114,12 @@ string params::get_header(){
 		line+="#================================================================\n";
 		line+="#Statistics File for Motif Displacement and Enrichment\n";
 		line+="#Date/Time      "+currentDateTime2()+"\n";
+		line+="#-ID            "+p["-ID"]+"\n";
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
+		line+="#-o             "+p["-o"]+"\n";
+		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
 		line+="#-bsn           "+p["-bsn"]+"\n";
 		line+="#================================================================\n";
@@ -124,9 +127,12 @@ string params::get_header(){
 		line+="#================================================================\n";
 		line+="#Database File for Motif Displacement and Enrichment\n";
 		line+="#Date/Time      "+currentDateTime2()+"\n";
+		line+="#-ID            "+p["-ID"]+"\n";
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
+		line+="#-o             "+p["-o"]+"\n";
+		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
 		line+="#-sim_N         "+p["-sim_N"]+"\n";
 		line+="#================================================================\n";		

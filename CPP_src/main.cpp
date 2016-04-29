@@ -129,11 +129,11 @@ int main(int argc,char* argv[]){
 		LG->write("loading PSSM DB.............................", verbose);
 		vector<double> background;
 		vector<PSSM *> PSSMS 					= load_personal_DB_file(DB_file, P,background);
-		LG->write("exiting...\n", verbose);
 		if (PSSMS.empty()){
 			if (rank==0){
 				collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
 			}
+			LG->write("exiting...\n", verbose);
 			MPI::Finalize();
 			return 0;
 		}
@@ -164,13 +164,19 @@ int main(int argc,char* argv[]){
 		
 		//============================================================
 		//....6.... scan the provided intervals
-		LG->write("scanning intervals..........................", verbose);
-		run_accross(intervals , PSSMS,  background, pv, interval_size, BSN);
-		LG->write("done\n", verbose);
+		LG->write("\n         scanning intervals\n\n",verbose);
+		
+		scan_intervals(intervals, PSSMS, background, 
+ 								pv,  interval_size,   BSN, 
+ 								rank,   nprocs,   LG);
+
 		
 		//============================================================
 		//....7.... assess significance
-		write_out_stats(PSSMS, OUT, P);
+		if (rank==0){
+			write_out_stats(PSSMS, OUT, P);
+			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+		}
 	}
 	
 

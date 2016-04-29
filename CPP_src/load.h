@@ -21,7 +21,7 @@ public:
 	vector<vector<double> > ENRICH_CDF;
 	double ENRICH_score;
 	double MD_score;
-	double pv_enrich_score, pv_MD_score,total;
+	double pv_enrich_score_rt, pv_MD_score_rt, pv_enrich_score_lt, pv_MD_score_lt,total;
 	PSSM();
 	PSSM(string);
 	PSSM(int);

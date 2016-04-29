@@ -4,6 +4,8 @@
 #include "collect_sample_statistics.h"
 #include <cmath>
 #include <omp.h>
+#include <mpi.h>
+
 using namespace std;
 
 vector<double> get_GC_content(map<string, vector<segment>> S){
@@ -44,10 +46,10 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 }
 
 
-vector<double> get_sig_positions(int forward[2000], 
+vector<int> get_sig_positions(int forward[2000], 
 	int reverse[2000], int N, PSSM * p, vector<double> background, double pv){
 
-	vector<double> locs_pvs;
+	vector<int> locs_pvs;
 	int length 	= p->frequency_table.size();
 	double pvaluef, pvaluer,llr,llf;
 	int k,j;
@@ -80,241 +82,150 @@ vector<double> get_sig_positions(int forward[2000],
 	}
 	return locs_pvs;
 }
-vector<double> get_sig_positions2(int forward[2000], 
-	int reverse[2000], int N, PSSM * p, vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv){
-
-	vector<double> locs_pvs;
-	int length 	= p->frequency_table.size();
-	double pvaluef, pvaluer,llr,llf;
-	int k,j;
-	bool collect;
-	int BOUND 	= N-length;
-	int i;
-	int f, r, l;
-	for (i =0 ; i  < BOUND; i++){
-		llf 	= 0;
-		llr 	= 0;
-		k 		= 0;
-		j 		= i;
-		l 		= i + length-1;
-		for (k=0; k < length; k++){
-			f 	= forward[j], r 	= reverse[l];
-			llf+= (p->frequency_table[k][f] - backgroundf[i][f])  ;
-			llr+= (p->frequency_table[k][r] - backgroundr[i][r])  ;
-			j++;
-			l--;
-		}
-		pvaluef 	= 1.0-p->get_pvalue2_f(2*llf,i,1);
-		pvaluer 	= 1.0-p->get_pvalue2_r(2*llr,i,-1);
-		if (pvaluef < pv){
-			locs_pvs.push_back(i);
-		}
-		if (pvaluer < pv){
-			locs_pvs.push_back(-i);
-		}
-	}
-	return locs_pvs;
-}
-
-map<int, vector<double>> wrapper(segment & S, vector<PSSM *> PSSMS, 
-	vector<double> background, double pv){
-	vector<vector<double>> sig_positions(PSSMS.size());
-	#pragma omp parallel for
-	for (int p = 0 ; p < PSSMS.size(); p++){
-		sig_positions[p]= get_sig_positions(S.forward, S.reverse, 2000, 
-			PSSMS[p], background, pv);
-	}
-	map<int, vector<double>> sig_positions_map;
-	for (int i = 0 ; i < PSSMS.size();i++){
-		sig_positions_map[i]=sig_positions[i];
-	}
-	return sig_positions_map;
-}
-
-
-map<int, vector<double>> wrapper2(segment & S, vector<PSSM *> PSSMS, 
-	vector<vector<double>> backgroundf,vector<vector<double>> backgroundr, double pv){
-	vector<vector<double>> sig_positions(PSSMS.size());
-	#pragma omp parallel for
-	for (int p = 0 ; p < PSSMS.size(); p++){
-		sig_positions[p]= get_sig_positions2(S.forward, S.reverse, 2000, 
-			PSSMS[p], backgroundf,backgroundr, pv);
-	}
-	map<int, vector<double>> sig_positions_map;
-	for (int i = 0 ; i < PSSMS.size();i++){
-		sig_positions_map[PSSMS[i]->ID]=sig_positions[i];
-	}
-	return sig_positions_map;
-}
 
 
 
-
-
-double get_MIN(vector<double> X, int & S){
-	double M 	= 100000;
-	for (int i = 0 ;  i < X.size(); i++){
-		if ((abs(abs(X[i]) - 1000)) < M  ){
-			M 	= abs(abs(X[i]) - 1000);
-			if (X[i] < 0){
-				S=-1;
-			}else{
-				S=1;
-			}
-		}
-	}
-	return M;
-
-
-}
-map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
- vector<PSSM *> PSSMS, vector<double> background, double pv, int interval_size, int bsn){
+vector<segment> collapse_map(map<string, vector<segment>> S){
 	typedef map<string, vector<segment>>::iterator it_type; 
-	map<string, vector<segment> > newS;
+	vector<segment> D ;	
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
-			c->second[i].motif_positions = wrapper(c->second[i], PSSMS,background, pv);
-			newS[c->first].push_back(c->second[i]);
+			D.push_back(c->second[i]);
 		}
 	}
-	//=========================================
-	//get MD_scores, N for each PSSM
-	for (int p = 0 ; p < PSSMS.size(); p++) {
-		vector<int> displacements ;
-		for (it_type c = S.begin(); c!=S.end(); c++){ //over chromosomes
-			for (int i = 0 ; i < c->second.size(); i++){ // each interval
-				if (c->second[i].motif_positions.find(p)!=c->second[i].motif_positions.end()){
-					for (int s = 0 ; s<c->second[i].motif_positions[p].size(); s++ ){
-						int x 	= c->second[i].motif_positions[p][s];
-						displacements.push_back(x);
-					}
-
-				}
-			}
-		}	
-		double MD_score 		= get_MD_score(displacements,100,true);
-		double ENRICH_score 	= get_MD_score(displacements,100,false);
-		double NN 				= displacements.size();
-		PSSMS[p]->MD_score 		= MD_score;
-		PSSMS[p]->ENRICH_score 	= ENRICH_score;		
-		PSSMS[p]->total 		= NN;
-		build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
-
-		PSSMS[p]->get_pvalue_stats();
-
+	return D;
+}
+vector<int> to_vector_2(int * array, int S){
+	vector<int> A(S);
+	for (int s = 0 ; s < S; s++){
+		A[s] 	= array[s];
 	}
-
-	return newS;
+	return A;
 }
 
-map<string, vector<segment> > run_accross2(map<string, vector<segment>> S ,
- vector<PSSM *> PSSMS, vector<vector<double>> backgroundf,
- vector<vector<double>> backgroundr, double pv, int rank, string bed_out, string job_Name){
-	typedef map<string, vector<segment>>::iterator it_type; 
+
+void send_out_displacement_data(vector<int> & D, int rank, 
+										int nprocs){
+	if (rank==0){
+		for (int j = 1 ; j < nprocs; j++){
+			int S;
+			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			int * A = new int[S];
+			MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+			vector<int> temp 	= to_vector_2(A, S);
+			D.insert(D.end(), temp.begin(), temp.end());
+		}
+	}else{
+		int S 	= D.size();
+		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
+		int * A = new int[S];
+		copy(D.begin(), D.end(), A);
+		MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
+	}
+}
+
+string get_dots_2(int N){
+	string line="";
+	for (int i = 0 ; i < N; i++){
+		line+=".";
+	}
+	return line;
+}
+
+
+void scan_intervals(map<string, vector<segment>> S ,
+ 												vector<PSSM *> PSSMS, vector<double> background, 
+ 												double pv, int interval_size, int bsn, 
+ 												int rank, int nprocs, Log_File * LG){
+
+	vector<segment> D 	= collapse_map(S);
+	int threads  		= omp_get_max_threads();
+	int diff 			= D.size() / nprocs;
+	int start 	= rank*diff, stop 	= min( int( (rank+1)*diff),int(D.size()));
+	if (rank+1==nprocs){
+		stop 	= D.size();
+	}
+	clock_t t;
+
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		for (int i = 0 ; i<PSSMS[p]->frequency_table.size(); i++){
-			for (int j = 0 ; j<PSSMS[p]->frequency_table[i].size(); j++){
-				PSSMS[p]->frequency_table[i][j] 	= log(PSSMS[p]->frequency_table[i][j]);
-			}
+		vector<vector<int>> displacements(stop-start);
+		int l 	= 0;
+		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
+		t = clock();
+		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
+		#pragma omp parallel for
+		for (int i = start ; i < stop; i++ ){
+			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
+			l++;
 		}
-	}	
-	for (int b = 0 ; b < backgroundf.size(); b++){
-		for (int j = 0 ; j < backgroundf[b].size(); j++){
-			backgroundf[b][j] 	= log(backgroundf[b][j]);
-			backgroundr[b][j] 	= log(backgroundr[b][j]);
+		vector<int> final_displacements;
+		for (int i =0 ; i < displacements.size(); i++){
+			final_displacements.insert(final_displacements.end(), 
+										displacements[i].begin(), displacements[i].end());
 		}
-	}
+		send_out_displacement_data(final_displacements, rank, nprocs);
+		t = clock() - t;
+		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
 
-	map<string, vector<segment> > newS;
-	for (it_type c = S.begin(); c!=S.end(); c++){
-		for (int i = 0 ; i < c->second.size(); i++){
-			c->second[i].motif_positions = wrapper2(c->second[i], PSSMS,backgroundf,backgroundr, pv);
-			newS[c->first].push_back(c->second[i]);
-		}
-	}
+		if (rank==0){
+			double MD_score 		= get_MD_score(final_displacements,100,true);
+			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
+			double NN 				= final_displacements.size();
+			PSSMS[p]->MD_score 		= MD_score;
+			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+			PSSMS[p]->total 		= NN;
 
-	if (!bed_out.empty()){
-		for (int p = 0 ; p < PSSMS.size(); p++){
-			ofstream FHW;
-			FHW.open(bed_out + job_Name+ "-" + PSSMS[p]->name+ ".bed");
-			string line 	= "track name=\"" + PSSMS[p]->name +  "\"" +  " visibility=1 useScore=2 cgGrades=50 cgColour1=white cgColour2=yellow cgColour3=red height=30\n";
-			FHW<<line;
-			for (it_type c = S.begin(); c!=S.end(); c++){
-				for (int i = 0 ; i < c->second.size(); i++){
-					if (c->second[i].motif_positions.find(PSSMS[p]->ID)!= c->second[i].motif_positions.end() and 
-							!c->second[i].motif_positions[PSSMS[p]->ID].empty() )	{
-						int S ;
-						double MIN 	= get_MIN(c->second[i].motif_positions[PSSMS[p]->ID], S);
-						if (abs(MIN) < 200){
-							double x 	= (c->second[i].start + c->second[i].stop) / 2.;
-							int y 	= x + MIN;
-							int START 	= x-300;
-							int STOP 	= x+300;
-							int d 		= PSSMS[p]->frequency_table.size();
-							string strand 	= "-";
-							string color 	= "255,0,0";
-
-							if (S == 1){	
-								strand 		= "+";
-								color 		= "0,0,255";
-							}
-
-							FHW<<c->second[i].chrom<<"\t" << to_string(START)<<"\t"<<to_string(y)<<"\t.\t"<<"500"<<"\t.\t"<< to_string(START)<<"\t"<<to_string(y)<<"\t0,255,0\t.\n";
-							FHW<<c->second[i].chrom<<"\t" << to_string(y)<<"\t"<<to_string(y+d)<<"\t"<<to_string(int(abs(MIN))) <<"\t"<<"100"<<"\t"<<strand<<"\t"<< to_string(y)<<"\t"<<to_string(y+d)<<"\t"<<color<<"\t.\n";
-							FHW<<c->second[i].chrom<<"\t" << to_string(y+d)<<"\t"<<to_string(STOP)<<"\t.\t"<<"500"<<"\t.\t"<< to_string(y+d)<<"\t"<<to_string(STOP)<<"\t0,255,0\t.\n";							
-						}
-					}
-				}
-			}
-			FHW.close();
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
+			PSSMS[p]->get_pvalue_stats();
 		}
 	}
 
 
 
-	return newS;
 }
 
 
-int PSSM_index(int i, vector<PSSM *> P){
-	for (int j = 0 ; j < P.size(); j++){
-		if (P[j]->ID==i){
-			return j;
-		}
-	}
-	printf("what???\n");
-	return 0;
-}
 
-map<int, map<int, vector<segment> >> scan_simulations(map<int, map<int, vector<segment> >> S,
-	vector<PSSM *> P, vector<double> background,double pv ){
-	for (int b = 0 ; b < background.size(); b++){
-		background[b] 	= log(background[b]);
-	}
-	typedef map<int, map<int, vector<segment> >>::iterator it_type; 
-	typedef map<int, vector<segment> >::iterator it_type_2; 
-	
-	map<int, map<int, vector<segment> >> newS;
-	for (it_type s = S.begin(); s!=S.end(); s++ ){
-		int p_index 		= PSSM_index(s->first, P);
+// map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
+//  vector<PSSM *> PSSMS, vector<double> background, double pv, int interval_size, int bsn){
+// 	typedef map<string, vector<segment>>::iterator it_type; 
+// 	map<string, vector<segment> > newS;
+// 	for (it_type c = S.begin(); c!=S.end(); c++){
+// 		for (int i = 0 ; i < c->second.size(); i++){
+// 			c->second[i].motif_positions = wrapper(c->second[i], PSSMS,background, pv);
+// 			newS[c->first].push_back(c->second[i]);
+// 		}
+// 	}
+// 	//=========================================
+// 	//get MD_scores, N for each PSSM
+// 	for (int p = 0 ; p < PSSMS.size(); p++) {
+// 		vector<int> displacements ;
+// 		for (it_type c = S.begin(); c!=S.end(); c++){ //over chromosomes
+// 			for (int i = 0 ; i < c->second.size(); i++){ // each interval
+// 				if (c->second[i].motif_positions.find(p)!=c->second[i].motif_positions.end()){
+// 					for (int s = 0 ; s<c->second[i].motif_positions[p].size(); s++ ){
+// 						int x 	= c->second[i].motif_positions[p][s];
+// 						displacements.push_back(x);
+// 					}
+// 				}
+// 			}
+// 		}	
+// 		double MD_score 		= get_MD_score(displacements,100,true);
+// 		double ENRICH_score 	= get_MD_score(displacements,100,false);
+// 		double NN 				= displacements.size();
+// 		PSSMS[p]->MD_score 		= MD_score;
+// 		PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+// 		PSSMS[p]->total 		= NN;
+// 		build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 
-		for (it_type_2 cn 	= s->second.begin(); cn!=s->second.end(); cn++){
-			vector<segment> currents(cn->second.size());
-			#pragma omp parallel for
-			for (int i = 0 ; i < cn->second.size(); i++){
-				cn->second[i].motif_positions[s->first]=get_sig_positions(cn->second[i].forward,
-					cn->second[i].reverse, 2000,P[p_index], background, pv );
-				currents[i] 	= cn->second[i];
-			}
+// 		PSSMS[p]->get_pvalue_stats();
 
-			newS[s->first][cn->first]= currents;
+// 	}
 
-		}
-	}
-	return newS;
-	
+// 	return newS;
+// }
 
-}
+
 
 
 
