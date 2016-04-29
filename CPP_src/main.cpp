@@ -112,7 +112,7 @@ int main(int argc,char* argv[]){
 		string DB_file 				= P->p["-DB"];
 		string OUT 					= P->p["-o"]; 
 		int BSN 					= stoi(P->p["-bsn"]);
-		int test 					= 1;
+		int test 					= 0;
 		int job_ID 					= 1;
 		double window 				= 1000;
 		int verbose 				= 1;
