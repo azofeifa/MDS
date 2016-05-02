@@ -110,17 +110,21 @@ void send_out_displacement_data(vector<int> & D, int rank,
 		for (int j = 1 ; j < nprocs; j++){
 			int S;
 			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-			int * A = new int[S];
-			MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
-			vector<int> temp 	= to_vector_2(A, S);
-			D.insert(D.end(), temp.begin(), temp.end());
+			if (S>0){
+				int * A = new int[S];
+				MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+				vector<int> temp 	= to_vector_2(A, S);
+				D.insert(D.end(), temp.begin(), temp.end());
+			}
 		}
 	}else{
 		int S 	= D.size();
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
-		int * A = new int[S];
-		copy(D.begin(), D.end(), A);
-		MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
+		if (S>0){
+			int * A = new int[S];
+			copy(D.begin(), D.end(), A);
+			MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
+		}
 	}
 }
 
