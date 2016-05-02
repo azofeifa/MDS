@@ -76,12 +76,8 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N){
 				line_array=splitter(line, "\t");
 				chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
 				N++;
-				if (pad != 0){
-					x 	= (start + stop)/2.;
-					S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
-				}else{
-					S[chrom].push_back(segment(chrom, start, stop,i, start, stop));					
-				}
+				x 	= (start + stop)/2.;
+				S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
 				i++;
 			}
 		}
@@ -120,7 +116,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				}
 				chrom 	= line.substr(1,line.size());
 				start 	= 0, i = 0;
-				N 	= S[chrom].size();
+				N 			= S[chrom].size();
 				current 	= S[chrom];
 				
 				if (!chrom.empty()){
@@ -138,8 +134,8 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 					l 	= 0;
 					for (int k = start; k < b; k++ ){
 						u 	= i;
-
 						while (u < N and k > current[u].start){
+
 							if (k <= current[u].stop){
 								current[u].seq+=line[l];
 							}
@@ -149,14 +145,12 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 					}
 
 				}
-
 				start+=n;
-
 			}
-
-		
-
 		}
+		if (!current.empty()){
+			S[chrom] 	= current;
+		}		
 		typedef map<string, vector<segment> >::iterator it_type;
 		int LOSS 	= 0;
 		for (it_type i = S.begin(); i!=S.end(); i++){
@@ -170,7 +164,7 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 						LOSS+=1;
 					}
 				}else{
-					printf("WARNING: ignoring %s:%d-%d, not found in fasta file, %d\n",i->second[j].chrom.c_str(), i->second[j].start, i->second[j].stop,d);
+					printf("WARNING: ignoring %s:%d-%d, not found in fasta file, %d,%d\n",i->second[j].chrom.c_str(), i->second[j].start, i->second[j].stop,d,i->second[j].seq.size());
 				}
 			}
 		}
