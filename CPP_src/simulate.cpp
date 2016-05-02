@@ -136,7 +136,7 @@ void run_simulations(map<string, vector<segment>> intervals,
 	
 	int ind_N 	= sim_N / nprocs;
 	clock_t t;
-	
+	int threads 	= omp_get_max_threads();
 	for (int p = 0 ; p < P.size(); p++){//iterate over every PSSM model
 		int WN 	= max(int(44 - P[p]->name.size()), 1);	
 		t = clock();
@@ -150,7 +150,7 @@ void run_simulations(map<string, vector<segment>> intervals,
 		double wall1 = get_wall_time();
 		t = clock() - t;
 
-		LG->write("done: " + to_string(float(t)/CLOCKS_PER_SEC) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
+		LG->write("done: " + to_string(float(t)/(threads*CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
 	//transform back to frequency space
 	for (int p = 0; p < P.size(); p++){ //
