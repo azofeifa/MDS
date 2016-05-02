@@ -25,14 +25,14 @@ DB=/Users/azofeifa/Lab/gTFIv2/PSSM_DB/HOCOMOCOv10_HUMAN_mono_meme_format_filtere
 #bed=/Users/azofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/before_1_1/Allen2014_Nutlin2_3-3_divergent_classifications.bed
 bed=/Users/azofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/before_1_1/Allen2014_DMSO2_3-19_divergent_classifications.bed
 fasta=/Users/azofeifa/Lab/genome_files/hg19.fa
-out=/Users/azofeifa/
+out=/Users/azofeifa/motif_distances_new/PSSM_DBS/generated_1000000_null_simulations.txt
 br=100
 pv=0.000001
 log_out=/Users/azofeifa/
 ID=DMSO_1000_high
-simN=1000
+sim_N=1000000
 #================================================================
 #calling command
 cmd="mpirun -np $PBS_NUM_NODES -hosts ${hostlist}"
-$cmd $src -DB $DB -fasta $fasta -bed $bed -o $out -br $br -pv $pv -log_out $log_out -ID $ID -simN $simN
+$cmd $src -DB $DB -fasta $fasta -bed $bed -o $out -br $br -pv $pv -log_out $log_out -ID $ID -sim_N $sim_N
 #================================================================
