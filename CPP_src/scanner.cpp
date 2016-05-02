@@ -155,13 +155,18 @@ void scan_intervals(map<string, vector<segment>> S ,
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = start ; i < stop; i++ ){
+			LG->write("A ", 1);
 			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
+			LG->write("B\n", 1);
 			l++;
 		}
+		LG->write("DONEE\n", 1);
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){
+			LG->write(to_string(i) + "A ", 1);
 			final_displacements.insert(final_displacements.end(), 
 										displacements[i].begin(), displacements[i].end());
+			LG->write(to_string(i) + "B\n", 1);
 		}
 		send_out_displacement_data(final_displacements, rank, nprocs);
 		t = clock() - t;
@@ -184,46 +189,6 @@ void scan_intervals(map<string, vector<segment>> S ,
 
 }
 
-
-
-// map<string, vector<segment> > run_accross(map<string, vector<segment>> S ,
-//  vector<PSSM *> PSSMS, vector<double> background, double pv, int interval_size, int bsn){
-// 	typedef map<string, vector<segment>>::iterator it_type; 
-// 	map<string, vector<segment> > newS;
-// 	for (it_type c = S.begin(); c!=S.end(); c++){
-// 		for (int i = 0 ; i < c->second.size(); i++){
-// 			c->second[i].motif_positions = wrapper(c->second[i], PSSMS,background, pv);
-// 			newS[c->first].push_back(c->second[i]);
-// 		}
-// 	}
-// 	//=========================================
-// 	//get MD_scores, N for each PSSM
-// 	for (int p = 0 ; p < PSSMS.size(); p++) {
-// 		vector<int> displacements ;
-// 		for (it_type c = S.begin(); c!=S.end(); c++){ //over chromosomes
-// 			for (int i = 0 ; i < c->second.size(); i++){ // each interval
-// 				if (c->second[i].motif_positions.find(p)!=c->second[i].motif_positions.end()){
-// 					for (int s = 0 ; s<c->second[i].motif_positions[p].size(); s++ ){
-// 						int x 	= c->second[i].motif_positions[p][s];
-// 						displacements.push_back(x);
-// 					}
-// 				}
-// 			}
-// 		}	
-// 		double MD_score 		= get_MD_score(displacements,100,true);
-// 		double ENRICH_score 	= get_MD_score(displacements,100,false);
-// 		double NN 				= displacements.size();
-// 		PSSMS[p]->MD_score 		= MD_score;
-// 		PSSMS[p]->ENRICH_score 	= ENRICH_score;		
-// 		PSSMS[p]->total 		= NN;
-// 		build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
-
-// 		PSSMS[p]->get_pvalue_stats();
-
-// 	}
-
-// 	return newS;
-// }
 
 
 
