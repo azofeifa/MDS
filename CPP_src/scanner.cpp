@@ -157,7 +157,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 	clock_t t;
 
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		vector<vector<int>> displacements(stop-start);
+		vector<vector<int>> displacements(int(stop-start));
 		int l 	= 0;
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
 		t = clock();
@@ -165,6 +165,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = start ; i < stop; i++ ){
+			LG->write(to_string(i) + "\t" + to_string(D.size()) + "\t" + to_string(PSSMS[p]->frequency_table.size()) + "\t" + to_string(sizeof(D[i].forward)) + "\t" + to_string(sizeof(D[i].reverse)) + "\n",1);
 			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
 			l++;
 		}
