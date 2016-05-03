@@ -52,11 +52,9 @@ vector<int> get_sig_positions(int forward[2000],
 	vector<int> locs_pvs;
 	int length 	= p->frequency_table.size();
 	double pvaluef, pvaluer,llr,llf;
-	int k,j;
-	bool collect;
+
 	int BOUND 	= N-length;
-	int i;
-	int f, r, l;
+	int k,j,i,f, r, l;
 	for (i =0 ; i  < BOUND; i++){
 		llf 	= 0;
 		llr 	= 0;
@@ -165,33 +163,28 @@ void scan_intervals(map<string, vector<segment>> S ,
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = start ; i < stop; i++ ){
-			LG->write(to_string(i) + "\t" + to_string(D.size()) + "\t" + to_string(PSSMS[p]->frequency_table.size()) + "\t" + to_string(sizeof(D[i].forward)) + "\t" + to_string(sizeof(D[i].reverse)) + "\n",1);
 			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
 			l++;
 		}
-		LG->write("finished scanning...", 1);
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
-		LG->write("finished inserting...", 1);
-		LG->write("MPI...", 1);
-		send_out_displacement_data(final_displacements, rank, nprocs);
-		LG->write("MPI DONE...", 1);
+		// send_out_displacement_data(final_displacements, rank, nprocs);
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
-		if (rank==0){
-			double MD_score 		= get_MD_score(final_displacements,100,true);
-			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
-			double NN 				= final_displacements.size();
-			PSSMS[p]->MD_score 		= MD_score;
-			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
-			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
-			PSSMS[p]->get_pvalue_stats();
-		}
+		// if (rank==0){
+		// 	double MD_score 		= get_MD_score(final_displacements,100,true);
+		// 	double ENRICH_score 	= get_MD_score(final_displacements,100,false);
+		// 	double NN 				= final_displacements.size();
+		// 	PSSMS[p]->MD_score 		= MD_score;
+		// 	PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+		// 	PSSMS[p]->total 		= NN;
+		// 	build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
+		// 	PSSMS[p]->get_pvalue_stats();
+		// }
 	}
 
 
