@@ -1,8 +1,8 @@
-DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/new_motif_db_format.txt
+DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/test_new_motif_db_format.txt
 DB2=/Users/joazofeifa/Desktop/generated_DB.txt
 fasta=~/Lab/genome_files/hg19.fa
 log_out=/Users/joazofeifa/Lab/log_out/
-bed=~/Lab/gro_seq_files/Allen2014/EMG_out_files/test_Allen2014_DMSO2_3-19_divergent_classifications.bed
+bed=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/test_Allen2014_DMSO2_3-19_divergent_classifications.bed
 out=/Users/joazofeifa/Desktop/generated_DB.txt
 out2=/Users/joazofeifa/Desktop/stats.txt
 br=100

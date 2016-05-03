@@ -15,6 +15,9 @@ public:
 	vector<vector<double>> frequency_table;
 	vector<vector<double>> pvalues;
 	vector<vector<int>> null_displacements;
+	vector<int> null_displacements_2;
+	
+	double zeros; 
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
 	vector<vector<double> > MD_CDF;

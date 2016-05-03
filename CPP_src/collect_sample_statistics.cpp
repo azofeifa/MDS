@@ -169,47 +169,37 @@ vector<vector<double> > make_CDF(vector<double> X){
 }
 
 
+
 void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 	random_device rd;
 	// Initialize Mersenne Twister pseudo-random number generator
 	mt19937 gen(rd());
 	
-	vector<vector<int>> displacements 			= P->null_displacements;
-	vector<int> total_hits;
-	for (int i = 0 ; i < displacements.size(); i++){
-		for (int j = 0 ; j < displacements[i].size(); j++){
-			if (displacements[i][j]>-1){
-				total_hits.push_back(displacements[i][j]);
-			}
-		}
-	}
+	vector<int> displacements 			= P->null_displacements_2;
 
-	int collection_n 							= min(int(displacements.size()), int(displacements.size()*0.5));
+	int collection_n 			= min(int(displacements.size()), int(displacements.size()*0.5));
+	double bias 				= P->zeros / (P->zeros + displacements.size());
+	double bias_2 				= get_MD_score(displacements, 100,true);
 	uniform_int_distribution<int> distribution(0,displacements.size()-1);
-	uniform_int_distribution<int> distribution_2(0,total_hits.size()-1);
+	uniform_real_distribution<double> distribution_2(0,1);
 	vector<double> MD_scores;
 	vector<double> ENRICHMENT;
 	for (int b = 0 ; b < bsn; b++){//make this number of random collections
-		vector<int> current_collection;
+		double enriched 	= 0;
 		vector<int> current_collection_spec;
 		int spec_N 	= 0;
-		int NN 		= total_hits.size();
-		int ccN 	= 0, k =0;
-		while (spec_N < interval_size and NN > 0){
-			if (ccN < hit_size){
-				k 	= distribution_2(gen);
-				current_collection_spec.push_back(total_hits[k]);
-
-				ccN++;
+		int k 		= 0;
+		for (int i = 0 ; i < interval_size ; i ++){
+			if (distribution_2(gen) > bias && distribution_2(gen) < bias_2  ){
+				enriched++;
 			}
 			k 	= distribution(gen);
-			current_collection.insert(current_collection.end(), displacements[k].begin(), displacements[k].end());
-
-			spec_N++;
-
+			current_collection_spec.push_back(displacements[k]);
+				
 		}
+
+
 		double MD_score 	= get_MD_score(current_collection_spec, 100,true);
-		double enriched 	= get_MD_score(current_collection, 100,false);
 		MD_scores.push_back(MD_score);
 		ENRICHMENT.push_back(enriched);
 

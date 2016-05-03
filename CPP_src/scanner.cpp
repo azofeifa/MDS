@@ -157,7 +157,6 @@ void scan_intervals(map<string, vector<segment>> S ,
 	clock_t t;
 
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		printf("%d\n",stop-start );
 		vector<vector<int>> displacements(stop-start);
 		int l 	= 0;
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
@@ -168,17 +167,17 @@ void scan_intervals(map<string, vector<segment>> S ,
 			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
 			l++;
 		}
-		LG->write("finished scanning...", 1);
+		//LG->write("finished scanning...", 1);
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
-		LG->write("finished inserting...", 1);
-		LG->write("MPI...", 1);
+		// LG->write("finished inserting...", 1);
+		// LG->write("MPI...", 1);
 		send_out_displacement_data(final_displacements, rank, nprocs);
-		LG->write("MPI DONE...", 1);
+		// LG->write("MPI DONE...", 1);
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
 		if (rank==0){

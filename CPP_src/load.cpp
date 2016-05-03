@@ -409,23 +409,23 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 			FHW<<line;
 		}
 		FHW<<"~";
+		//count up the number of zeros
+		int zero 	= 1;
 		for (int s = 0 ; s < PSSMS[p]->null_displacements.size(); s++){
-			string line 	= "";
-			for (int i = 0 ; i <PSSMS[p]->null_displacements[s].size() ; i++ ){
-				if (i+1 < PSSMS[p]->null_displacements[s].size()){
-					line+=to_string(PSSMS[p]->null_displacements[s][i])+",";
-				}else{
-					line+=to_string(PSSMS[p]->null_displacements[s][i]);
-				}
-
-			}
-			if (s+1 <PSSMS[p]->null_displacements.size() ){
-				FHW<<line+"|";	
-			}else{
-				FHW<<line+"|\n";	
-				
+			if (PSSMS[p]->null_displacements[s].empty()){
+				zero++;
 			}
 		}
+		FHW<<to_string(zero) + "|" ;
+
+		string line 	= "";
+		for (int s = 0 ; s < PSSMS[p]->null_displacements.size(); s++){
+			for (int i = 0 ; i <PSSMS[p]->null_displacements[s].size() ; i++ ){
+				line+=to_string(PSSMS[p]->null_displacements[s][i])+",";
+			}				
+		}
+		FHW<<line.substr(0,line.size()-1)+"\n";	
+
 	}
 }
 
@@ -614,20 +614,14 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 				pssm->frequency_table.push_back(row);
 				
 			}else if(line.substr(0,1)=="~" and pssm!=NULL){
-				line_array 	= split_by_bar(line.substr(1,line.size()-1), " ");
+				line_array 		= split_by_bar(line.substr(1,line.size()-1), " ");
+				double zeros 	= stod(line_array[0]);
+				line_array 		= split_by_comma(line_array[1], " ");
 				for (int i = 0 ; i < line_array.size(); i++){
-					if (!line_array[i].empty()){
-						line_array_2 	= split_by_comma(line_array[i], " ");
-						vector<int> x ;
-						for (int s = 0 ; s < line_array_2.size();s++){
-							x.push_back(stoi(line_array_2[s]));
-						}
-						pssm->null_displacements.push_back(x);
-					}else{
-						vector<int> x 	= {-1} ;
-						pssm->null_displacements.push_back(x);						
-					}
+					int x 		= stoi(line_array[i]);
+					pssm->null_displacements_2.push_back(x);						
 				}
+				pssm->zeros 	= zeros;
 			}
 			header 		= false;
 
