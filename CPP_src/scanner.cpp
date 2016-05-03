@@ -109,7 +109,7 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-void send_out_displacement_data(vector<int> & D, int rank, 
+void send_out_displacement_data(vector<int> & DD, int rank, 
 										int nprocs){
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
@@ -119,15 +119,15 @@ void send_out_displacement_data(vector<int> & D, int rank,
 				int * A = new int[S];
 				MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
 				vector<int> temp 	= to_vector_2(A, S);
-				D.insert(D.end(), temp.begin(), temp.end());
+				DD.insert(DD.end(), temp.begin(), temp.end());
 			}
 		}
 	}else{
-		int S 	= D.size();
+		int S 	= DD.size();
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
 		if (S>0){
 			int * A = new int[S];
-			fill_array(D, A);
+			fill_array(DD, A);
 			MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
 		}
 	}
@@ -161,6 +161,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		int l 	= 0;
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
 		t = clock();
+		LG->write(to_string(D.size()) + "\n");
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = start ; i < stop; i++ ){
