@@ -153,17 +153,15 @@ void scan_intervals(map<string, vector<segment>> S ,
 		stop 	= D.size();
 	}
 	clock_t t;
-
+	LG->write("This call will process " + to_string(stop-start) + " intervals\n", 1);
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		vector<vector<int>> displacements(int(stop-start));
-		int l 	= start;
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
 		t = clock();
-		LG->write(to_string(D.size()) + "\n",1);
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = 0 ; i < stop-start; i++ ){
-			displacements[i] 	= get_sig_positions(D[l+i].forward, D[l+i].reverse, 2000, PSSMS[p], background, pv);
+			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], background, pv);
 		}
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){
