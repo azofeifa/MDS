@@ -154,6 +154,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 	}
 	clock_t t;
 	LG->write("This call will process " + to_string(stop-start) + " intervals\n", 1);
+	vector<vector<int>> array_of_final_displacements(PSSMS.size());
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		vector<vector<int>> displacements(int(stop-start));
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
@@ -169,9 +170,10 @@ void scan_intervals(map<string, vector<segment>> S ,
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
-		// send_out_displacement_data(final_displacements, rank, nprocs);
+		send_out_displacement_data(final_displacements, rank, nprocs);
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
+		
 		if (rank==0){
 			double MD_score 		= get_MD_score(final_displacements,100,true);
 			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
