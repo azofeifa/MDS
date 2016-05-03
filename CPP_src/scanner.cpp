@@ -114,7 +114,7 @@ void send_out_displacement_data(vector<int> & D, int rank,
 				int * A = new int[S];
 				MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
 				vector<int> temp 	= to_vector_2(A, S);
-				D.insert(D.end(), temp.begin(), temp.end());
+			//	D.insert(D.end(), temp.begin(), temp.end());
 			}
 		}
 	}else{
@@ -122,7 +122,7 @@ void send_out_displacement_data(vector<int> & D, int rank,
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
 		if (S>0){
 			int * A = new int[S];
-			copy(D.begin(), D.end(), A);
+			//copy(D.begin(), D.end(), A);
 			MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
 		}
 	}
@@ -145,7 +145,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 	vector<segment> D 	= collapse_map(S);
 	int threads  		= omp_get_max_threads();
 	int diff 			= D.size() / nprocs;
-	int start 	= rank*diff, stop 	= min( int( (rank+1)*diff),int(D.size()));
+	int start 	= rank*diff, stop 	= min(int( (rank+1)*diff),int(D.size()));
 	if (rank+1==nprocs){
 		stop 	= D.size();
 	}
@@ -179,7 +179,6 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
-
 			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 			PSSMS[p]->get_pvalue_stats();
 		}
