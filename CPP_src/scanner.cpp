@@ -171,10 +171,18 @@ void scan_intervals(map<string, vector<segment>> S ,
 			}
 		}
 		send_out_displacement_data(final_displacements, rank, nprocs);
+		if (rank==0){
+			array_of_final_displacements[p] 	= final_displacements;
+		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
-		
-		if (rank==0){
+	}
+	if (rank==0){
+		LG->write("computing boostrapped distribution..........", 1);
+
+		#pragma omp parallel for
+		for (int p = 0 ; p < PSSMS.size(); p++){
+			vector<int> final_displacements 	= array_of_final_displacements[p];
 			double MD_score 		= get_MD_score(final_displacements,100,true);
 			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
 			double NN 				= final_displacements.size();
@@ -184,6 +192,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 			PSSMS[p]->get_pvalue_stats();
 		}
+		LG->write("done", 1);
 	}
 
 
