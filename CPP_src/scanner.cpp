@@ -153,7 +153,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		stop 	= D.size();
 	}
 	clock_t t;
-	LG->write("This call will process " + to_string(stop-start) + " intervals\n", 1);
+	LG->write("(this MPI call will process " + to_string(stop-start) + " intervals)\n\n", 1);
 	vector<vector<int>> array_of_final_displacements(PSSMS.size());
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		vector<vector<int>> displacements(int(stop-start));
@@ -180,6 +180,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 	if (rank==0){
 		LG->write("computing boostrapped distribution..........", 1);
 
+		t = clock();
 		#pragma omp parallel for
 		for (int p = 0 ; p < PSSMS.size(); p++){
 			vector<int> final_displacements 	= array_of_final_displacements[p];
@@ -192,7 +193,8 @@ void scan_intervals(map<string, vector<segment>> S ,
 			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 			PSSMS[p]->get_pvalue_stats();
 		}
-		LG->write("done", 1);
+		t = clock() - t;
+		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);
 	}
 
 
