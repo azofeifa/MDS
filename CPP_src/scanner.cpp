@@ -102,6 +102,11 @@ vector<int> to_vector_2(int * array, int S){
 	}
 	return A;
 }
+void fill_array(vector<int> D, int * A){
+	for (int i = 0; i < D.size(); i++){
+		A[i] 	= D[i];
+	}
+}
 
 
 void send_out_displacement_data(vector<int> & D, int rank, 
@@ -114,7 +119,7 @@ void send_out_displacement_data(vector<int> & D, int rank,
 				int * A = new int[S];
 				MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
 				vector<int> temp 	= to_vector_2(A, S);
-			//	D.insert(D.end(), temp.begin(), temp.end());
+				D.insert(D.end(), temp.begin(), temp.end());
 			}
 		}
 	}else{
@@ -122,7 +127,7 @@ void send_out_displacement_data(vector<int> & D, int rank,
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
 		if (S>0){
 			int * A = new int[S];
-			//copy(D.begin(), D.end(), A);
+			fill_array(D, A);
 			MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
 		}
 	}
