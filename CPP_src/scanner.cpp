@@ -161,11 +161,11 @@ void scan_intervals(map<string, vector<segment>> S ,
 		t = clock();
 		LG->write(to_string(D.size()) + "\n",1);
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
-		#pragma omp parallel for
-		for (int i = start ; i < stop; i++ ){
-			displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
-			l++;
-		}
+		// #pragma omp parallel for
+		// for (int i = start ; i < stop; i++ ){
+		// 	displacements[l] 	= get_sig_positions(D[i].forward, D[i].reverse, 2000, PSSMS[p], background, pv);
+		// 	l++;
+		// }
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
@@ -175,16 +175,16 @@ void scan_intervals(map<string, vector<segment>> S ,
 		// send_out_displacement_data(final_displacements, rank, nprocs);
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
-		// if (rank==0){
-		// 	double MD_score 		= get_MD_score(final_displacements,100,true);
-		// 	double ENRICH_score 	= get_MD_score(final_displacements,100,false);
-		// 	double NN 				= final_displacements.size();
-		// 	PSSMS[p]->MD_score 		= MD_score;
-		// 	PSSMS[p]->ENRICH_score 	= ENRICH_score;		
-		// 	PSSMS[p]->total 		= NN;
-		// 	build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
-		// 	PSSMS[p]->get_pvalue_stats();
-		// }
+		if (rank==0){
+			double MD_score 		= get_MD_score(final_displacements,100,true);
+			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
+			double NN 				= final_displacements.size();
+			PSSMS[p]->MD_score 		= MD_score;
+			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+			PSSMS[p]->total 		= NN;
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
+			PSSMS[p]->get_pvalue_stats();
+		}
 	}
 
 
