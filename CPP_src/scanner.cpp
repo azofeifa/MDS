@@ -161,7 +161,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		int l 	= 0;
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
 		t = clock();
-		LG->write(to_string(D.size()) + "\n");
+		LG->write(to_string(D.size()) + "\n",1);
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = start ; i < stop; i++ ){
