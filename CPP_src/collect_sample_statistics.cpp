@@ -168,6 +168,38 @@ vector<vector<double> > make_CDF(vector<double> X){
 	return Y;
 }
 
+void turn_to_CDF(vector<double> & CDF, vector<int> X, double & N){
+	for (int i = 0 ; i < X.size(); i++){
+		N+=X[i];
+	}
+	double new_n=0;
+	for (int i = 0 ; i < X.size(); i++){
+		new_n+=X[i];
+		CDF.push_back(X[i]/N);
+	}
+}
+int get_sample(vector<double> CDF,double U ){
+	int i=0;
+	while (i+ 1 < CDF.size() and U > CDF[i]){
+		i++;
+	}
+	return i; 
+}
+
+double get_MD_from_binned(vector<int> displacements , int window ){
+	double N 	= 0;
+	if (displacements.size() == 2000){
+
+		for (int i = 1000-window ; i < 1000+window; i++ ){
+			N+=displacements[i];
+		}
+	}else{
+		printf("WHAT?, get_MD() collect_sample_statistics.o \n");
+	}
+	return N;
+}
+
+
 
 
 void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
@@ -176,11 +208,14 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 	mt19937 gen(rd());
 	
 	vector<int> displacements 			= P->null_displacements_2;
+	double total_N 	= 0;
+	vector<double> CDF;
 
-	int collection_n 			= min(int(displacements.size()), int(displacements.size()*0.5));
-	double bias 				= P->zeros / (P->zeros + displacements.size());
-	double bias_2 				= get_MD_score(displacements, 100,true);
-	uniform_int_distribution<int> distribution(0,displacements.size()-1);
+	turn_to_CDF(CDF,displacements, total_N);
+	double bias 				= P->zeros / (P->zeros + total_N);
+	double bias_2 				= get_MD_from_binned(P->null_displacements_2,100)/total_N;
+
+	discrete_distribution<int> distribution(CDF.begin(),CDF.end());
 	uniform_real_distribution<double> distribution_2(0,1);
 	vector<double> MD_scores;
 	vector<double> ENRICHMENT;
@@ -194,7 +229,8 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 				enriched++;
 			}
 			k 	= distribution(gen);
-			current_collection_spec.push_back(displacements[k]);
+			//k 	= get_sample(CDF, U);
+			current_collection_spec.push_back(k);
 				
 		}
 		double MD_score 	= get_MD_score(current_collection_spec, 100,true);

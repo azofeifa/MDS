@@ -311,6 +311,18 @@ void PSSM::bin_observations(){
 	}
 }
 
+void PSSM::bin_null_displacements(){
+	for (int i = 0 ; i < 2000; i++){
+		binned_null_displacements.push_back(0);
+	}
+	for (int i = 0 ; i < null_displacements.size(); i++){
+		for (int j = 0 ; j < null_displacements[i].size(); j++){
+			int x 	= null_displacements[i][j];
+			binned_null_displacements[x]++;
+		}
+	}
+}
+
 
 
 
@@ -428,15 +440,20 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 				zero++;
 			}
 		}
+		PSSMS[p]->bin_null_displacements();
 		FHW<<to_string(zero) + "|" ;
 
 		string line 	= "";
-		for (int s = 0 ; s < PSSMS[p]->null_displacements.size(); s++){
-			for (int i = 0 ; i <PSSMS[p]->null_displacements[s].size() ; i++ ){
-				line+=to_string(PSSMS[p]->null_displacements[s][i])+",";
-			}				
+
+		for (int i = 0 ; i < PSSMS[p]->binned_null_displacements.size() ; i ++  ){
+			if (i+1 < PSSMS[p]->binned_null_displacements.size() ){
+				line+=to_string(PSSMS[p]->binned_null_displacements[i])+",";
+			}else{
+				line+=to_string(PSSMS[p]->binned_null_displacements[i]);	
+			}
 		}
-		FHW<<line.substr(0,line.size()-1)+"\n";	
+
+		FHW<<line+"\n";	
 
 	}
 }
