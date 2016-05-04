@@ -197,8 +197,6 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 			current_collection_spec.push_back(displacements[k]);
 				
 		}
-
-
 		double MD_score 	= get_MD_score(current_collection_spec, 100,true);
 		MD_scores.push_back(MD_score);
 		ENRICHMENT.push_back(enriched);

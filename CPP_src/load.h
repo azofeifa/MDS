@@ -16,7 +16,8 @@ public:
 	vector<vector<double>> pvalues;
 	vector<vector<int>> null_displacements;
 	vector<int> null_displacements_2;
-	
+	vector<int> observed_displacements; 
+	vector<int> binned_observed_displacements; 
 	double zeros; 
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
@@ -28,6 +29,7 @@ public:
 	PSSM();
 	PSSM(string);
 	PSSM(int);
+	void bin_observations();
 	void get_pvalue_stats();
 	void transform_ft();
 	double get_pvalue(double);

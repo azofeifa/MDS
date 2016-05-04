@@ -107,8 +107,7 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-void send_out_displacement_data(vector<int> & DD, int rank, 
-										int nprocs){
+void send_out_displacement_data(vector<int> & DD, int rank, int nprocs){
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
 			int S;
@@ -192,6 +191,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->total 		= NN;
 			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
 			PSSMS[p]->get_pvalue_stats();
+			PSSMS[p]->observed_displacements 	= final_displacements;
 		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);

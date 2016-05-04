@@ -301,6 +301,18 @@ void PSSM::get_pvalue_stats(){
 	pv_enrich_score_lt 	= float(K) / ENRICH_CDF.size();
 
 }
+void PSSM::bin_observations(){
+	for (int i = 0 ; i < 2000; i++){
+		binned_observed_displacements.push_back(0);
+	}
+	for (int i = 0 ; i < observed_displacements.size(); i++){
+		int x 	= observed_displacements[i];
+		binned_observed_displacements[x]++;
+	}
+}
+
+
+
 
 
 
@@ -477,6 +489,23 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		}
 		FHW<<to_string(MDL) + "," + to_string(MDR) + "\t" + to_string(ENL) + "," + to_string(ENR)+"\n";
 	}
+	FHW<<"#Binned Observation statistics range={-1000,..,1000}\n";
+	for (int p =0 ; p < PSSMS.size(); p++){
+		FHW<<PSSMS[p]->name<<"\t";
+		PSSMS[p]->bin_observations();
+		string line="";
+		for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
+			if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
+				line+=to_string(PSSMS[p]->binned_observed_displacements[i]) + ",";
+			}else{
+				line+=to_string(PSSMS[p]->binned_observed_displacements[i]);				
+			}
+		}
+		FHW<<line<<endl;
+
+	}
+
+
 	FHW<<"#Empiracle Bootstrapped Distribution\n";
 	FHW<<"#Motif Identifier\tMD Score\tEnrichment Number\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
