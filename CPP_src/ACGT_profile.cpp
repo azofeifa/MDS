@@ -74,7 +74,7 @@ void get_ACGT_profile_all(map<string, vector<segment> > S,
 		}
 		for (int j = 0; j < 4; j++ ){
 			background_forward[i][j]/=SUM_f;
-			background_reverse[i][j]/=SUM_f;
+			background_reverse[i][j]/=SUM_r;
 		}
 	}
 

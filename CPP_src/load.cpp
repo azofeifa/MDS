@@ -458,7 +458,7 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 	}
 	FHW<<"#Estimated Background Distribution\n";
 	for (int i = 0 ; i < MAP_background.size(); i++){
-		FHW<<"#\t"+ to_string(MAP_background[i][0])+to_string(MAP_background[i][1])+to_string(MAP_background[i][2])+to_string(MAP_background[i][3])+ "\n";
+		FHW<<"#\t"+ to_string(MAP_background[i][0])+","+to_string(MAP_background[i][1])+","+to_string(MAP_background[i][2])+","+to_string(MAP_background[i][3])+ "\n";
 	}
 
 }

@@ -150,12 +150,19 @@ void run_simulations(map<string, vector<segment>> intervals,
 		vector<int> seqr(S);
 		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, 
 			D_forward, D_reverse, background, P[p], threshold );
+
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		P[p]->null_displacements 	= DD;
 		double wall1 = get_wall_time();
 		t = clock() - t;
 
 		LG->write("done: " + to_string(float(t)/(threads*CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
+		for (int d = 0 ; d  < DD.size(); d++){
+			for (int j = 0 ; j < DD[d].size(); j++){
+				LG->write(to_string(DD[d][j]) + ",",0);
+			}
+		}
+		LG->write("\n", 0);
 	}
 	//transform back to frequency space
 	for (int p = 0; p < P.size(); p++){ //
