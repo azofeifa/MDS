@@ -97,7 +97,7 @@ int main(int argc,char* argv[]){
 		//....6....write out to DB file
 		if (rank==0){
 			LG->write("writing out simulations.....................",verbose);
-			write_out_null_stats( PSSMS,OUT,  P, background);
+			write_out_null_stats( PSSMS,OUT,  P, background,background_forward);
 			LG->write("done\n",verbose);
 		}
 		if (rank==0){

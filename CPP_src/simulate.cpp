@@ -41,12 +41,16 @@ int get_pvalue_llr(vector<int> seq, vector<double> background, double threshold,
 vector<vector<int>> make_random_draws(	int sim_N, 
 										vector<int> seqf, vector<int> seqr, 
 										vector<discrete_distribution<int>> D_forward,
-										vector<discrete_distribution<int>> D_reverse, mt19937 gen,
+										vector<discrete_distribution<int>> D_reverse,
 										vector<double> background, PSSM * p, double threshold){
 	vector<vector<int>> DD(sim_N);
 	int hit;
+	random_device rd;
+
 	#pragma omp parallel for
 	for (int s = 0 ; s < sim_N; s++){//number of random samples
+		mt19937 gen(rd()*s);
+
 		vector<int> 	D;
 		for (int d 	= 0 ; d < D_forward.size(); d++ ){
 			gen 	= get_rand_seq(seqf,D_forward[d], gen );
@@ -144,7 +148,8 @@ void run_simulations(map<string, vector<segment>> intervals,
 		int S 	= P[p]->frequency_table.size(), hit=0;
 		vector<int> seqf(S);
 		vector<int> seqr(S);
-		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, D_forward, D_reverse, gen, background, P[p], threshold );
+		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, 
+			D_forward, D_reverse, background, P[p], threshold );
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		P[p]->null_displacements 	= DD;
 		double wall1 = get_wall_time();

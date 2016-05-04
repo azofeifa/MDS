@@ -395,7 +395,7 @@ const std::string currentDateTime() {
 }
 
 
-void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<double> background){
+void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<double> background, vector<vector<double>> MAP_background){
 	
 	string fasta_file 			= PP->p["-fasta"];
 	string bed_file 			= PP->p["-bed"];
@@ -456,6 +456,11 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 		FHW<<line+"\n";	
 
 	}
+	FHW<<"#Estimated Background Distribution\n";
+	for (int i = 0 ; i < MAP_background.size(); i++){
+		FHW<<"#\t"+ to_string(MAP_background[i][0])+to_string(MAP_background[i][1])+to_string(MAP_background[i][2])+to_string(MAP_background[i][3])+ "\n";
+	}
+
 }
 
 vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
@@ -646,12 +651,12 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 					}
 				}
 
-			}else if (line.substr(0,1)==">"){
+			}else if (line.substr(0,1)==">" and line.substr(0,1)!="#"){
 				if (pssm != NULL){
 					PSSMS.push_back(pssm);
 				}
 				pssm 	= new PSSM(line.substr(1,line.size()-1));
-			}else if(pssm != NULL and line.substr(0,1)!="~"){
+			}else if(pssm != NULL and line.substr(0,1)!="~" and line.substr(0,1)!="#"){
 				line_array 	= split_by_comma(line, "");
 				vector<double> row;
 				for (int i = 0 ; i < 4;i++){
@@ -659,7 +664,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 				}
 				pssm->frequency_table.push_back(row);
 				
-			}else if(line.substr(0,1)=="~" and pssm!=NULL){
+			}else if(line.substr(0,1)=="~" and pssm!=NULL and line.substr(0,1)!="#"){
 				line_array 		= split_by_bar(line.substr(1,line.size()-1), " ");
 				double zeros 	= stod(line_array[0]);
 				line_array 		= split_by_comma(line_array[1], " ");
