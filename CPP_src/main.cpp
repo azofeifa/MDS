@@ -50,6 +50,7 @@ int main(int argc,char* argv[]){
 		int interval_size 			= 0;
 		int verbose 				= 1;
 		int PSSM_test 				= stoi(P->p["-t"]);
+		int order 					= stoi(P->p["-order"]);
 		vector<PSSM *> PSSMS;
 		//============================================================
 
@@ -82,23 +83,30 @@ int main(int argc,char* argv[]){
 		intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
 		LG->write("done\n", verbose);
 		
+
+
+
 		//============================================================
 		//....5.... get generic GC content across intervals for background model
 		vector<vector<double>> background_forward, background_reverse;
+		vector<double ** > D(2000);
 		LG->write("computing ACGT profile......................", verbose);
 		get_ACGT_profile_all(intervals, 
 			background_forward,background_reverse, rank);
+		get_1st_order_markov(intervals, D);
 		LG->write("done\n",verbose);
 
 		//============================================================
 		//....6.... perform simulations and get random MD scores
 		LG->write("\n     running simulations for null model\n\n",verbose);
-		run_simulations(intervals,PSSMS, sim_N,background_forward, background_reverse,background, pv, rank, nprocs, LG);
+		run_simulations(intervals,PSSMS, sim_N,background_forward, 
+			background_reverse,background, pv, rank, nprocs, LG, order, D);
+	
 		//============================================================
 		//....6....write out to DB file
 		if (rank==0){
 			LG->write("writing out simulations.....................",verbose);
-			write_out_null_stats( PSSMS,OUT,  P, background,background_forward);
+			write_out_null_stats( PSSMS,OUT,  P, background,background_forward, D);
 			LG->write("done\n",verbose);
 		}
 		if (rank==0){

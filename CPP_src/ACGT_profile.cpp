@@ -77,7 +77,66 @@ void get_ACGT_profile_all(map<string, vector<segment> > S,
 			background_reverse[i][j]/=SUM_r;
 		}
 	}
+}
+
+void get_1st_order_markov(map<string, vector<segment> > S, vector<double ** > & D){
+
+	typedef map<string, vector<segment> >::iterator it_type;
+	typedef vector<segment>::iterator it_type_2;
+	double N 	= 0;
+	for (int i = 0 ; i < 2000; i++){
+		D[i] 	= new double*[4];
+		for (int u = 0 ; u < 4; u++){
+			D[i][u] 	= new double[4];
+			for (int v = 0 ; v < 4; v++){
+				D[i][u][v] 	= 0;
+			}
+		}
+
+	}
+	for (it_type c = S.begin(); c!=S.end(); c++){
+		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
+
+			for (int i = 0 ; i <2000 ; i++ ){
+				if (i == 0){
+					for (int u = 0 ; u < 4; u++){
+						for (int v = 0 ; v < 4; v++){
+							D[i][u][v]+=s->forward[i];
+						}
+					}
+				}else{
+					D[i][s->forward[i-1]][s->forward[i]]++;
+				}
+			}
+		}
+	}
+	for (int i = 0 ; i < D.size(); i++){
+		for (int u = 0 ; u < 4; u++){
+			double S 	= 0;
+			for (int v = 0 ; v < 4; v++){
+				S+=D[i][u][v];
+			}
+			for (int v = 0 ; v < 4; v++){
+				D[i][u][v]/=S;
+			}
+		}
+		// 
+	}
+
+
+
 
 
 
 }
+
+
+
+
+
+
+
+
+
+
+

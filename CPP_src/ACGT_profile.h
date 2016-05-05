@@ -12,4 +12,5 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 void get_ACGT_profile_all(map<string, vector<segment> > , 
 	vector<vector<double>> &,
 vector<vector<double>> &,  int);
+void get_1st_order_markov(map<string, vector<segment> >,vector<double ** > &  );
 #endif

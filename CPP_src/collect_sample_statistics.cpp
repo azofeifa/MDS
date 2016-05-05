@@ -229,7 +229,6 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 				enriched++;
 			}
 			k 	= distribution(gen);
-			//k 	= get_sample(CDF, U);
 			current_collection_spec.push_back(k);
 				
 		}

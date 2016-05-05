@@ -71,6 +71,30 @@ vector<vector<int>> make_random_draws(	int sim_N,
 	}
 	return DD;
 }
+
+vector<vector<int>> make_random_draws_from_markov(int sim_N, PSSM * p, 
+				double threshold,vector<vector<discrete_distribution<int>>> D_forward_MM){
+	vector<vector<int>> DD(sim_N);
+	random_device rd;
+	discrete_distribution<int> U 	= {0.25,0.25,0.25,0.25};
+	map<int, int> G;
+	G[0] 	=3,G[3] 	=0,G[1] 	=2,G[2] 	=1;
+	#pragma omp parallel for
+	for (int s = 0 ; s < sim_N; s++){//number of random samples
+		mt19937 gen(rd()*s);
+		int forward[2000], reverse[2000];
+		forward[0] 	= U(gen);
+		reverse[0] 	= G[forward[0]];
+		for (int i = 1 ; i < 2000; i++){
+			forward[i] 	= D_forward_MM[i-1][forward[i-1]](gen);
+			reverse[i] 	= G[forward[i]];
+		}
+		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, threshold);
+	}
+	return DD;
+}
+
+
 vector<int> to_vector(int * array, int S){
 	vector<int> A(S);
 	for (int s = 0 ; s < S; s++){
@@ -79,8 +103,7 @@ vector<int> to_vector(int * array, int S){
 	return A;
 }
 
-void send_out_null_displacement_data(vector<vector<int>> & D, int rank, 
-										int nprocs, int ind_N){
+void send_out_null_displacement_data(vector<vector<int>> & D, int rank, int nprocs, int ind_N){
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
 			for (int k = 0 ; k < ind_N; k++){
@@ -120,25 +143,33 @@ string get_dots(int N){
 void run_simulations(map<string, vector<segment>> intervals, 
 		vector<PSSM *> P, int sim_N,
 		vector<vector<double>> background_forward, vector<vector<double>>  background_reverse,
-		vector<double> background, double threshold,int rank, int nprocs,Log_File * LG){
+		vector<double> background, double threshold,int rank, int nprocs,Log_File * LG, int order,
+		vector<double ** > MM){
 
 
-	for (int i =0 ; i < 4; i++){
-		background[i] 	= log(background[i]);
-	}
-	
 	vector<discrete_distribution<int>> D_forward;
 	vector<discrete_distribution<int>> D_reverse;
-	for (int i = 0 ; i < background_forward.size(); i++){
-		discrete_distribution<int> Df {background_forward[i][0],background_forward[i][1],background_forward[i][2],background_forward[i][3]};
-		discrete_distribution<int> Dr {background_reverse[i][0],background_reverse[i][1],background_reverse[i][2],background_reverse[i][3]};
-		D_forward.push_back(Df);
-		D_reverse.push_back(Dr);
+
+	vector<vector<discrete_distribution<int>>> D_forward_MM(2000);
+
+	if (order==0){
+		for (int i = 0 ; i < background_forward.size(); i++){
+			discrete_distribution<int> Df {background_forward[i][0],background_forward[i][1],background_forward[i][2],background_forward[i][3]};
+			discrete_distribution<int> Dr {background_reverse[i][0],background_reverse[i][1],background_reverse[i][2],background_reverse[i][3]};
+			D_forward.push_back(Df);
+			D_reverse.push_back(Dr);
+		}
+	}else{
+		for (int i = 0 ; i < MM.size(); i++){
+			vector<discrete_distribution<int>> current(4);
+			for (int u = 0 ; u < 4; u++){
+				discrete_distribution<int> Df {MM[i][u][0],MM[i][u][1],MM[i][u][2],MM[i][u][3]};
+				current[u] 	= Df;
+			}
+			D_forward_MM[i] 	= current;
+
+		}
 	}
-
-	random_device rd;
-
-	mt19937 gen(rd()*rank);
 	
 	int ind_N 	= sim_N / nprocs;
 	clock_t t;
@@ -150,9 +181,13 @@ void run_simulations(map<string, vector<segment>> intervals,
 		int S 	= P[p]->frequency_table.size(), hit=0;
 		vector<int> seqf(S);
 		vector<int> seqr(S);
-		vector<vector<int>> DD 							= make_random_draws(ind_N, seqf, seqr, 
-			D_forward, D_reverse, background, P[p], threshold );
-
+		vector<vector<int>> DD ;
+		if (order==0){
+			DD 							= make_random_draws(ind_N, seqf, seqr, 
+				D_forward, D_reverse, background, P[p], threshold );
+		}else{
+			DD 							= make_random_draws_from_markov(ind_N,P[p], threshold, D_forward_MM);
+		}
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		P[p]->null_displacements 	= DD;
 		double wall1 = get_wall_time();
@@ -169,7 +204,6 @@ void run_simulations(map<string, vector<segment>> intervals,
 			}
 		}
 	}
-
 }	
 
 

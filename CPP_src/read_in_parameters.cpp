@@ -14,6 +14,7 @@ params::params(){
 	p["-bsn"] 		= "100";
 	p["-log_out"] 	= "";
 	p["-t"] 		= "0";
+	p["-order"] 	= "0";
 
 	module 		= "";
 	EXIT 		= false;

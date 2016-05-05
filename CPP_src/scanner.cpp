@@ -175,7 +175,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			array_of_final_displacements[p] 	= final_displacements;
 		}
 		t = clock() - t;
-		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
+		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
 	}
 	if (rank==0){
 		LG->write("computing boostrapped distribution..........", 1);

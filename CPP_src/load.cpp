@@ -135,7 +135,6 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 					for (int k = start; k < b; k++ ){
 						u 	= i;
 						while (u < N and k > current[u].start){
-
 							if (k <= current[u].stop){
 								current[u].seq+=line[l];
 							}
@@ -395,7 +394,8 @@ const std::string currentDateTime() {
 }
 
 
-void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<double> background, vector<vector<double>> MAP_background){
+void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, 
+	vector<double> background, vector<vector<double>> MAP_background, vector<double ** > M){
 	
 	string fasta_file 			= PP->p["-fasta"];
 	string bed_file 			= PP->p["-bed"];
@@ -459,6 +459,13 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, vector<
 	FHW<<"#Estimated Background Distribution\n";
 	for (int i = 0 ; i < MAP_background.size(); i++){
 		FHW<<"#\t"+ to_string(MAP_background[i][0])+","+to_string(MAP_background[i][1])+","+to_string(MAP_background[i][2])+","+to_string(MAP_background[i][3])+ "\n";
+	}
+	FHW<<"#Estimate Markov Chain\n";
+	for (int i = 0 ; i < M.size(); i++){
+		FHW<<"#$" + to_string(i)+"\n";
+		for (int u = 0 ; u < 4; u++){
+			FHW<<"#\t" + to_string(M[i][u][0])+","+to_string(M[i][u][1]) + "," + to_string(M[i][u][2]) + "," + to_string(M[i][u][3])+ "\n";
+		}
 	}
 
 }
