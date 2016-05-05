@@ -47,7 +47,7 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 
 
 vector<int> get_sig_positions(int forward[2000], 
-	int reverse[2000], int N, PSSM * p, vector<double> background, double pv){
+	int reverse[2000], int N, PSSM * p, double pv){
 
 	vector<int> locs_pvs;
 	int length 	= p->frequency_table.size();
@@ -63,16 +63,17 @@ vector<int> get_sig_positions(int forward[2000],
 		l 		= i + length-1;
 		for (k=0; k < length; k++){
 			f 	= forward[j], r 	= reverse[l];
-			llf+= (p->frequency_table[k][f])  ;
+			llf+= (p->frequency_table[k][f]) ;
 			llr+= (p->frequency_table[k][r]) ;
 			j++;
 			l--;
 		}
-		pvaluef 	= 1.0-p->get_pvalue(llf*2);
-		pvaluer 	= 1.0-p->get_pvalue(llr*2);
+
+
+		pvaluef 	= 1.0-p->get_pvalue(llf);
+		pvaluer 	= 1.0-p->get_pvalue(llr);
 		if (pvaluef < pv){
-			locs_pvs.push_back(i);
-			
+			locs_pvs.push_back(i);	
 		}
 		if (pvaluer < pv){
 			locs_pvs.push_back(i);
@@ -161,7 +162,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
 		#pragma omp parallel for
 		for (int i = 0 ; i < stop-start; i++ ){
-			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], background, pv);
+			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], pv);
 		}
 		vector<int> final_displacements;
 		for (int i =0 ; i < displacements.size(); i++){

@@ -18,8 +18,7 @@ map<string, vector<segment> > run_accross2(map<string, vector<segment>>   ,
  vector<PSSM *>  , vector<vector<double>>,vector<vector<double>>  , double  , int, string,string  );
 
 vector<int> get_sig_positions(int [2000], 
-	int [2000], int, PSSM * , 
-	vector<double> , double );
+	int [2000], int, PSSM *  , double );
 void scan_intervals(map<string, vector<segment>> ,vector<PSSM *>  , vector<double> , double  , int  , int  , 
  						int  , int  , Log_File *);
 

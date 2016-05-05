@@ -156,7 +156,7 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background, 
 	for (int p = 0 ; p < P.size();p++){
 		for (int s = 0 ; s < P[p]->frequency_table.size();s++){
 			for (int i = 0 ; i < 4; i++){
-				P[p]->frequency_table[s][i] 	= log(P[p]->frequency_table[s][i]) - log(background[i]);
+				P[p]->frequency_table[s][i] 	= 2*(log(P[p]->frequency_table[s][i]) - log(background[i]));
 			}
 		}
 	}

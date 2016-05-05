@@ -57,14 +57,17 @@ vector<vector<int>> make_random_draws(	int sim_N,
 										vector<double> background, PSSM * p, double threshold){
 	vector<vector<int>> DD(sim_N);
 	random_device rd;
-
+	map<int, int> G;
+	G[0] 	=3,G[3] 	=0,G[1] 	=2,G[2] 	=1;
 	#pragma omp parallel for
 	for (int s = 0 ; s < sim_N; s++){//number of random samples
 		mt19937 gen(rd()*s);
 		int forward[2000], reverse[2000];
-		gen 		= get_rand_seq_2(forward, reverse, D_forward, D_reverse, gen);
-		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, background, threshold);
-		
+		for (int i = 0 ; i < 2000; i++){
+			forward[i] 	= D_forward[i](gen);
+			reverse[i] 	= G[forward[i]];
+		}
+		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, threshold);
 	}
 	return DD;
 }
@@ -124,7 +127,6 @@ void run_simulations(map<string, vector<segment>> intervals,
 		background[i] 	= log(background[i]);
 	}
 	
-
 	vector<discrete_distribution<int>> D_forward;
 	vector<discrete_distribution<int>> D_reverse;
 	for (int i = 0 ; i < background_forward.size(); i++){
@@ -156,7 +158,7 @@ void run_simulations(map<string, vector<segment>> intervals,
 		double wall1 = get_wall_time();
 		t = clock() - t;
 
-		LG->write("done: " + to_string(float(t)/(threads*CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
+		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
 	//transform back to frequency domain
 	for (int p = 0; p < P.size(); p++){ //
