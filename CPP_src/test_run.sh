@@ -1,6 +1,6 @@
-DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/test_new_motif_db_format.txt
+DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/HOCOMOCO_DB_reformatted_human.txt
 DB2=/Users/joazofeifa/Desktop/generated_DB.txt
-fasta=~/Lab/genome_files/hg19.fa
+fasta=/Users/joazofeifa/Lab/genome_files/test_hg19.fa
 log_out=/Users/joazofeifa/Lab/log_out/
 bed=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/test_Allen2014_DMSO2_3-19_divergent_classifications.bed
 out=/Users/joazofeifa/Desktop/generated_DB.txt
@@ -14,6 +14,7 @@ NP=3
 site_br=10
 boot_strap_number=1000
 test=1
-mpirun -np $NP ./SE DB -DB $DB -fasta $fasta -bed $bed -o $out -sim_N $simN -br $br -pv $pv -log_out $log_out
+PSSM_test=5
+mpirun -np $NP ./SE DB -DB $DB -fasta $fasta -bed $bed -o $out -sim_N $simN -br $br -pv $pv -log_out $log_out -t $PSSM_test
 
 #mpirun -np $NP ./SE EVAL -DB $DB2 -fasta $fasta -bed $bed -o $out2 -bsn $boot_strap_number -log_out $log_out -ID $ID

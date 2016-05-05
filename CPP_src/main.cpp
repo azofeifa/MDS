@@ -49,6 +49,7 @@ int main(int argc,char* argv[]){
 		int bins 					= stoi(P->p["-br"]);
 		int interval_size 			= 0;
 		int verbose 				= 1;
+		int PSSM_test 				= stoi(P->p["-t"]);
 		vector<PSSM *> PSSMS;
 		//============================================================
 
@@ -59,7 +60,7 @@ int main(int argc,char* argv[]){
 		//....1.... Load PSSM Database
 
 		LG->write("loading PSSM DB.............................", verbose);
-		PSSMS 		= load_PSSM_DB_new(PSSM_DB, test );
+		PSSMS 		= load_PSSM_DB_new(PSSM_DB, PSSM_test );
 		LG->write("done\n", verbose);
 		//============================================================
 		//....2.... Compute P-values, approximation error ~ 1.0 / bins

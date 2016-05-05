@@ -13,6 +13,7 @@ params::params(){
 	p["-br"] 		= "100";
 	p["-bsn"] 		= "100";
 	p["-log_out"] 	= "";
+	p["-t"] 		= "0";
 
 	module 		= "";
 	EXIT 		= false;

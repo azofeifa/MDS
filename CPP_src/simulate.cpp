@@ -25,6 +25,18 @@ mt19937  get_rand_seq(vector<int> & seq,  discrete_distribution<int> B, mt19937 
 }
 
 
+mt19937  get_rand_seq_2( int forward[2000], int reverse[2000],  
+							vector<discrete_distribution<int>> D_forward, 
+							vector<discrete_distribution<int>> D_reverse,
+							mt19937 g){
+	for (int i = 0 ; i < 2000; i++){
+		forward[i] 	= D_forward[i](g),reverse[i] 	= D_reverse[i](g);
+	}
+	return g;
+}
+
+
+
 int get_pvalue_llr(vector<int> seq, vector<double> background, double threshold, PSSM * p){
 	int length 	= seq.size();
 	double ll 	= 0;
@@ -44,27 +56,15 @@ vector<vector<int>> make_random_draws(	int sim_N,
 										vector<discrete_distribution<int>> D_reverse,
 										vector<double> background, PSSM * p, double threshold){
 	vector<vector<int>> DD(sim_N);
-	int hit;
 	random_device rd;
 
 	#pragma omp parallel for
 	for (int s = 0 ; s < sim_N; s++){//number of random samples
 		mt19937 gen(rd()*s);
-
-		vector<int> 	D;
-		for (int d 	= 0 ; d < D_forward.size(); d++ ){
-			gen 	= get_rand_seq(seqf,D_forward[d], gen );
-			gen 	= get_rand_seq(seqr,D_reverse[d], gen );
-			hit 	= get_pvalue_llr(seqf, background,threshold, p );
-			if (hit){
-				D.push_back(d);
-			}
-			hit 	= get_pvalue_llr(seqr, background,threshold, p );
-			if (hit){
-				D.push_back(d);
-			}
-		}
-		DD[s]=D;
+		int forward[2000], reverse[2000];
+		gen 		= get_rand_seq_2(forward, reverse, D_forward, D_reverse, gen);
+		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, background, threshold);
+		
 	}
 	return DD;
 }
@@ -135,7 +135,7 @@ void run_simulations(map<string, vector<segment>> intervals,
 	}
 
 	random_device rd;
-	// Initialize Mersenne Twister pseudo-random number generator
+
 	mt19937 gen(rd()*rank);
 	
 	int ind_N 	= sim_N / nprocs;
@@ -158,7 +158,7 @@ void run_simulations(map<string, vector<segment>> intervals,
 
 		LG->write("done: " + to_string(float(t)/(threads*CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
-	//transform back to frequency space
+	//transform back to frequency domain
 	for (int p = 0; p < P.size(); p++){ //
 		for (int i = 0; i < P[p]->frequency_table.size(); i++){
 			for (int j = 0 ; j < 4;j++){

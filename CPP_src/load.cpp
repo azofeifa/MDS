@@ -329,11 +329,11 @@ void PSSM::bin_null_displacements(){
 
 
 
-vector<PSSM *> load_PSSM_DB_new(string FILE, int test){
+vector<PSSM *> load_PSSM_DB_new(string FILE, int threshold){
 	ifstream FH(FILE);
 	vector<PSSM *> 	PS;
 	PSSM * P 	= NULL;
-		
+	bool test  	= threshold > 0;
 	if (FH){
 		vector<string>line_array;
 		string MOTIF 	= "", line 	= "";
@@ -346,7 +346,7 @@ vector<PSSM *> load_PSSM_DB_new(string FILE, int test){
 				}
 				line_array 	= split_by_comma(line.substr(1,line.size()-1), " ");				
 				if (0<line_array.size() and line_array.size()<3){
-					if (test and t > 4){
+					if (test and t > threshold){
 						return PS;	
 					}
 					
