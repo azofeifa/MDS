@@ -11,12 +11,17 @@ def load_stats_file(FILE, BOOT=False):
 	i 			= 0
 	begin 	= True
 	boot 	= False
+	OBS 	= False
 	with open(FILE) as FH:
 		for line in FH:
-			if begin and "#Empiracle" in line:
+			if begin and  "#Binned" == line[:7]:
+				begin 	= False
+				OBS 	= True
+			elif OBS and "#Empiracle" in line:
 				begin 	= False
 				boot 	= BOOT
-
+				OBS 	= False
+	
 			elif begin and line[0]!="#":
 				line_arrray 	= line.strip("\n").split("\t")
 				name,N, MD, E 	= line_arrray[:4]
@@ -46,4 +51,4 @@ if __name__ == "__main__":
 	Nutlin 	= "/Users/joazofeifa/Lab/new_motif_distances/out_files/Allen2014_Nutlin_3_enrichment_stats.txt"
 
 	DMSO 	= load_stats_file(DMSO)
-	Nutlin 	= load_stats_file(Nutlin)
+	#Nutlin 	= load_stats_file(Nutlin)
