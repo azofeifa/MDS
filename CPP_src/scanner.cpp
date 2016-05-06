@@ -196,7 +196,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);
-		LG->write("\ninterval size " + to_string(interval_size) + "\n\n" ,1 )
+		LG->write("\ninterval size " + to_string(interval_size) + "\n\n" ,1 );
 	}
 
 
