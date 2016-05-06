@@ -15,6 +15,7 @@ params::params(){
 	p["-log_out"] 	= "";
 	p["-t"] 		= "0";
 	p["-order"] 	= "0";
+	p["-window"] 	= "100";
 
 	module 		= "";
 	EXIT 		= false;

@@ -124,6 +124,7 @@ int main(int argc,char* argv[]){
 		int test 					= 0;
 		int job_ID 					= 1;
 		double window 				= 1000;
+		int MD_window 				= stoi(P->p["-window"]);
 		int verbose 				= 1;
 		int interval_size 			= 0;
 		//the rest of the parameters will be in the DB file
@@ -177,7 +178,7 @@ int main(int argc,char* argv[]){
 		
 		scan_intervals(intervals, PSSMS, background, 
  								pv,  interval_size,   BSN, 
- 								rank,   nprocs,   LG);
+ 								rank,   nprocs,   LG, MD_window);
 
 		
 		//============================================================

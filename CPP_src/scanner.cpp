@@ -143,7 +143,7 @@ string get_dots_2(int N){
 void scan_intervals(map<string, vector<segment>> S ,
  												vector<PSSM *> PSSMS, vector<double> background, 
  												double pv, int interval_size, int bsn, 
- 												int rank, int nprocs, Log_File * LG){
+ 												int rank, int nprocs, Log_File * LG, int MD_window){
 
 	vector<segment> D 	= collapse_map(S);
 	int threads  		= omp_get_max_threads();
@@ -184,19 +184,18 @@ void scan_intervals(map<string, vector<segment>> S ,
 		#pragma omp parallel for
 		for (int p = 0 ; p < PSSMS.size(); p++){
 			vector<int> final_displacements 	= array_of_final_displacements[p];
-			double MD_score 		= get_MD_score(final_displacements,100,true);
-			double ENRICH_score 	= get_MD_score(final_displacements,100,false);
+			double MD_score 		= get_MD_score(final_displacements,MD_window,true);
+			double ENRICH_score 	= get_MD_score(final_displacements,MD_window,false);
 			double NN 				= final_displacements.size();
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN);
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window);
 			PSSMS[p]->get_pvalue_stats();
 			PSSMS[p]->observed_displacements 	= final_displacements;
 		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);
-		LG->write("\ninterval size " + to_string(interval_size) + "\n\n" ,1 );
 	}
 
 

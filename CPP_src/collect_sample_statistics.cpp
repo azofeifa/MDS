@@ -202,7 +202,7 @@ double get_MD_from_binned(vector<int> displacements , int window ){
 
 
 
-void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
+void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int MD_window){
 	random_device rd;
 	// Initialize Mersenne Twister pseudo-random number generator
 	mt19937 gen(rd());
@@ -213,7 +213,7 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 
 	turn_to_CDF(CDF,displacements, total_N);
 	double bias 				= P->zeros / (P->zeros + total_N);
-	double bias_2 				= get_MD_from_binned(P->null_displacements_2,100)/total_N;
+	double bias_2 				= get_MD_from_binned(P->null_displacements_2,MD_window)/total_N;
 
 	discrete_distribution<int> distribution(CDF.begin(),CDF.end());
 	uniform_real_distribution<double> distribution_2(0,1);
@@ -225,14 +225,20 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size){
 		int spec_N 	= 0;
 		int k 		= 0;
 		for (int i = 0 ; i < interval_size ; i ++){
-			if (distribution_2(gen) > bias && distribution_2(gen) < bias_2  ){
-				enriched++;
+			if (distribution_2(gen) > bias  ){
+				int t 	= 0;
+				while(distribution_2(gen) < bias_2 and t < 4){
+					enriched++;
+					t++;
+				}
+
 			}
-			k 	= distribution(gen);
-			current_collection_spec.push_back(k);
-				
 		}
-		double MD_score 	= get_MD_score(current_collection_spec, 100,true);
+		for (int i = 0 ; i < hit_size; i++ ){
+			k 	= distribution(gen);
+			current_collection_spec.push_back(k);				
+		}
+		double MD_score 	= get_MD_score(current_collection_spec, MD_window,true);
 		MD_scores.push_back(MD_score);
 		ENRICHMENT.push_back(enriched);
 
