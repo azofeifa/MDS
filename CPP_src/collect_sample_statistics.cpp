@@ -202,40 +202,65 @@ double get_MD_from_binned(vector<int> displacements , int window ){
 
 
 
-void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int MD_window){
+void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int MD_window, double TSS_association){
 	random_device rd;
 	// Initialize Mersenne Twister pseudo-random number generator
 	mt19937 gen(rd());
 	
-	vector<int> displacements 			= P->null_displacements_2;
-	double total_N 	= 0;
-	vector<double> CDF;
+	
+	double total_N 		= 0;
+	double total_N_non 	= 0;
 
-	turn_to_CDF(CDF,displacements, total_N);
-	double bias 				= P->zeros / (P->zeros + total_N);
+	vector<double> CDF;
+	vector<double> CDF_non;
+
+	turn_to_CDF(CDF,P->null_displacements_2, total_N);
+	turn_to_CDF(CDF_non,P->null_displacements_2_non, total_N_non);
+
+	double bias 				= P->zeros     / (P->zeros + total_N);
+	double bias_non 			= P->zeros_non / (P->zeros_non + total_N_non);
+
 	double bias_2 				= get_MD_from_binned(P->null_displacements_2,MD_window)/total_N;
+	double bias_2_non 			= get_MD_from_binned(P->null_displacements_2_non,MD_window)/total_N_non;
+
+
 
 	discrete_distribution<int> distribution(CDF.begin(),CDF.end());
+	discrete_distribution<int> distribution_non(CDF_non.begin(),CDF_non.end());
+
+
 	uniform_real_distribution<double> distribution_2(0,1);
 	vector<double> MD_scores;
 	vector<double> ENRICHMENT;
+
+
+
 	for (int b = 0 ; b < bsn; b++){//make this number of random collections
 		double enriched 	= 0;
 		vector<int> current_collection_spec;
 		int spec_N 	= 0;
 		int k 		= 0;
+		int t 		= 0;
+		double U;
 		for (int i = 0 ; i < interval_size ; i ++){
-			if (distribution_2(gen) > bias  ){
-				int t 	= 0;
-				while(distribution_2(gen) < bias_2 and t < 4){
+			t 		= 0;
+			while (true and t < 4){
+				U 	= distribution_2(gen);
+				if ((U < TSS_association and distribution_2(gen) > bias  ) or (U > TSS_association and distribution_2(gen) > bias_non  )) {
 					enriched++;
-					t++;
+				}else{
+					break;
 				}
-
+				t++;
 			}
 		}
 		for (int i = 0 ; i < hit_size; i++ ){
-			k 	= distribution(gen);
+			U 	= distribution_2(gen);
+			if (U < TSS_association){
+				k 	= distribution(gen);
+			}else{
+				k 	= distribution_non(gen);	
+			}
 			current_collection_spec.push_back(k);				
 		}
 		double MD_score 	= get_MD_score(current_collection_spec, MD_window,true);

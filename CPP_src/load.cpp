@@ -330,7 +330,6 @@ void PSSM::bin_null_displacements(){
 			binned_null_displacements_non[x]++;
 		}
 	}
-
 }
 
 
@@ -517,7 +516,6 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 			FHW<<"#\t" + to_string(MN[i][u][0])+","+to_string(MN[i][u][1]) + "," + to_string(MN[i][u][2]) + "," + to_string(MN[i][u][3])+ "\n";
 		}
 	}
-
 }
 
 vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
@@ -680,6 +678,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 		vector<string> line_array_2;
 		
 		bool header 	= true;
+		int counter 	= 0;
 		while (getline(FH,line)){
 			if (line.substr(0,1)=="#" and not header){
 				//fill in P
@@ -699,6 +698,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 				if (pssm != NULL){
 					PSSMS.push_back(pssm);
 				}
+				counter 	= 0;
 				pssm 	= new PSSM(line.substr(1,line.size()-1));
 			}else if(pssm != NULL and line.substr(0,1)!="~" and line.substr(0,1)!="#"){
 				line_array 	= split_by_comma(line, "");
@@ -714,9 +714,19 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 				line_array 		= split_by_comma(line_array[1], " ");
 				for (int i = 0 ; i < line_array.size(); i++){
 					int x 		= stoi(line_array[i]);
-					pssm->null_displacements_2.push_back(x);						
+					if (counter == 0){
+						pssm->null_displacements_2.push_back(x);						
+					}else{
+						pssm->null_displacements_2_non.push_back(x);							
+					}
 				}
-				pssm->zeros 	= zeros;
+				if (counter == 0){
+					pssm->zeros 		= zeros;
+				}else{
+					pssm->zeros_non 	= zeros;	
+				}
+				counter++;
+			
 			}
 			header 		= false;
 
@@ -751,7 +761,7 @@ vector<segment> merge(vector<segment> S, string chr){
 
 
 
-map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<string, vector<segment>> TSS){
+map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<string, vector<segment>> TSS, double & TSS_percent){
 	//need to sort both
 	typedef map<string, vector<segment>>::iterator it_type;
 	//merge and sort TSS
@@ -772,18 +782,17 @@ map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<stri
 		}
 		S[c->first] 	= c->second;
 	}
-	int tss = 0 , NOT = 0;
+	int tss = 0 , ALL = 0;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (int i = 0 ; i < c->second.size(); i++){
 			if (c->second[i].TSS){
-				tss++;
-			}else{
-				NOT++;
+				TSS_percent++;
 			}
+			ALL++;
 		}
 	}
+	TSS_percent 	= TSS_percent / ALL;
 	return S;
-
 }
 
 

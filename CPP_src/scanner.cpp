@@ -143,7 +143,7 @@ string get_dots_2(int N){
 void scan_intervals(map<string, vector<segment>> S ,
  												vector<PSSM *> PSSMS, vector<double> background, 
  												double pv, int interval_size, int bsn, 
- 												int rank, int nprocs, Log_File * LG, int MD_window){
+ 												int rank, int nprocs, Log_File * LG, int MD_window,double TSS_association){
 
 	vector<segment> D 	= collapse_map(S);
 	int threads  		= omp_get_max_threads();
@@ -190,7 +190,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window);
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,TSS_association);
 			PSSMS[p]->get_pvalue_stats();
 			PSSMS[p]->observed_displacements 	= final_displacements;
 		}

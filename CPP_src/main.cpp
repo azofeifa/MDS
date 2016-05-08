@@ -89,8 +89,9 @@ int main(int argc,char* argv[]){
 		//....5.... label intervals as TSS and not
 
 		LG->write("labeling TSS association....................", verbose);
-		intervals 									= label_TSS(intervals, TSS_intervals);
-		LG->write("done\n", verbose);
+		double TSS_association =	0;
+		intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
+		LG->write("done, " + to_string(TSS_association*100)+" %\n", verbose);
 
 
 
@@ -151,6 +152,8 @@ int main(int argc,char* argv[]){
 		string bed_file 			= P->p["-bed"];
 		string DB_file 				= P->p["-DB"];
 		string OUT 					= P->p["-o"]; 
+		string TSS_bed_file 		= P->p["-TSS"];
+
 		int BSN 					= stoi(P->p["-bsn"]);
 		int test 					= 0;
 		int job_ID 					= 1;
@@ -183,12 +186,38 @@ int main(int argc,char* argv[]){
 		int bins 		= stoi(P->p["-bins"]);
 		double pv 		= stod(P->p["-pv"]);
 
+
 		//============================================================
-		//....2.... Load user provided intervals
+		//....3.... load intervals from user 
 		LG->write("loading intervals...........................", verbose);
-		map<string, vector<segment>> intervals 	= load_bed_file(bed_file, window,interval_size); 
+		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size); 
+		LG->write("done\n", verbose);
+
+		//============================================================
+		//....4.... load TSS intervals from user 
+
+		LG->write("loading TSS intervals.......................", verbose);
+		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size); 
 		LG->write("done\n", verbose);
 		
+		//============================================================
+		//....5.... label intervals as TSS and not
+
+		LG->write("labeling TSS association....................", verbose);
+		double TSS_association =	0;
+		intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
+		LG->write("done, " + to_string(TSS_association*100)+" %\n", verbose);
+
+
+
+		
+		//============================================================
+		//....4.... insert the fasta sequnece into the provided intervals
+		LG->write("inserting fasta.............................", verbose);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,test);
+		LG->write("done\n", verbose);
+		
+
 		//============================================================
 		//....3.... Computed LLR distribution for motifs
 		LG->write("computing p-values..........................", verbose);
@@ -196,20 +225,13 @@ int main(int argc,char* argv[]){
 		LG->write("done\n", verbose);
 
 
-		
-		//============================================================
-		//....5.... insert the fasta sequnece into the provided intervals
-		LG->write("inserting fasta.............................", verbose);
-		intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
-		LG->write("done\n",verbose);
-		
 		//============================================================
 		//....6.... scan the provided intervals
 		LG->write("\n         scanning intervals\n\n",verbose);
 		
 		scan_intervals(intervals, PSSMS, background, 
  								pv,  interval_size,   BSN, 
- 								rank,   nprocs,   LG, MD_window);
+ 								rank,   nprocs,   LG, MD_window, TSS_association);
 
 		
 		//============================================================

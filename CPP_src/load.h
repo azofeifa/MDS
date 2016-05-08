@@ -16,7 +16,11 @@ public:
 	vector<vector<double>> pvalues;
 	vector<vector<int>> null_displacements;
 	vector<vector<int>> null_displacements_non;
+	
 	vector<int> null_displacements_2;
+	vector<int> null_displacements_2_non;
+
+	
 	vector<int> observed_displacements; 
 	vector<int> binned_observed_displacements; 
 	
@@ -25,6 +29,8 @@ public:
 
 
 	double zeros; 
+	double zeros_non;
+
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
 	vector<vector<double> > MD_CDF;
@@ -88,6 +94,6 @@ void write_out_stats(vector<PSSM *>, string, params *);
 
 void collect_all_tmp_files(string , string , int  , int );
 
-map<string, vector<segment>> label_TSS(map<string, vector<segment>> , map<string, vector<segment>> );
+map<string, vector<segment>> label_TSS(map<string, vector<segment>> , map<string, vector<segment>>,double & );
 
 #endif
