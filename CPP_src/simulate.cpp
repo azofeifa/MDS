@@ -53,7 +53,6 @@ int get_pvalue_llr(vector<int> seq, vector<double> background, double threshold,
 vector<vector<int>> make_random_draws(	int sim_N, 
 										vector<int> seqf, vector<int> seqr, 
 										vector<discrete_distribution<int>> D_forward,
-										vector<discrete_distribution<int>> D_reverse,
 										vector<double> background, PSSM * p, double threshold){
 	vector<vector<int>> DD(sim_N);
 	random_device rd;
@@ -142,9 +141,9 @@ string get_dots(int N){
 
 void run_simulations(map<string, vector<segment>> intervals, 
 		vector<PSSM *> P, int sim_N,
-		vector<vector<double>> background_forward, vector<vector<double>>  background_reverse,
+		vector<vector<double>> background_D,
 		vector<double> background, double threshold,int rank, int nprocs,Log_File * LG, int order,
-		vector<double ** > MM){
+		vector<double ** > MM, int TSS){
 
 
 	vector<discrete_distribution<int>> D_forward;
@@ -153,11 +152,9 @@ void run_simulations(map<string, vector<segment>> intervals,
 	vector<vector<discrete_distribution<int>>> D_forward_MM(2000);
 
 	if (order==0){
-		for (int i = 0 ; i < background_forward.size(); i++){
-			discrete_distribution<int> Df {background_forward[i][0],background_forward[i][1],background_forward[i][2],background_forward[i][3]};
-			discrete_distribution<int> Dr {background_reverse[i][0],background_reverse[i][1],background_reverse[i][2],background_reverse[i][3]};
+		for (int i = 0 ; i < background_D.size(); i++){
+			discrete_distribution<int> Df {background_D[i][0],background_D[i][1],background_D[i][2],background_D[i][3]};
 			D_forward.push_back(Df);
-			D_reverse.push_back(Dr);
 		}
 	}else{
 		for (int i = 0 ; i < MM.size(); i++){
@@ -184,26 +181,31 @@ void run_simulations(map<string, vector<segment>> intervals,
 		vector<vector<int>> DD ;
 		if (order==0){
 			DD 							= make_random_draws(ind_N, seqf, seqr, 
-				D_forward, D_reverse, background, P[p], threshold );
+				D_forward, background, P[p], threshold );
 		}else{
 			DD 							= make_random_draws_from_markov(ind_N,P[p], threshold, D_forward_MM);
 		}
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
-		P[p]->null_displacements 	= DD;
+		if (TSS){
+			P[p]->null_displacements 		= DD;
+		}else{
+			P[p]->null_displacements_non 	= DD;			
+		}
+
 		double wall1 = get_wall_time();
 		t = clock() - t;
 
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
-	//transform back to frequency domain
-	for (int p = 0; p < P.size(); p++){ //
-		for (int i = 0; i < P[p]->frequency_table.size(); i++){
-			for (int j = 0 ; j < 4;j++){
-				P[p]->frequency_table[i][j]+=(background[j]);
-				P[p]->frequency_table[i][j]=exp(P[p]->frequency_table[i][j]);
-			}
-		}
-	}
+	// //transform back to frequency domain
+	// for (int p = 0; p < P.size(); p++){ //
+	// 	for (int i = 0; i < P[p]->frequency_table.size(); i++){
+	// 		for (int j = 0 ; j < 4;j++){
+	// 			P[p]->frequency_table[i][j]+=(background[j]);
+	// 			P[p]->frequency_table[i][j]=exp(P[p]->frequency_table[i][j]);
+	// 		}
+	// 	}
+	// }
 }	
 
 

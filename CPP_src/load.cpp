@@ -14,6 +14,7 @@ segment::segment(string chr, int st, int sp, int ID, int rst, int rsp){
 	seq 	= "";
 	position=ID;
 	rstart = rst, rstop = rsp;
+	TSS 	= false;
 }
 
 
@@ -395,7 +396,8 @@ const std::string currentDateTime() {
 
 
 void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, 
-	vector<double> background, vector<vector<double>> MAP_background, vector<double ** > M){
+	vector<double> background, vector<vector<double>> MAP_background,vector<vector<double>> MAP_background_NON,
+	 vector<double ** > M,vector<double ** > MN){
 	
 	string fasta_file 			= PP->p["-fasta"];
 	string bed_file 			= PP->p["-bed"];
@@ -456,15 +458,26 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 		FHW<<line+"\n";	
 
 	}
-	FHW<<"#Estimated Background Distribution\n";
+	FHW<<"#Estimated Background Distribution (TSS)\n";
 	for (int i = 0 ; i < MAP_background.size(); i++){
 		FHW<<"#\t"+ to_string(MAP_background[i][0])+","+to_string(MAP_background[i][1])+","+to_string(MAP_background[i][2])+","+to_string(MAP_background[i][3])+ "\n";
 	}
-	FHW<<"#Estimate Markov Chain\n";
+	FHW<<"#Estimated Background Distribution (~TSS)\n";
+	for (int i = 0 ; i < MAP_background_NON.size(); i++){
+		FHW<<"#\t"+ to_string(MAP_background_NON[i][0])+","+to_string(MAP_background_NON[i][1])+","+to_string(MAP_background_NON[i][2])+","+to_string(MAP_background_NON[i][3])+ "\n";
+	}
+	FHW<<"#Estimate Markov Chain (TSS)\n";
 	for (int i = 0 ; i < M.size(); i++){
 		FHW<<"#$" + to_string(i)+"\n";
 		for (int u = 0 ; u < 4; u++){
 			FHW<<"#\t" + to_string(M[i][u][0])+","+to_string(M[i][u][1]) + "," + to_string(M[i][u][2]) + "," + to_string(M[i][u][3])+ "\n";
+		}
+	}
+	FHW<<"#Estimate Markov Chain (~TSS)\n";
+	for (int i = 0 ; i < MN.size(); i++){
+		FHW<<"#$" + to_string(i)+"\n";
+		for (int u = 0 ; u < 4; u++){
+			FHW<<"#\t" + to_string(MN[i][u][0])+","+to_string(MN[i][u][1]) + "," + to_string(MN[i][u][2]) + "," + to_string(MN[i][u][3])+ "\n";
 		}
 	}
 
@@ -484,10 +497,7 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 		}
 	}
 	return PSSMS;
-
 }
-
-
 
 void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 
@@ -552,13 +562,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		}
 		FHW<<line+ "\t" + line2<<endl;
 	}	
-
-
-
-
 }
-
-
 
 void load_PSSM_ID_names_only(string FILE, map<int, string> & G){
 	ifstream FH(FILE);
@@ -580,10 +584,7 @@ void load_PSSM_ID_names_only(string FILE, map<int, string> & G){
 	}else{
 
 	}
-
 }
-
-
 
 vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> streamed,vector<int> IDS,
 	vector<int> NS){
@@ -596,7 +597,6 @@ vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>> stream
 		PSSMS.push_back(current);
 	}
 	return PSSMS;
-
 }
 void collect_all_tmp_files(string dir, string job_name, int nprocs, int job_ID){
 	int c 	= 0;
@@ -694,7 +694,60 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 	return PSSMS;
 }
 
+vector<segment> merge(vector<segment> S, string chr){
+	vector<segment> newS;
+	int i = 0, o_st = 0, o_sp = 0;
+	int ID 	= 0;
+	while (i < S.size()){
+		o_st 	= S[i].start , o_sp = S[i].stop;
+		while (i < S.size() and S[i].start < o_sp and S[i].stop > o_st ){
+			o_st 	= min(S[i].start, o_st) , o_sp 	= max(S[i].stop, o_sp);
+			i++;
+		}
+		segment nS(chr, o_st, o_sp, ID, o_st, o_sp);
+		ID++;
+		newS.push_back(nS);
+	}
+	return newS;
+}
 
+
+
+
+map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<string, vector<segment>> TSS){
+	//need to sort both
+	typedef map<string, vector<segment>>::iterator it_type;
+	//merge and sort TSS
+	for (it_type c = TSS.begin(); c!=TSS.end(); c++){
+		TSS[c->first] = merge(c->second, c->first);
+	}	
+	for (it_type c = S.begin(); c!=S.end(); c++){
+		if (TSS.find(c->first)!=TSS.end()){
+			int j = 0, N = TSS[c->first].size();
+			for (int i = 0 ; i < c->second.size(); i++){
+				while (j < N and TSS[c->first][j].stop < c->second[i].start){
+					j++;
+				}
+				if (j < N and TSS[c->first][j].start < c->second[i].stop ){
+					c->second[i].TSS 	= true;
+				}
+			}
+		}
+		S[c->first] 	= c->second;
+	}
+	int tss = 0 , NOT = 0;
+	for (it_type c = S.begin(); c!=S.end(); c++){
+		for (int i = 0 ; i < c->second.size(); i++){
+			if (c->second[i].TSS){
+				tss++;
+			}else{
+				NOT++;
+			}
+		}
+	}
+	return S;
+
+}
 
 
 

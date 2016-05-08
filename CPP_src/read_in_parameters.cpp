@@ -2,6 +2,7 @@
 #include <iostream>
 using namespace std;
 params::params(){
+	p["-TSS"] 		= "";
 	p["-o"] 		= "";
 	p["-bed"] 		= "";
 	p["-fasta"] 	= "";

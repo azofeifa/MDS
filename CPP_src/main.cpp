@@ -39,6 +39,7 @@ int main(int argc,char* argv[]){
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
 		string bed_file 			= P->p["-bed"];
+		string TSS_bed_file 		= P->p["-TSS"];
 		string OUT 					= P->p["-o"];
 		string PSSM_DB 				= P->p["-DB"];
 		int job_ID 					= 1;
@@ -74,13 +75,30 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....3.... load intervals from user 
 		LG->write("loading intervals...........................", verbose);
-		map<string, vector<segment>> intervals 	= load_bed_file(bed_file, window,interval_size); 
+		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size); 
 		LG->write("done\n", verbose);
+
+		//============================================================
+		//....4.... load TSS intervals from user 
+
+		LG->write("loading TSS intervals.......................", verbose);
+		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size); 
+		LG->write("done\n", verbose);
+		
+		//============================================================
+		//....5.... label intervals as TSS and not
+
+		LG->write("labeling TSS association....................", verbose);
+		intervals 									= label_TSS(intervals, TSS_intervals);
+		LG->write("done\n", verbose);
+
+
+
 		
 		//============================================================
 		//....4.... insert the fasta sequnece into the provided intervals
 		LG->write("inserting fasta.............................", verbose);
-		intervals 								= insert_fasta_sequence(fasta_file, intervals,test);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,test);
 		LG->write("done\n", verbose);
 		
 
@@ -88,25 +106,38 @@ int main(int argc,char* argv[]){
 
 		//============================================================
 		//....5.... get generic GC content across intervals for background model
-		vector<vector<double>> background_forward, background_reverse;
-		vector<double ** > D(2000);
+		vector<vector<double>> background_TSS, background_non_TSS;
+		vector<double ** > D_TSS(2000);
+		vector<double ** > D_NON(2000);
 		LG->write("computing ACGT profile......................", verbose);
-		get_ACGT_profile_all(intervals, 
-			background_forward,background_reverse, rank);
-		get_1st_order_markov(intervals, D);
+		
+
+		get_ACGT_profile_all(intervals, background_TSS, 1);
+		get_ACGT_profile_all(intervals, background_non_TSS, 0);
+		
+		get_1st_order_markov(intervals, D_TSS, 1);
+		get_1st_order_markov(intervals, D_NON, 0);
+		
+
 		LG->write("done\n",verbose);
 
 		//============================================================
 		//....6.... perform simulations and get random MD scores
-		LG->write("\n     running simulations for null model\n\n",verbose);
-		run_simulations(intervals,PSSMS, sim_N,background_forward, 
-			background_reverse,background, pv, rank, nprocs, LG, order, D);
+		LG->write("\n   running simulations for null model (TSS)\n\n",verbose);
+		
+		run_simulations(intervals,PSSMS, sim_N,background_TSS,background, pv, rank, nprocs, LG, order, D_TSS,1);
+
+		LG->write("\n   running simulations for null model (~TSS)\n\n",verbose);
+		
+		run_simulations(intervals,PSSMS, sim_N,background_non_TSS,background, pv, rank, nprocs, LG, order, D_NON,0);
 	
 		//============================================================
 		//....6....write out to DB file
 		if (rank==0){
 			LG->write("writing out simulations.....................",verbose);
-			write_out_null_stats( PSSMS,OUT,  P, background,background_forward, D);
+
+			write_out_null_stats( PSSMS,OUT,  P, background,background_TSS, background_non_TSS, D_TSS, D_NON);
+
 			LG->write("done\n",verbose);
 		}
 		if (rank==0){

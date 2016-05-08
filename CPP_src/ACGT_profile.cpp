@@ -47,11 +47,10 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 }
 
 void get_ACGT_profile_all(map<string, vector<segment> > S, 
-	vector<vector<double>> & background_forward,vector<vector<double>> & background_reverse, int rank){
+	vector<vector<double>> & background, int TSS){
 	for (int i = 0 ; i < 2000; i++){
 		vector<double> current 	= {10,10,10,10};
-		background_forward.push_back(current);
-		background_reverse.push_back(current);
+		background.push_back(current);
 		
 	}
 
@@ -60,26 +59,26 @@ void get_ACGT_profile_all(map<string, vector<segment> > S,
 	double N 	= 0;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
-			for (int i = 0 ; i <2000 ; i++ ){
-				background_forward[i][s->forward[i]]++;
-				background_reverse[i][s->reverse[i]]++;
+
+			if ( (s->TSS and TSS) or (not s->TSS and not TSS) ){
+				for (int i = 0 ; i <2000 ; i++ ){
+					background[i][s->forward[i]]++;
+				}
 			}
 		}
 	}
 	for (int i = 0 ; i < 2000; i ++){
-		double SUM_f= 0, SUM_r=0;
+		double SUM= 0;
 		for (int j = 0; j < 4; j++ ){
-			SUM_f+=background_forward[i][j];
-			SUM_r+=background_reverse[i][j];
+			SUM+=background[i][j];
 		}
 		for (int j = 0; j < 4; j++ ){
-			background_forward[i][j]/=SUM_f;
-			background_reverse[i][j]/=SUM_r;
+			background[i][j]/=SUM;
 		}
 	}
 }
 
-void get_1st_order_markov(map<string, vector<segment> > S, vector<double ** > & D){
+void get_1st_order_markov(map<string, vector<segment> > S, vector<double ** > & D, int TSS){
 
 	typedef map<string, vector<segment> >::iterator it_type;
 	typedef vector<segment>::iterator it_type_2;
@@ -96,16 +95,17 @@ void get_1st_order_markov(map<string, vector<segment> > S, vector<double ** > & 
 	}
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
-
-			for (int i = 0 ; i <2000 ; i++ ){
-				if (i == 0){
-					for (int u = 0 ; u < 4; u++){
-						for (int v = 0 ; v < 4; v++){
-							D[i][u][v]+=s->forward[i];
+			if ( (s->TSS and TSS) or (not s->TSS and not TSS) ){
+				for (int i = 0 ; i <2000 ; i++ ){
+					if (i == 0){
+						for (int u = 0 ; u < 4; u++){
+							for (int v = 0 ; v < 4; v++){
+								D[i][u][v]+=s->forward[i];
+							}
 						}
+					}else{
+						D[i][s->forward[i-1]][s->forward[i]]++;
 					}
-				}else{
-					D[i][s->forward[i-1]][s->forward[i]]++;
 				}
 			}
 		}
@@ -120,14 +120,7 @@ void get_1st_order_markov(map<string, vector<segment> > S, vector<double ** > & 
 				D[i][u][v]/=S;
 			}
 		}
-		// 
 	}
-
-
-
-
-
-
 }
 
 

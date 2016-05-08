@@ -15,6 +15,7 @@ public:
 	vector<vector<double>> frequency_table;
 	vector<vector<double>> pvalues;
 	vector<vector<int>> null_displacements;
+	vector<vector<int>> null_displacements_non;
 	vector<int> null_displacements_2;
 	vector<int> observed_displacements; 
 	vector<int> binned_observed_displacements; 
@@ -52,6 +53,7 @@ public:
 	int reverse[2000];
 	int position;
 	string seq; 
+	bool TSS;
 	int N;
 	map<int, vector<double>> motif_positions;
 	segment();
@@ -71,12 +73,18 @@ vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
 	vector<int>, vector<int>);
 void load_PSSM_ID_names_only(string , map<int, string> &  );
 vector<PSSM *> load_PSSM_DB_new(string, int);
-void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,vector<vector<double>>,vector<double ** > );
+
+void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,vector<vector<double>>,
+					vector<vector<double>>,vector<double ** >,vector<double ** > );
+
+
+
+
 vector<PSSM *> load_personal_DB_file(string , params *, vector<double> & );
 void write_out_stats(vector<PSSM *>, string, params *);
 
 void collect_all_tmp_files(string , string , int  , int );
 
-
+map<string, vector<segment>> label_TSS(map<string, vector<segment>> , map<string, vector<segment>> );
 
 #endif
