@@ -197,15 +197,6 @@ void run_simulations(map<string, vector<segment>> intervals,
 
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(P.size())+")\n", 1);
 	}
-	// //transform back to frequency domain
-	// for (int p = 0; p < P.size(); p++){ //
-	// 	for (int i = 0; i < P[p]->frequency_table.size(); i++){
-	// 		for (int j = 0 ; j < 4;j++){
-	// 			P[p]->frequency_table[i][j]+=(background[j]);
-	// 			P[p]->frequency_table[i][j]=exp(P[p]->frequency_table[i][j]);
-	// 		}
-	// 	}
-	// }
 }	
 
 

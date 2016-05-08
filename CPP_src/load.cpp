@@ -4,6 +4,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <time.h>
+#include <cmath>
 
 #include "split.h"
 using namespace std;
@@ -314,6 +315,8 @@ void PSSM::bin_observations(){
 void PSSM::bin_null_displacements(){
 	for (int i = 0 ; i < 2000; i++){
 		binned_null_displacements.push_back(0);
+		binned_null_displacements_non.push_back(0); 
+
 	}
 	for (int i = 0 ; i < null_displacements.size(); i++){
 		for (int j = 0 ; j < null_displacements[i].size(); j++){
@@ -321,6 +324,13 @@ void PSSM::bin_null_displacements(){
 			binned_null_displacements[x]++;
 		}
 	}
+	for (int i = 0 ; i < null_displacements_non.size(); i++){
+		for (int j = 0 ; j < null_displacements_non[i].size(); j++){
+			int x 	= null_displacements_non[i][j];
+			binned_null_displacements_non[x]++;
+		}
+	}
+
 }
 
 
@@ -399,6 +409,19 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	vector<double> background, vector<vector<double>> MAP_background,vector<vector<double>> MAP_background_NON,
 	 vector<double ** > M,vector<double ** > MN){
 	
+	//transform back to frequency domain
+	for (int p = 0; p < PSSMS.size(); p++){ //
+		for (int i = 0; i < PSSMS[p]->frequency_table.size(); i++){
+			for (int j = 0 ; j < 4;j++){
+				PSSMS[p]->frequency_table[i][j]/=2.0;
+				PSSMS[p]->frequency_table[i][j]+=(log(background[j]));
+				PSSMS[p]->frequency_table[i][j]=exp(PSSMS[p]->frequency_table[i][j]);
+			}
+		}
+	}
+
+
+
 	string fasta_file 			= PP->p["-fasta"];
 	string bed_file 			= PP->p["-bed"];
 	string out_dir 				= PP->p["-o"];
@@ -436,17 +459,22 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 		}
 		FHW<<"~";
 		//count up the number of zeros
-		int zero 	= 1;
+		int zero 		= 1;
+		int zero_non 	= 0;
 		for (int s = 0 ; s < PSSMS[p]->null_displacements.size(); s++){
 			if (PSSMS[p]->null_displacements[s].empty()){
 				zero++;
 			}
 		}
+		for (int s = 0 ; s < PSSMS[p]->null_displacements_non.size(); s++){
+			if (PSSMS[p]->null_displacements_non[s].empty()){
+				zero_non++;
+			}
+		}
+		
 		PSSMS[p]->bin_null_displacements();
 		FHW<<to_string(zero) + "|" ;
-
 		string line 	= "";
-
 		for (int i = 0 ; i < PSSMS[p]->binned_null_displacements.size() ; i ++  ){
 			if (i+1 < PSSMS[p]->binned_null_displacements.size() ){
 				line+=to_string(PSSMS[p]->binned_null_displacements[i])+",";
@@ -454,8 +482,17 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 				line+=to_string(PSSMS[p]->binned_null_displacements[i]);	
 			}
 		}
-
-		FHW<<line+"\n";	
+		FHW<<line+"\n~";	
+		FHW<<to_string(zero_non) + "|" ;
+		line 	= "";
+		for (int i = 0 ; i < PSSMS[p]->binned_null_displacements_non.size() ; i ++  ){
+			if (i+1 < PSSMS[p]->binned_null_displacements_non.size() ){
+				line+=to_string(PSSMS[p]->binned_null_displacements_non[i])+",";
+			}else{
+				line+=to_string(PSSMS[p]->binned_null_displacements_non[i]);	
+			}
+		}
+		FHW<<line+"\n";
 
 	}
 	FHW<<"#Estimated Background Distribution (TSS)\n";

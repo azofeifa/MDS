@@ -19,7 +19,10 @@ public:
 	vector<int> null_displacements_2;
 	vector<int> observed_displacements; 
 	vector<int> binned_observed_displacements; 
+	
 	vector<int> binned_null_displacements; 
+	vector<int> binned_null_displacements_non; 
+
 
 	double zeros; 
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
