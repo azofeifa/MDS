@@ -183,7 +183,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			}
 		}
 		TSS_spec_association/=displacements.size();
-		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association );
+		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,1.0-TSS_spec_association );
 
 		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
