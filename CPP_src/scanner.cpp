@@ -175,13 +175,16 @@ void scan_intervals(map<string, vector<segment>> S ,
 		vector<int> final_displacements;
 		double TSS_spec_association 	= 0;
 		for (int i =0 ; i < displacements.size(); i++){
-			TSS_spec_association+=int(displacements[i].empty());
+			if(D[i].TSS){
+				TSS_spec_association+=int(displacements[i].empty());
+			}
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
 		TSS_spec_association/=displacements.size();
 		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association );
+
 		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
 			array_of_final_displacements[p] 	= final_displacements;
@@ -202,6 +205,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
+			
 			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,PSSMS[p]->TSS_association);
 			PSSMS[p]->get_pvalue_stats();
 			PSSMS[p]->observed_displacements 	= final_displacements;
