@@ -176,13 +176,13 @@ void scan_intervals(map<string, vector<segment>> S ,
 		double TSS_spec_association 	= 0;
 		double N 	= 0.01;
 		for (int i =0 ; i < displacements.size(); i++){
-			if(displacements[i].size()){
-				if (D[i].TSS){
-					TSS_spec_association++;		
-				}
-				N++;
-			}
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
+				if ( 1000-MD_window < displacements[i][j] and displacements[i][j] < 1000+MD_window   ){
+					if (D[i].TSS){
+						TSS_spec_association++;
+					}
+					N++;
+				}
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
