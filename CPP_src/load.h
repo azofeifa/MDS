@@ -31,6 +31,8 @@ public:
 	double zeros; 
 	double zeros_non;
 
+	double TSS_association;
+
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
 	vector<vector<double> > MD_CDF;

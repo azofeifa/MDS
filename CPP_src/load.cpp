@@ -573,7 +573,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		}
 		double mean 	= get_mean(PSSMS[p]->MD_CDF);
 		double var 		= get_var(PSSMS[p]->MD_CDF,mean);
-		FHW<<to_string(MDL) + "," + to_string(MDR) +"\t" + to_string(mean) + "," + to_string(var) +"\n";
+		FHW<<to_string(MDL) + "," + to_string(MDR) +"\t" + to_string(mean) + "," + to_string(sqrt(var)) +"\n";
 	}
 	FHW<<"#Binned Observation statistics range={-1000,..,1000}\n";
 	for (int p =0 ; p < PSSMS.size(); p++){

@@ -108,27 +108,35 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-void send_out_displacement_data(vector<int> & DD, int rank, int nprocs){
+double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double TSS_spec_association){
+	double final_association 	= TSS_spec_association;
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
 			int S;
+			double S2;
 			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			MPI_Recv(&S2, 1, MPI_DOUBLE, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			final_association+=S2;
 			if (S>0){
 				int * A = new int[S];
-				MPI_Recv(&A[0], S, MPI_INT, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+				MPI_Recv(&A[0], S, MPI_INT, j, 3, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
 				vector<int> temp 	= to_vector_2(A, S);
 				DD.insert(DD.end(), temp.begin(), temp.end());
 			}
 		}
 	}else{
 		int S 	= DD.size();
+
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
+		MPI_Ssend(&TSS_spec_association, 1, MPI_DOUBLE, 0,2, MPI_COMM_WORLD);
+		
 		if (S>0){
 			int * A = new int[S];
 			fill_array(DD, A);
-			MPI_Ssend(&A[0], S, MPI_INT, 0,2, MPI_COMM_WORLD);
+			MPI_Ssend(&A[0], S, MPI_INT, 0,3, MPI_COMM_WORLD);
 		}
 	}
+	return final_association/nprocs;
 }
 
 string get_dots_2(int N){
@@ -165,17 +173,21 @@ void scan_intervals(map<string, vector<segment>> S ,
 			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], pv);
 		}
 		vector<int> final_displacements;
+		double TSS_spec_association 	= 0;
 		for (int i =0 ; i < displacements.size(); i++){
+			TSS_spec_association+=int(displacements[i].empty());
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				final_displacements.push_back(displacements[i][j]);
 			}
 		}
-		send_out_displacement_data(final_displacements, rank, nprocs);
+		TSS_spec_association/=displacements.size();
+		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association );
+		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
 			array_of_final_displacements[p] 	= final_displacements;
 		}
 		t = clock() - t;
-		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+")\n", 1);
+		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), " + to_string(TSS_spec_association)+"\n", 1);
 	}
 	if (rank==0){
 		LG->write("computing boostrapped distribution..........", 1);
@@ -190,7 +202,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,TSS_association);
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,PSSMS[p]->TSS_association);
 			PSSMS[p]->get_pvalue_stats();
 			PSSMS[p]->observed_displacements 	= final_displacements;
 		}
