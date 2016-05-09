@@ -176,13 +176,15 @@ void scan_intervals(map<string, vector<segment>> S ,
 		double TSS_spec_association 	= 0;
 		double N 	= 0.01;
 		for (int i =0 ; i < displacements.size(); i++){
-			if(D[i].TSS and displacements[i].size()){
-				TSS_spec_association++;		
+			if(displacements[i].size()){
+				if (D[i].TSS){
+					TSS_spec_association++;		
+				}
+				N++;
 			}
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				final_displacements.push_back(displacements[i][j]);
 			}
-			N++;
 		}
 		TSS_spec_association/=N;
 		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association );
