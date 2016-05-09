@@ -32,6 +32,7 @@ public:
 	double zeros_non;
 
 	double TSS_association;
+	double stationary_pvalue;
 
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
@@ -45,7 +46,7 @@ public:
 	PSSM(int);
 	void bin_observations();
 	void bin_null_displacements();
-	void get_pvalue_stats();
+	void get_pvalue_stats(double);
 	void transform_ft();
 	double get_pvalue(double);
 	double get_pvalue2_f(double,int, int);

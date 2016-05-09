@@ -217,13 +217,6 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int M
 	turn_to_CDF(CDF,P->null_displacements_2, total_N);
 	turn_to_CDF(CDF_non,P->null_displacements_2_non, total_N_non);
 
-	double bias 				= P->zeros     / (P->zeros + total_N);
-	double bias_non 			= P->zeros_non / (P->zeros_non + total_N_non);
-
-	double bias_2 				= get_MD_from_binned(P->null_displacements_2,MD_window)/total_N;
-	double bias_2_non 			= get_MD_from_binned(P->null_displacements_2_non,MD_window)/total_N_non;
-
-
 
 	discrete_distribution<int> distribution(CDF.begin(),CDF.end());
 	discrete_distribution<int> distribution_non(CDF_non.begin(),CDF_non.end());
@@ -231,7 +224,6 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int M
 
 	uniform_real_distribution<double> distribution_2(0,1);
 	vector<double> MD_scores;
-	vector<double> ENRICHMENT;
 
 
 
@@ -241,19 +233,8 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int M
 		int spec_N 	= 0;
 		int k 		= 0;
 		int t 		= 0;
+		double NN 	= 0.0;
 		double U;
-		for (int i = 0 ; i < interval_size ; i ++){
-			t 		= 0;
-			while (true and t < 4){
-				U 	= distribution_2(gen);
-				if ((U < TSS_association and distribution_2(gen) > bias  ) or (U > TSS_association and distribution_2(gen) > bias_non  )) {
-					enriched++;
-				}else{
-					break;
-				}
-				t++;
-			}
-		}
 		for (int i = 0 ; i < hit_size; i++ ){
 			U 	= distribution_2(gen);
 			if (U < TSS_association){
@@ -265,10 +246,8 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int M
 		}
 		double MD_score 	= get_MD_score(current_collection_spec, MD_window,true);
 		MD_scores.push_back(MD_score);
-		ENRICHMENT.push_back(enriched);
 	}
 	P->MD_CDF 		= make_CDF(MD_scores);
-	P->ENRICH_CDF 	= make_CDF(ENRICHMENT);
 }
 
 
