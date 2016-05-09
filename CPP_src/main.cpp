@@ -91,7 +91,7 @@ int main(int argc,char* argv[]){
 		LG->write("labeling TSS association....................", verbose);
 		double TSS_association =	0;
 		intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
-		LG->write("done, " + to_string(TSS_association*100)+" %\n", verbose);
+		LG->write("done, " + to_string(TSS_association*100)+" percent association\n", verbose);
 
 
 
@@ -206,7 +206,7 @@ int main(int argc,char* argv[]){
 		LG->write("labeling TSS association....................", verbose);
 		double TSS_association =	0;
 		intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
-		LG->write("done, " + to_string(TSS_association*100)+" %\n", verbose);
+		LG->write("done, " + to_string(TSS_association*100)+" percent association\n", verbose);
 
 
 

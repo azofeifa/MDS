@@ -266,13 +266,9 @@ void build_cdfs_PSSMs(PSSM *  P, int bsn, int interval_size, int hit_size, int M
 		double MD_score 	= get_MD_score(current_collection_spec, MD_window,true);
 		MD_scores.push_back(MD_score);
 		ENRICHMENT.push_back(enriched);
-
 	}
 	P->MD_CDF 		= make_CDF(MD_scores);
 	P->ENRICH_CDF 	= make_CDF(ENRICHMENT);
-
-
-
 }
 
 

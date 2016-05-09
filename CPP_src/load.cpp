@@ -533,6 +533,23 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 	}
 	return PSSMS;
 }
+double get_mean(vector<vector<double>> X){
+	double N 	= X.size(), S = 0;
+	for (int i = 0 ; i < X.size(); i++){
+		S+=X[i][0];
+	}
+	return S/N;
+}
+double get_var(vector<vector<double>> X, double mu){
+	double N 	= X.size(), S = 0;
+	for (int i = 0 ; i < X.size(); i++){
+		S+=pow(X[i][0]-mu,2);
+	}
+	return S/N;	
+}
+
+
+
 
 void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 
@@ -540,10 +557,10 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
 	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
-	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tenrichment score\tMD score p-value (left, right tail)\tenrichment score p-value (left, right tail)\tMD score significance (left, right adj)\tenrichment score significance (left, right adj)\n";
+	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tMD score p-value (left, right tail)\tMD score significance (left, right adj)\tNull Expectation, Variance\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t"+to_string(PSSMS[p]->ENRICH_score)+"\t";
-		FHW<<to_string(PSSMS[p]->pv_MD_score_lt)+ "," +to_string(PSSMS[p]->pv_MD_score_rt) +"\t"+to_string(PSSMS[p]->pv_enrich_score_lt)+ "," +to_string(PSSMS[p]->pv_enrich_score_rt)+"\t";
+		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t";
+		FHW<<to_string(PSSMS[p]->pv_MD_score_lt)+ "," +to_string(PSSMS[p]->pv_MD_score_rt)+"\t";
 		int MDL	= 0, MDR=0, ENL=0, ENR=0;
 
 
@@ -554,14 +571,9 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		if (PSSMS[p]->pv_MD_score_rt <  (0.01/PSSMS.size() )){
 			MDR=1;
 		}
-	
-		if (PSSMS[p]->pv_enrich_score_lt < (0.01/PSSMS.size())){
-			ENL=-1;
-		}
-		if (PSSMS[p]->pv_enrich_score_rt <  (0.01/PSSMS.size() )){
-			ENR=1;
-		}
-		FHW<<to_string(MDL) + "," + to_string(MDR) + "\t" + to_string(ENL) + "," + to_string(ENR)+"\n";
+		double mean 	= get_mean(PSSMS[p]->MD_CDF);
+		double var 		= get_var(PSSMS[p]->MD_CDF,mean);
+		FHW<<to_string(MDL) + "," + to_string(MDR) +"\t" + to_string(mean) + "," + to_string(var) +"\n";
 	}
 	FHW<<"#Binned Observation statistics range={-1000,..,1000}\n";
 	for (int p =0 ; p < PSSMS.size(); p++){
