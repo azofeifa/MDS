@@ -207,7 +207,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
 			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,PSSMS[p]->TSS_association);
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,0.01);
 			PSSMS[p]->get_pvalue_stats(2*MD_window/2000.0);
 			PSSMS[p]->observed_displacements 	= final_displacements;
 		}
