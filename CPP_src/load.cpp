@@ -564,7 +564,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
 	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
-	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tStationary p-value (left,right tail)\tNon-stationary p-value (left, right-tail)\tNull Expectation, Variance\n";
+	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tNon-stationary p-value (left, right-tail)\tStationary p-value (left,right tail)\tNull Expectation, Variance\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t";
 		FHW<<to_string(PSSMS[p]->pv_MD_score_lt)+ "," +to_string(PSSMS[p]->pv_MD_score_rt)+"\t" + to_string(PSSMS[p]->stationary_pvalue)+","+to_string(1.0-PSSMS[p]->stationary_pvalue)+"\t";

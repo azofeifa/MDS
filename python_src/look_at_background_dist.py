@@ -38,9 +38,7 @@ def look_at_BS(FILE, G):
 def show(G):
 	for m in G:
 		F 		= plt.figure()
-		print m
 		ax1 	= F.add_subplot(1,2,1)
-		print sum(G[m][0]), sum(G[m][1])
 		ax1.hist(range(2000),  weights=G[m][0], bins=50, edgecolor="white")
 
 		ax2 	= F.add_subplot(1,2,2)
@@ -50,10 +48,9 @@ def show(G):
 
 if __name__ == "__main__":
 	FILE 	= "/Users/joazofeifa/Lab/new_motif_distances/PSSM_DBS/new_Allen2014_generated_DB_2_MM.txt"
-	# load_for_freq(FILE)
-	# G 		= {}
-	# G 		= look_at_BS(FILE,G)
-	# show(G)
+	load_for_freq(FILE)
+	G 		= {}
+	G 		= look_at_BS(FILE,G)
+	show(G)
 
-	print (48.00/74)
 
