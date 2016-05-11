@@ -152,6 +152,7 @@ int main(int argc,char* argv[]){
 		string bed_file 			= P->p["-bed"];
 		string DB_file 				= P->p["-DB"];
 		string OUT 					= P->p["-o"]; 
+		string OUT2 				= P->p["-o2"];
 		string TSS_bed_file 		= P->p["-TSS"];
 
 		int BSN 					= stoi(P->p["-bsn"]);
@@ -231,7 +232,7 @@ int main(int argc,char* argv[]){
 		
 		scan_intervals(intervals, PSSMS, background, 
  								pv,  interval_size,   BSN, 
- 								rank,   nprocs,   LG, MD_window, TSS_association);
+ 								rank,   nprocs,   LG, MD_window, TSS_association, OUT2);
 
 		
 		//============================================================

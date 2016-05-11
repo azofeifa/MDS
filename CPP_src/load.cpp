@@ -769,7 +769,29 @@ vector<segment> merge(vector<segment> S, string chr){
 	return newS;
 }
 
+void write_out_bed_file(vector<segment> D, string out, int MD_score ){
+	typedef map<string, int>::iterator it_type;
+	ofstream FHW;
+	FHW.open(out);
+	for (int i = 0 ; i < D.size();i++){
+		double x 		= (D[i].start + D[i].stop)/2.;
+		string line 	= D[i].chrom + "\t" + to_string(int(x-MD_score)) + "\t" + to_string(int(x+MD_score)) + "\t";
+		int N=0;
+		for (it_type p = D[i].motif_hits.begin(); p!=D[i].motif_hits.end(); p++){
+			line+= p->first + ",";
+			N++;
+		}
+		if (N > 0){
+			line 	= line.substr(0,line.size()-1);
+		}
+		FHW<<line+"\n";
 
+
+	}
+
+
+
+}
 
 
 map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<string, vector<segment>> TSS, double & TSS_percent){

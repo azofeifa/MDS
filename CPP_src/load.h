@@ -68,6 +68,7 @@ public:
 	bool TSS;
 	int N;
 	map<int, vector<double>> motif_positions;
+	map<string, int> motif_hits;
 	segment();
 	segment(string, int, int,int, int, int);
 	bool transform();
@@ -98,5 +99,9 @@ void write_out_stats(vector<PSSM *>, string, params *);
 void collect_all_tmp_files(string , string , int  , int );
 
 map<string, vector<segment>> label_TSS(map<string, vector<segment>> , map<string, vector<segment>>,double & );
+
+
+void write_out_bed_file(vector<segment>, string,int );
+
 
 #endif

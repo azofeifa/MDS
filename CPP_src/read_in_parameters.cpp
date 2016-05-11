@@ -4,6 +4,8 @@ using namespace std;
 params::params(){
 	p["-TSS"] 		= "";
 	p["-o"] 		= "";
+	p["-o2"] 		= "";
+	
 	p["-bed"] 		= "";
 	p["-fasta"] 	= "";
 	p["-DB"] 		= "";
@@ -122,6 +124,7 @@ string params::get_header(){
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
+		line+="#-TSS           "+p["-TSS"]+"\n";
 		line+="#-o             "+p["-o"]+"\n";
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
@@ -135,6 +138,7 @@ string params::get_header(){
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
+		line+="#-TSS           "+p["-TSS"]+"\n";
 		line+="#-o             "+p["-o"]+"\n";
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";

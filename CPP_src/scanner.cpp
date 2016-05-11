@@ -108,7 +108,7 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double TSS_spec_association){
+double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double TSS_spec_association, vector<int> & special_hits){
 	double final_association 	= TSS_spec_association;
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
@@ -123,6 +123,16 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
 				vector<int> temp 	= to_vector_2(A, S);
 				DD.insert(DD.end(), temp.begin(), temp.end());
 			}
+			int S3;
+			MPI_Recv(&S3, 1, MPI_INT, j, 4, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			if (S3>0){
+				int * B = new int[S3];
+				MPI_Recv(&B[0], S3, MPI_INT, j, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+				vector<int> temp 	= to_vector_2(B, S3);
+				special_hits.insert(special_hits.end(), temp.begin(), temp.end());
+					
+			}
+
 		}
 	}else{
 		int S 	= DD.size();
@@ -135,6 +145,16 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
 			fill_array(DD, A);
 			MPI_Ssend(&A[0], S, MPI_INT, 0,3, MPI_COMM_WORLD);
 		}
+		int S3 	=	 special_hits.size();
+		MPI_Ssend(&S3, 1, MPI_INT, 0,4, MPI_COMM_WORLD);
+
+		if (S3>0){
+			int * B = new int[S3];
+			fill_array(special_hits, B);
+			MPI_Ssend(&B[0], S3, MPI_INT, 0,5, MPI_COMM_WORLD);
+		}
+		
+
 	}
 	return final_association/nprocs;
 }
@@ -151,7 +171,7 @@ string get_dots_2(int N){
 void scan_intervals(map<string, vector<segment>> S ,
  												vector<PSSM *> PSSMS, vector<double> background, 
  												double pv, int interval_size, int bsn, 
- 												int rank, int nprocs, Log_File * LG, int MD_window,double TSS_association){
+ 												int rank, int nprocs, Log_File * LG, int MD_window,double TSS_association, string out2){
 
 	vector<segment> D 	= collapse_map(S);
 	int threads  		= omp_get_max_threads();
@@ -173,28 +193,44 @@ void scan_intervals(map<string, vector<segment>> S ,
 			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], pv);
 		}
 		vector<int> final_displacements;
+		vector<int> special_hits;
 		double TSS_spec_association 	= 0;
 		double N 	= 0.01;
 		for (int i =0 ; i < displacements.size(); i++){
+			double MIN 	= 2000;
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
 				if (D[i].TSS){
 					TSS_spec_association++;
 				}
 				N++;			
+				if (abs(displacements[i][j] - 1000) < MIN){
+					MIN 	= abs(displacements[i][j] - 1000);
+				}
 				final_displacements.push_back(displacements[i][j]);
+			}
+			if (MIN < MD_window){
+				special_hits.push_back(start + i);
 			}
 		}
 		TSS_spec_association/=N;
-		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association );
+		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association, special_hits );
 
 		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
 			array_of_final_displacements[p] 	= final_displacements;
+			for (int i = 0 ; i < special_hits.size(); i++){
+				D[special_hits[i]].motif_hits[PSSMS[p]->name] 	= 1;
+			}
 		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), " + to_string(TSS_spec_association)+"\n", 1);
 	}
 	if (rank==0){
+		if (not out2.empty()){
+			LG->write("writing out bed hits........................", 1);
+			write_out_bed_file(D, out2 , MD_window);
+			LG->write("done\n",1);
+		}
 		LG->write("computing boostrapped distribution..........", 1);
 
 		t = clock();
