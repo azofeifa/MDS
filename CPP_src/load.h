@@ -36,11 +36,28 @@ public:
 
 	map<int, vector<vector<double>>> position_specific_pvalues_forward;
 	map<int, vector<vector<double>>> position_specific_pvalues_reverse;
+	
 	vector<vector<double> > MD_CDF;
+	vector<vector<double> > MD_CDF_NON;
+	vector<vector<double> > MD_CDF_TSS;
+
+
 	vector<vector<double> > ENRICH_CDF;
+
+	vector<double> non_pvalues, stationary_p_values;
 	double ENRICH_score;
+	
 	double MD_score;
-	double pv_enrich_score_rt, pv_MD_score_rt, pv_enrich_score_lt, pv_MD_score_lt,total;
+	double MD_score_TSS;
+	double MD_score_NON;
+
+	double pv_enrich_score_rt, pv_MD_score_rt, pv_enrich_score_lt, pv_MD_score_lt;
+
+	double total;
+	double total_TSS;
+	double total_NON;
+
+
 	PSSM();
 	PSSM(string);
 	PSSM(int);

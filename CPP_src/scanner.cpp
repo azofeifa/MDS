@@ -108,10 +108,13 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double TSS_spec_association, vector<int> & special_hits){
+double send_out_displacement_data(vector<int> & DD, vector<int> & DD_TSS,vector<int> & DD_NON , int rank, int nprocs, double TSS_spec_association, vector<int> & special_hits){
 	double final_association 	= TSS_spec_association;
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
+			//===========================================
+			//recieve All
+
 			int S;
 			double S2;
 			MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
@@ -124,6 +127,8 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
 				DD.insert(DD.end(), temp.begin(), temp.end());
 			}
 			int S3;
+			//===========================================
+			//recieve spec interval hits (for bed_out)
 			MPI_Recv(&S3, 1, MPI_INT, j, 4, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 			if (S3>0){
 				int * B = new int[S3];
@@ -132,11 +137,41 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
 				special_hits.insert(special_hits.end(), temp.begin(), temp.end());
 					
 			}
+			
+			int S_TSS, S_NON;
+			
+			//===================================
+			//revieve TSS displacements
+			MPI_Recv(&S_TSS, 1, MPI_INT, j, 6, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			if (S_TSS>0){
+				int * A = new int[S_TSS];
+				MPI_Recv(&A[0], S_TSS, MPI_INT, j, 7, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+				vector<int> temp 	= to_vector_2(A, S_TSS);
+				DD_TSS.insert(DD_TSS.end(), temp.begin(), temp.end());
+			}
+
+			//===================================
+			//revieve nonTSS displacements
+			MPI_Recv(&S_NON, 1, MPI_INT, j, 8, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			if (S_NON>0){
+				int * A = new int[S_NON];
+				MPI_Recv(&A[0], S_NON, MPI_INT, j, 9, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+				vector<int> temp 	= to_vector_2(A, S_NON);
+				DD_NON.insert(DD_NON.end(), temp.begin(), temp.end());
+			}
+			
+
+
+
 
 		}
 	}else{
-		int S 	= DD.size();
-
+		int S 		= DD.size();
+		int S_TSS 	= DD_TSS.size();
+		int S_NON 	= DD_NON.size();
+		
+		//===========================================
+		//Send All
 		MPI_Ssend(&S, 1, MPI_INT, 0,1, MPI_COMM_WORLD);
 		MPI_Ssend(&TSS_spec_association, 1, MPI_DOUBLE, 0,2, MPI_COMM_WORLD);
 		
@@ -145,14 +180,40 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
 			fill_array(DD, A);
 			MPI_Ssend(&A[0], S, MPI_INT, 0,3, MPI_COMM_WORLD);
 		}
+		//===========================================
+		//send spec interval hits (for bed_out)
+
 		int S3 	=	 special_hits.size();
 		MPI_Ssend(&S3, 1, MPI_INT, 0,4, MPI_COMM_WORLD);
-
 		if (S3>0){
 			int * B = new int[S3];
 			fill_array(special_hits, B);
 			MPI_Ssend(&B[0], S3, MPI_INT, 0,5, MPI_COMM_WORLD);
 		}
+		//===================================
+		//send TSS displacements
+		MPI_Ssend(&S_TSS, 1, MPI_INT, 0,6, MPI_COMM_WORLD);
+		
+		if (S_TSS>0){
+			int * A = new int[S_TSS];
+			fill_array(DD_TSS, A);
+			MPI_Ssend(&A[0], S_TSS, MPI_INT, 0,7, MPI_COMM_WORLD);
+		}
+
+		
+
+		//===================================
+		//send nonTSS displacements
+		MPI_Ssend(&S_NON, 1, MPI_INT, 0,8, MPI_COMM_WORLD);
+		
+		if (S_NON>0){
+			int * A = new int[S_NON];
+			fill_array(DD_NON, A);
+			MPI_Ssend(&A[0],S_NON, MPI_INT, 0,9, MPI_COMM_WORLD);
+		}
+		
+
+
 		
 
 	}
@@ -182,7 +243,14 @@ void scan_intervals(map<string, vector<segment>> S ,
 	}
 	clock_t t;
 	LG->write("(this MPI call will process " + to_string(stop-start) + " intervals)\n\n", 1);
+	
+
 	vector<vector<int>> array_of_final_displacements(PSSMS.size());
+	vector<vector<int>> array_of_final_displacements_TSS(PSSMS.size());
+	vector<vector<int>> array_of_final_displacements_NON(PSSMS.size());
+
+
+
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		vector<vector<int>> displacements(int(stop-start));
 		int WN 	= max(int(44 - PSSMS[p]->name.size()), 1);	
@@ -193,6 +261,9 @@ void scan_intervals(map<string, vector<segment>> S ,
 			displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2000, PSSMS[p], pv);
 		}
 		vector<int> final_displacements;
+		vector<int> final_displacements_NON;
+		vector<int> final_displacements_TSS;
+		
 		vector<int> special_hits;
 		double TSS_spec_association 	= 0;
 		double N 	= 0.01;
@@ -207,17 +278,25 @@ void scan_intervals(map<string, vector<segment>> S ,
 					MIN 	= abs(displacements[i][j] - 1000);
 				}
 				final_displacements.push_back(displacements[i][j]);
+				if (D[i].TSS){
+					final_displacements_TSS.push_back(displacements[i][j]);
+				}else{
+					final_displacements_NON.push_back(displacements[i][j]);	
+				}
 			}
 			if (MIN < MD_window){
 				special_hits.push_back(start + i);
 			}
 		}
 		TSS_spec_association/=N;
-		TSS_spec_association=send_out_displacement_data(final_displacements, rank, nprocs,TSS_spec_association, special_hits );
+		TSS_spec_association=send_out_displacement_data(final_displacements,final_displacements_TSS,final_displacements_NON, rank, nprocs,TSS_spec_association, special_hits );
 
 		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
-			array_of_final_displacements[p] 	= final_displacements;
+			array_of_final_displacements[p] 		= final_displacements;
+			array_of_final_displacements_TSS[p] 	= final_displacements_TSS;
+			array_of_final_displacements_NON[p] 	= final_displacements_NON;
+
 			for (int i = 0 ; i < special_hits.size(); i++){
 				D[special_hits[i]].motif_hits[PSSMS[p]->name] 	= 1;
 			}
@@ -237,13 +316,29 @@ void scan_intervals(map<string, vector<segment>> S ,
 		#pragma omp parallel for
 		for (int p = 0 ; p < PSSMS.size(); p++){
 			vector<int> final_displacements 	= array_of_final_displacements[p];
-			double MD_score 		= get_MD_score(final_displacements,MD_window,true);
-			double ENRICH_score 	= get_MD_score(final_displacements,MD_window,false);
+			vector<int> final_displacements_TSS = array_of_final_displacements_TSS[p];
+			vector<int> final_displacements_NON = array_of_final_displacements_NON[p];
+
+			double MD_score 			= get_MD_score(final_displacements,MD_window,true);
+			double MD_score_TSS 		= get_MD_score(final_displacements_TSS,MD_window,true);
+			double MD_score_NON 		= get_MD_score(final_displacements_NON,MD_window,true);
+
 			double NN 				= final_displacements.size();
+			double NN_TSS 			= final_displacements_TSS.size();
+			double NN_NON 			= final_displacements_NON.size();
+			
 			PSSMS[p]->MD_score 		= MD_score;
-			PSSMS[p]->ENRICH_score 	= ENRICH_score;		
+			PSSMS[p]->MD_score_TSS 	= MD_score_TSS;
+			PSSMS[p]->MD_score_NON 	= MD_score_NON;
+
 			PSSMS[p]->total 		= NN;
-			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, MD_window,0.01);
+			PSSMS[p]->total_TSS 	= NN_TSS;
+			PSSMS[p]->total_NON 	= NN_NON;
+
+			build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, NN_TSS, NN_NON, MD_window,0.01);
+			
+
+
 			PSSMS[p]->get_pvalue_stats(2*MD_window/2000.0);
 			PSSMS[p]->observed_displacements 	= final_displacements;
 		}

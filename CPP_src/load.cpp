@@ -270,27 +270,33 @@ double PSSM::get_pvalue2_r(double obs, int i, int s){
 }
 
 void PSSM::get_pvalue_stats(double prob){
-	int i 	= 0;
-	int J=0, K = 0;
 
-	while (i < MD_CDF.size()-1){
-		if (MD_CDF[i][0] >= MD_score  ){
-			J++;
-			
-		}
-		if (MD_CDF[i][0] <=  MD_score ){
-			K++;
-		}
+	vector<double> MD_scores 				= {MD_score, MD_score_TSS, MD_score_NON};
+	vector<vector<vector<double>>> CDFS 	= {MD_CDF, MD_CDF_NON, MD_CDF_TSS};
 
-		i++;
+	for (int l = 0 ; l < 3; l++){
+		vector<vector<double>> CDF 	= CDFS[l];
+		double score 				= MD_scores[l];
+		int i 	= 0;
+		int J=0;
+
+		while (i < CDF.size()-1){
+			if (CDF[i][0] >= score  ){
+				J++;
+				
+			}
+			i++;
+		}
+		double pv 	= float(J) / CDF.size();
+		double mean 		= total*prob;
+		double std 			= sqrt(mean*(1-prob));
+		double z_score 		= (score*total - mean)/std;
+		stationary_pvalue 	= 0.5*(1+erf(z_score));
+
+		non_pvalues.push_back(pv);
+		stationary_p_values.push_back(stationary_pvalue);
+
 	}
-	pv_MD_score_rt 	= float(J) / MD_CDF.size();
-	pv_MD_score_lt 	= float(K) / MD_CDF.size();
-	double mean 		= total*prob;
-	double std 			= sqrt(mean*(1-prob));
-	double z_score 		= (MD_score*total - mean)/std;
-	stationary_pvalue 	= 0.5*(1+erf(z_score));
-
 
 
 }
@@ -515,7 +521,7 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 	while (switched){
 		switched=false;
 		for (int i = 0 ; i < PSSMS.size()-1; i++){
-			if (PSSMS[i]->stationary_pvalue < PSSMS[i+1]->stationary_pvalue){
+			if (PSSMS[i]->MD_score < PSSMS[i+1]->MD_score){
 				PSSM * copy 	= PSSMS[i];
 				PSSMS[i] 		= PSSMS[i+1];
 				PSSMS[i+1] 		= copy;
@@ -523,19 +529,7 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 			}
 		}
 	}
-	switched	= true;
-	while (switched){
-		switched=false;
-		for (int i = 0 ; i < PSSMS.size()-1; i++){
-			if (PSSMS[i]->pv_MD_score_lt < PSSMS[i+1]->pv_MD_score_lt and PSSMS[i]->stationary_pvalue < 0.00001 ){
-				PSSM * copy 	= PSSMS[i];
-				PSSMS[i] 		= PSSMS[i+1];
-				PSSMS[i+1] 		= copy;
-				switched 		= true;
-			}
-		}
-	}
-
+	
 
 
 	return PSSMS;
@@ -564,11 +558,17 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
 	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
-	FHW<<"#motif identifier\tTotal (2KB)\tMD score\tNon-stationary p-value (left, right-tail)\tStationary p-value (left,right tail)\tNull Expectation, Variance\n";
+	FHW<<"#motif identifier\tTotal(NON,TSS,COMB)\tMD score(NON,TSS,COMB)\tStationary p-value(NON,TSS,COMB)\tNon-stationary p-value(NON,TSS,COMB)\tNull Expectation, Variance\n";
 	for (int p = 0 ; p < PSSMS.size(); p++){
-		FHW<<PSSMS[p]->name<<"\t"<<to_string(int(PSSMS[p]->total))<<"\t"<<to_string(PSSMS[p]->MD_score)+"\t";
-		FHW<<to_string(PSSMS[p]->pv_MD_score_lt)+ "," +to_string(PSSMS[p]->pv_MD_score_rt)+"\t" + to_string(PSSMS[p]->stationary_pvalue)+","+to_string(1.0-PSSMS[p]->stationary_pvalue)+"\t";
-		int MDL	= 0, MDR=0, ENL=0, ENR=0;
+		FHW<<PSSMS[p]->name<<"\t";
+		FHW<<to_string(int(PSSMS[p]->total_NON))<<","<<to_string(int(PSSMS[p]->total_TSS))<<","<<to_string(int(PSSMS[p]->total))<<"\t";
+
+
+		FHW<<to_string(PSSMS[p]->MD_score_NON)<<","<<to_string(PSSMS[p]->MD_score_TSS)<<","<<to_string(PSSMS[p]->MD_score)+"\t";
+
+		FHW<<to_string(PSSMS[p]->stationary_p_values[0])<<","<<to_string(PSSMS[p]->stationary_p_values[1])<<","<<to_string(PSSMS[p]->stationary_p_values[2])+"\t";
+
+		FHW<<to_string(PSSMS[p]->non_pvalues[0])<<","<<to_string(PSSMS[p]->non_pvalues[1])<<","<<to_string(PSSMS[p]->non_pvalues[2])+"\t";
 
 
 
