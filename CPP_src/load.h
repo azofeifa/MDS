@@ -22,7 +22,15 @@ public:
 
 	
 	vector<int> observed_displacements; 
+	vector<int> observed_displacements_TSS; 
+	vector<int> observed_displacements_non; 
+
+
 	vector<int> binned_observed_displacements; 
+	vector<int> binned_observed_displacements_TSS; 
+	vector<int> binned_observed_displacements_non; 
+
+
 	
 	vector<int> binned_null_displacements; 
 	vector<int> binned_null_displacements_non; 

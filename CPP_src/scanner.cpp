@@ -340,14 +340,14 @@ void scan_intervals(map<string, vector<segment>> S ,
 
 
 			PSSMS[p]->get_pvalue_stats(2*MD_window/2000.0);
-			PSSMS[p]->observed_displacements 	= final_displacements;
+			PSSMS[p]->observed_displacements 		= final_displacements;
+			PSSMS[p]->observed_displacements_TSS 	= final_displacements_TSS;
+			PSSMS[p]->observed_displacements_non 	= final_displacements_NON;
+			
 		}
 		t = clock() - t;
 		LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);
 	}
-
-
-
 }
 
 

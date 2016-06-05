@@ -303,11 +303,24 @@ void PSSM::get_pvalue_stats(double prob){
 void PSSM::bin_observations(){
 	for (int i = 0 ; i < 2000; i++){
 		binned_observed_displacements.push_back(0);
+		binned_observed_displacements_TSS.push_back(0);
+		binned_observed_displacements_non.push_back(0);
 	}
 	for (int i = 0 ; i < observed_displacements.size(); i++){
 		int x 	= observed_displacements[i];
 		binned_observed_displacements[x]++;
 	}
+	for (int i = 0 ; i < observed_displacements_TSS.size(); i++){
+		int x 	= observed_displacements_TSS[i];
+		binned_observed_displacements_TSS[x]++;
+	
+	}
+	for (int i = 0 ; i < observed_displacements_non.size(); i++){
+		int x 	= observed_displacements_non[i];
+		binned_observed_displacements_non[x]++;
+
+	}
+
 }
 
 void PSSM::bin_null_displacements(){
@@ -581,11 +594,17 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		FHW<<PSSMS[p]->name<<"\t";
 		PSSMS[p]->bin_observations();
 		string line="";
-		for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
-			if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
-				line+=to_string(PSSMS[p]->binned_observed_displacements[i]) + ",";
-			}else{
-				line+=to_string(PSSMS[p]->binned_observed_displacements[i]);				
+		vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements_non};
+		for (int a = 0; a < A.size(); a++){
+			for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
+				if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
+					line+=to_string(PSSMS[p]->binned_observed_displacements[i]) + ",";
+				}else{
+					line+=to_string(PSSMS[p]->binned_observed_displacements[i]);				
+				}
+			}
+			if (a+1 < A.size()){
+				line+="\t";
 			}
 		}
 		FHW<<line<<endl;
@@ -788,9 +807,6 @@ void write_out_bed_file(vector<segment> D, string out, int MD_score ){
 
 
 	}
-
-
-
 }
 
 
