@@ -103,7 +103,7 @@ public:
 
 vector<PSSM *> load_PSSM_DB(string, int, int, int);
 
-map<string, vector<segment>> load_bed_file(string, int, int &) ;
+map<string, vector<segment>> load_bed_file(string, int, int &, double &) ;
 
 map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > , int);
 
@@ -119,7 +119,7 @@ void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,ve
 
 
 vector<PSSM *> load_personal_DB_file(string , params *, vector<double> & );
-void write_out_stats(vector<PSSM *>, string, params *);
+void write_out_stats(vector<PSSM *>, string, params *, double, double, double);
 
 void collect_all_tmp_files(string , string , int  , int );
 

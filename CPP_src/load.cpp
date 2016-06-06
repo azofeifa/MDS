@@ -63,7 +63,7 @@ bool segment::transform(){
 
 
 
-map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N){
+map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double & count){
 	map<string, vector<segment>> S ;
 	ifstream FH(FILE);
 
@@ -80,6 +80,7 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N){
 				N++;
 				x 	= (start + stop)/2.;
 				S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
+				count++;
 				i++;
 			}
 		}
@@ -565,13 +566,20 @@ double get_var(vector<vector<double>> X, double mu){
 
 
 
-void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
+void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P, 
+			double TSS_association,  double total_TSS, double total_intervals  ){
+
+	double TSS_percent 	= (total_intervals*TSS_association)/total_TSS;
 
 	ofstream FHW(OUT);
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
 	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
+	FHW<<"#overlap_stats\t" + to_string(TSS_association) + "," + to_string(total_intervals) + "\t";
+	FHW<<to_string(TSS_percent) + "," + to_string(total_TSS) + "\n";
+
 	FHW<<"#motif identifier\tTotal(NON,TSS,COMB)\tMD score(NON,TSS,COMB)\tStationary p-value(NON,TSS,COMB)\tNon-stationary p-value(NON,TSS,COMB)\tNull Expectation, Variance\n";
+	
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t";
 		FHW<<to_string(int(PSSMS[p]->total_NON))<<","<<to_string(int(PSSMS[p]->total_TSS))<<","<<to_string(int(PSSMS[p]->total))<<"\t";
@@ -596,11 +604,11 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P){
 		string line="";
 		vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements_non};
 		for (int a = 0; a < A.size(); a++){
-			for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
-				if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
-					line+=to_string(PSSMS[p]->binned_observed_displacements[i]) + ",";
+			for (int i = 0; i < A[a].size(); i++ ){
+				if (i+1 <  A[a].size()){
+					line+=to_string(A[a][i]) + ",";
 				}else{
-					line+=to_string(PSSMS[p]->binned_observed_displacements[i]);				
+					line+=to_string(A[a][i]);				
 				}
 			}
 			if (a+1 < A.size()){

@@ -75,14 +75,16 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....3.... load intervals from user 
 		LG->write("loading intervals...........................", verbose);
-		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size); 
+		double interval_count  	= 0;
+		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size,interval_count); 
 		LG->write("done\n", verbose);
 
 		//============================================================
 		//....4.... load TSS intervals from user 
 
 		LG->write("loading TSS intervals.......................", verbose);
-		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size); 
+		double TSS_count 		= 0;
+		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size, TSS_count); 
 		LG->write("done\n", verbose);
 		
 		//============================================================
@@ -191,14 +193,16 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....3.... load intervals from user 
 		LG->write("loading intervals...........................", verbose);
-		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size); 
+		double total_intervals 	= 0;
+		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size,total_intervals); 
 		LG->write("done\n", verbose);
 
 		//============================================================
 		//....4.... load TSS intervals from user 
 
 		LG->write("loading TSS intervals.......................", verbose);
-		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size); 
+		double total_TSS 	= 0;
+		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size,total_TSS); 
 		LG->write("done\n", verbose);
 		
 		//============================================================
@@ -238,7 +242,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....7.... assess significance
 		if (rank==0){
-			write_out_stats(PSSMS, OUT, P);
+			write_out_stats(PSSMS, OUT, P, TSS_association, total_TSS, total_intervals );
 			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
 		}
 	}
