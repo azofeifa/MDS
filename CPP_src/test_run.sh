@@ -1,6 +1,6 @@
 DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/HOCOMOCO_DB_reformatted_human.txt
 DB2=/Users/joazofeifa/Desktop/generated_DB.txt
-fasta=/Users/joazofeifa/Lab/genome_files/test_hg19.fa
+fasta=/Users/joazofeifa/Lab/genome_files/hg19.fa
 log_out=/Users/joazofeifa/Lab/log_out/
 bed=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/test_Allen2014_DMSO2_3-19_divergent_classifications.bed
 out=/Users/joazofeifa/Desktop/generated_DB.txt
@@ -8,12 +8,21 @@ out2=/Users/joazofeifa/Desktop/stats.txt
 out_bed=/Users/joazofeifa/Desktop/hits.bed
 TSS=/Users/joazofeifa/Lab/genome_files/chr1_TSS.bed
 
+
+TSS=/Users/joazofeifa/Lab/TF_predictions/peak_files/ENCFF001UEO.bed
+bed=/Users/joazofeifa/Lab/gro_seq_files/Allen2014/EMG_out_files/HCT116_EMG.bed
+DB=/Users/joazofeifa/Lab/gTFIv2/PSSM_DB/TEAD4_motif.txt
+
+
+
+
+
 br=100
 pv=0.00001
 ID=test
 simN=100
 bed_out=/Users/joazofeifa/Lab/motif_distances/test_bed_motif_files/
-NP=3
+NP=1
 site_br=10
 boot_strap_number=1000
 test=1

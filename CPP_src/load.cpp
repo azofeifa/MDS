@@ -26,7 +26,7 @@ vector<segment> sort(vector<segment> segments){
 	while (changed){
 		changed = false;
 		for (int i = 1 ; i < segments.size(); i++){
-			if (segments[i-1].stop > segments[i].stop){
+			if (segments[i-1].start > segments[i].start){
 				changed 		= true;
 				segment copy 	= segments[i-1];
 				segments[i-1] 	= segments[i];
@@ -66,7 +66,6 @@ bool segment::transform(){
 map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double & count){
 	map<string, vector<segment>> S ;
 	ifstream FH(FILE);
-
 	if (FH){
 		string line, chrom;
 		vector<string> line_array;
@@ -389,8 +388,6 @@ vector<PSSM *> load_PSSM_DB_new(string FILE, int threshold){
 				 		x.push_back(stod(line_array[i]));
 				 	}
 				 	P->frequency_table.push_back(x);	
-				}else{
-					P 	= NULL;
 				}
 
 			}
@@ -819,12 +816,7 @@ void write_out_bed_file(vector<segment> D, string out, int MD_score ){
 
 
 map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<string, vector<segment>> TSS, double & TSS_percent){
-	//need to sort both
 	typedef map<string, vector<segment>>::iterator it_type;
-	//merge and sort TSS
-	for (it_type c = TSS.begin(); c!=TSS.end(); c++){
-		TSS[c->first] = merge(c->second, c->first);
-	}	
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		if (TSS.find(c->first)!=TSS.end()){
 			int j = 0, N = TSS[c->first].size();
@@ -836,16 +828,20 @@ map<string, vector<segment>>  label_TSS(map<string, vector<segment>> S, map<stri
 					c->second[i].TSS 	= true;
 				}
 			}
+		
+		}else{
+			S[c->first].clear();
 		}
-		S[c->first] 	= c->second;
 	}
 	int tss = 0 , ALL = 0;
 	for (it_type c = S.begin(); c!=S.end(); c++){
-		for (int i = 0 ; i < c->second.size(); i++){
-			if (c->second[i].TSS){
-				TSS_percent++;
+		if (TSS.find(c->first)!=TSS.end()){
+			for (int i = 0 ; i < c->second.size(); i++){
+				if (c->second[i].TSS ){
+					TSS_percent++;
+				}
+				ALL++;
 			}
-			ALL++;
 		}
 	}
 	TSS_percent 	= TSS_percent / ALL;
