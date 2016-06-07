@@ -108,7 +108,8 @@ void fill_array(vector<int> DD, int * A){
 }
 
 
-double send_out_displacement_data(vector<int> & DD, vector<int> & DD_TSS,vector<int> & DD_NON , int rank, int nprocs, double TSS_spec_association, vector<int> & special_hits){
+double send_out_displacement_data(vector<int> & DD, vector<int> & DD_TSS,
+	vector<int> & DD_NON , int rank, int nprocs, double TSS_spec_association, vector<int> & special_hits){
 	double final_association 	= TSS_spec_association;
 	if (rank==0){
 		for (int j = 1 ; j < nprocs; j++){
@@ -270,7 +271,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 		for (int i =0 ; i < displacements.size(); i++){
 			double MIN 	= 2000;
 			for (int j = 0 ; j < displacements[i].size(); j++ ){
-				if (D[i].TSS){
+				if (D[start+i].TSS){
 					TSS_spec_association++;
 				}
 				N++;			
@@ -278,7 +279,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 					MIN 	= abs(displacements[i][j] - 1000);
 				}
 				final_displacements.push_back(displacements[i][j]);
-				if (D[i].TSS){
+				if (D[start+i].TSS){
 					final_displacements_TSS.push_back(displacements[i][j]);
 				}else{
 					final_displacements_NON.push_back(displacements[i][j]);	
@@ -289,7 +290,8 @@ void scan_intervals(map<string, vector<segment>> S ,
 			}
 		}
 		TSS_spec_association/=N;
-		TSS_spec_association=send_out_displacement_data(final_displacements,final_displacements_TSS,final_displacements_NON, rank, nprocs,TSS_spec_association, special_hits );
+		TSS_spec_association=send_out_displacement_data(final_displacements,
+			final_displacements_TSS,final_displacements_NON, rank, nprocs,TSS_spec_association, special_hits );
 
 		PSSMS[p]->TSS_association 	= TSS_spec_association;
 		if (rank==0){
