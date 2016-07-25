@@ -76,7 +76,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....4.... insert the fasta sequnece into the provided intervals
 		LG->write("inserting fasta.............................", verbose);
-		intervals 									= insert_fasta_sequence(fasta_file, intervals,1,1);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,0,1);
 		LG->write("done\n", verbose);
 
 
