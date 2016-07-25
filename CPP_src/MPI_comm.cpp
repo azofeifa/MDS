@@ -228,7 +228,6 @@ map<int, vector< vector <double> >> collect_PSSM_hits(int rank, int nprocs,
 
 	}
 	return collections;
-
 }
 
 map<int, segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<string, vector<segment>> intervals){
@@ -293,7 +292,6 @@ map<int, segment> gather_PSSM_hits_by_bidirectional(int rank, int nprocs, map<st
 		}
 	}
 	return m_collapsed;
-
 }
 
 map<int, vector<double> > send_collect_observed_statistics(int rank, int nprocs, vector<PSSM *> PSSMS, 
@@ -338,10 +336,7 @@ map<int, vector<double> > send_collect_observed_statistics(int rank, int nprocs,
 		}
 	}
 	return G;
-
-
 }	
-
 
 
 

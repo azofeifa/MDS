@@ -352,6 +352,155 @@ void scan_intervals(map<string, vector<segment>> S ,
 	}
 }
 
+void scan_accross_3(map<string, vector<segment> > S , PSSM * p,string out_dir, double pv,vector<double> background ){
+	map<char, int> table;
+	map<int, int>flip;
+	map<char, char> UC;
+	map<char, char> SS;
+
+
+
+	flip[0] 	=3, flip[3] = 0, flip[1]=2, flip[2]=1;
+		
+
+	UC['A'] 	= 'A';
+	UC['T'] 	= 'T';
+	UC['G'] 	= 'G';
+	UC['C'] 	= 'C';
+
+	UC['a'] 	= 'A';
+	UC['t'] 	= 'T';
+	UC['g'] 	= 'G';
+	UC['c'] 	= 'C';
+
+	SS['A'] 	= 'T';
+	SS['T'] 	= 'A';
+	SS['G'] 	= 'C';
+	SS['C'] 	= 'G';
+
+
+
+	table['A'] 	= 0, table['C']=1, table['G']=2, table['T']=3;
+	table['a'] 	= 0, table['c']=1, table['g']=2, table['t']=3;
+
+
+
+
+
+	ofstream FHW(out_dir+p->name + ".bed");
+	double threshold  	= p->get_threshold(pv);
+	FHW<<"#p-value\t"<<to_string(log10(pv))<<endl;
+	FHW<<"#llr\t"<<to_string(threshold)<<endl;
+	
+	FHW<<"#motif\t" <<p->name<<endl;
+	for (int i = 0 ; i < p->frequency_table.size();i++){
+		string 	linef 	= "#";
+		double x;
+		for (int s =0; s < 3;s++){
+			x = (p->frequency_table[i][s]/2.) + log(background[s]);
+			x 		= exp(x);
+			linef+=to_string(x) + ",";
+		}
+		x = (p->frequency_table[i][3]/2.) + log(background[3]);
+		x 		= exp(x);
+		linef+=to_string(x) + "\n";
+		FHW<<linef;
+
+	}
+	vector<int> locs_pvs;
+	int length 	= p->frequency_table.size();
+	double pvaluef, pvaluer,llr,llf;
+	typedef map<string, vector<segment> >::iterator it_type_1;
+	for (it_type_1 c=S.begin(); c!=S.end();c++){
+		for (int s = 0 ; s < c->second.size(); s++){
+			string seq 	= c->second[s].seq;
+			int N 		= seq.size();
+			int BOUND 	= N-length;
+			int k,j,i,f, r, l;
+			string current 	= "",line="",rcurrent="";
+			for (i =0 ; i  < BOUND; i++){
+				llf 	= 0;
+				llr 	= 0;
+				k 		= 0;
+				j 		= i;
+				l 		= i + length-1;
+				current = "";
+				rcurrent= "";
+				for (k=0; k < length; k++){
+					if (table.find(seq[j])!=table.end() ){
+						f 	= table[seq[j]], r 	= flip[table[seq[l]]];
+						llf+= (p->frequency_table[k][f]) ;
+						llr+= (p->frequency_table[k][r]) ;
+						j++;
+						l--;
+					}else{
+						llf=-10000,llr=-10000;
+						break;
+					}
+				}
+				// pvaluef 	= 1.0-p->get_pvalue(llf);
+				// pvaluer 	= 1.0-p->get_pvalue(llr);
+				if (threshold < llf){
+					j 	= i;
+					for (k=0; k < length; k++){
+						if (table.find(seq[j])!=table.end() ){
+							current+=UC[seq[j]];
+						}
+						j++;
+					}					
+
+
+					line 	 = c->second[s].chrom+"\t" +to_string(i+c->second[s].start) + "\t";
+					line 	+= to_string(i+length+c->second[s].start) + "\t";
+					line	+= current+"\t" + "+" +"\t" + to_string(llf)+ "\n";
+					FHW<<line;
+				}
+				if (threshold < llr){
+					l 		= i + length-1;
+					for (k=0; k < length; k++){
+						if (table.find(seq[j])!=table.end() ){
+							rcurrent+=SS[UC[seq[l]]];
+						}
+						l--;
+					}					
+
+					line 	 = c->second[s].chrom+"\t" +to_string(i+c->second[s].start) + "\t";
+					line 	+= to_string(i+length+c->second[s].start) + "\t";
+					line	+= rcurrent+"\t" + "-" + "\t" + to_string(llr)+"\n";
+					FHW<<line;
+				}
+
+
+			}					
+
+
+		}
+	}
+
+	FHW.close();
+
+
+}
+
+
+
+
+void scan_intervals_genome_wide(map<string, vector<segment>> S, vector<PSSM *> PSSMS, vector<double> background, 
+									double pv, 
+									int rank, int nprocs, Log_File * LG, string out_dir ){
+
+
+	typedef map<string, vector<segment>>::iterator it_type;
+
+	#pragma omp parallel for	
+	for (int p=0; p < PSSMS.size(); p++){
+		scan_accross_3(S, PSSMS[p], out_dir, pv,background );
+	}
+
+
+
+}
+
 
 
 

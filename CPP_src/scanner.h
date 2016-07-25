@@ -23,4 +23,9 @@ void scan_intervals(map<string, vector<segment>> ,vector<PSSM *>  , vector<doubl
  						int  , int  , Log_File *, int, double,string );
 
 
+
+void scan_intervals_genome_wide(map<string, vector<segment>>, vector<PSSM *> , vector<double> , 
+									double , int , 
+									int , Log_File * , string );
+
 #endif

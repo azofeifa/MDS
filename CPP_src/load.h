@@ -73,6 +73,7 @@ public:
 	void bin_null_displacements();
 	void get_pvalue_stats(double);
 	void transform_ft();
+	double get_threshold(double);
 	double get_pvalue(double);
 	double get_pvalue2_f(double,int, int);
 	double get_pvalue2_r(double,int, int);
@@ -88,6 +89,7 @@ public:
 	int rstart, rstop;
 	int forward[2000];
 	int reverse[2000];
+
 	int position;
 	string seq; 
 	bool TSS;
@@ -97,6 +99,7 @@ public:
 	segment();
 	segment(string, int, int,int, int, int);
 	bool transform();
+	vector<vector<int>> transform2();
 
 
 };
@@ -105,7 +108,7 @@ vector<PSSM *> load_PSSM_DB(string, int, int, int);
 
 map<string, vector<segment>> load_bed_file(string, int, int &, double &) ;
 
-map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > , int);
+map<string, vector<segment> > insert_fasta_sequence(string , map<string, vector<segment> > , int,int);
 
 vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
 	vector<int>, vector<int>);

@@ -20,7 +20,7 @@ segment::segment(string chr, int st, int sp, int ID, int rst, int rsp){
 
 
 
-
+ 
 vector<segment> sort(vector<segment> segments){
 	bool changed 	= true;
 	while (changed){
@@ -48,7 +48,6 @@ bool segment::transform(){
 	N 			= seq.size();
 	bool keep 	= true;
 	for (int j = 0 ; j < seq.size(); j++){
-
 		if (table.find(seq[j]) != table.end()){
 			forward[j] 	= table[seq[j]];
 			reverse[j] 	= flip[table[seq[j]]];
@@ -60,7 +59,6 @@ bool segment::transform(){
 	}
 	return keep;
 }
-
 
 
 map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double & count){
@@ -78,7 +76,11 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double 
 				chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
 				N++;
 				x 	= (start + stop)/2.;
-				S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
+				if (pad>0){
+					S[chrom].push_back(segment(chrom, x-pad, x+pad,i, start, stop));
+				}else{
+					S[chrom].push_back(segment(chrom, start, stop,i, start, stop));	
+				}
 				count++;
 				i++;
 			}
@@ -94,7 +96,7 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double 
 
 	return S;	
 }
-map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<string, vector<segment> > S, int test){
+map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<string, vector<segment> > S, int test,int ALL){
 	ifstream FH(fasta_file);
 	map<string, vector<segment> > newS;
 	if (FH){
@@ -159,13 +161,16 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 				int d 	= i->second[j].stop-i->second[j].start;
 				if (i->second[j].seq.size() == d ){
 					bool keep 	= i->second[j].transform();
-					if (keep){
+					if (keep  ){
 						newS[i->second[j].chrom].push_back(i->second[j]);
 					}else{
 						LOSS+=1;
 					}
 				}else{
-					printf("WARNING: ignoring %s:%d-%d, not found in fasta file, %d,%d\n",i->second[j].chrom.c_str(), i->second[j].start, i->second[j].stop,d,i->second[j].seq.size());
+					if (ALL){
+						newS[i->second[j].chrom].push_back(i->second[j]);
+					}
+					//printf("WARNING: ignoring %s:%d-%d, not found in fasta file, %d,%d\n",i->second[j].chrom.c_str(), i->second[j].start, i->second[j].stop,d,i->second[j].seq.size());
 				}
 			}
 		}
@@ -235,8 +240,21 @@ double PSSM::get_pvalue(double obs){
 		}
 	}
 	return pvalues[k][1];
+}
+
+double PSSM::get_threshold(double pv){
+	int i = 0;
+	while (i < pvalues.size() and pvalues[i][1] < (1.0-pv)){
+
+		i+=1;
+	}
+	if (i > 0){
+		return pvalues[i-1][0];
+	}
+	return pvalues[0][0];
 
 }
+
 
 
 double PSSM::get_pvalue2_f(double obs, int i, int s){

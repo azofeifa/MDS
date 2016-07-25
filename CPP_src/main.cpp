@@ -33,6 +33,80 @@ int main(int argc,char* argv[]){
 	}
 
 
+	if (P->module=="GENOME"){
+		//============================================================
+		//necessary user input parameters for GENOME module
+		string fasta_file 			= P->p["-fasta"];
+		string PSSM_DB 				= P->p["-DB"];
+		string out_dir 				= P->p["-o"];
+		string bed_file 			= P->p["-bed"];
+		double pv 					= stof(P->p["-pv"]);
+		int bins 					= stoi(P->p["-br"]);
+		int verbose 				= 1;
+		int job_ID 					= 1;
+		int PSSM_test 				= stoi(P->p["-t"]);
+		int interval_size 			= 0;
+
+		vector<PSSM *> PSSMS;
+		//============================================================
+		//...1... load up PSSMS
+	    Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+	    LG->write(P->get_header(), verbose);
+    	LG->write("loading PSSM DB.............................", verbose);
+		PSSMS 		= load_PSSM_DB_new(PSSM_DB, PSSM_test );
+		LG->write("done\n", verbose);
+		//============================================================
+		//...2... split up PSSMS
+		int h 			= PSSMS.size() / nprocs ;
+
+		int start = rank*h, stop = (rank+1)*h;
+		if ((rank+1)==nprocs){
+			stop 		= PSSMS.size();
+		}
+		vector<PSSM *> nPSSMS(PSSMS.begin()+start, PSSMS.begin()+stop);
+		PSSMS 			= nPSSMS;
+
+		//============================================================
+		//...3... load chromosome sizes
+		LG->write("loading intervals...........................", verbose);
+		double interval_count  	= 0;
+		map<string, vector<segment>> intervals 		= load_bed_file(bed_file, 0,interval_size,interval_count); 
+		LG->write("done\n", verbose);
+
+		//============================================================
+		//....4.... insert the fasta sequnece into the provided intervals
+		LG->write("inserting fasta.............................", verbose);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,1,1);
+		LG->write("done\n", verbose);
+
+
+
+
+
+
+
+		//============================================================
+		//....5.... Compute P-values, approximation error ~ 1.0 / bins
+		LG->write("computing p-values..........................",verbose);
+		vector<double> background 	= {0.25,0.25,0.25,0.25};
+		DP_pvalues(PSSMS,bins, background, true);
+		LG->write("done\n", verbose);
+		
+		scan_intervals_genome_wide(intervals, PSSMS,  background, pv, 
+									 rank,  nprocs,  LG,  out_dir );
+
+
+
+		if (rank==0){
+			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+		}
+
+
+
+
+	}
+
+
 	
 	if (P->module=="DB"){
 		//============================================================
@@ -101,7 +175,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....4.... insert the fasta sequnece into the provided intervals
 		LG->write("inserting fasta.............................", verbose);
-		intervals 									= insert_fasta_sequence(fasta_file, intervals,test);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,test,0);
 		LG->write("done\n", verbose);
 		
 
@@ -219,7 +293,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....4.... insert the fasta sequnece into the provided intervals
 		LG->write("inserting fasta.............................", verbose);
-		intervals 									= insert_fasta_sequence(fasta_file, intervals,test);
+		intervals 									= insert_fasta_sequence(fasta_file, intervals,test,0);
 		LG->write("done\n", verbose);
 		
 

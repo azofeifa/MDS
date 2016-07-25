@@ -116,6 +116,21 @@ const std::string currentDateTime2() {
 
 string params::get_header(){
 	string line 	= "";
+
+	if (module.size()==6 and module.substr(0,6)=="GENOME"){
+		line+="#================================================================\n";
+		line+="#Genome File for Motif Scanner\n";
+		line+="#Date/Time      "+currentDateTime2()+"\n";
+		line+="#-fasta         "+p["-fasta"]+"\n";
+		line+="#-bed           "+p["-bed"]+"\n";
+		line+="#-DB            "+p["-DB"]+"\n";
+		line+="#-o             "+p["-o"]+"\n";
+		line+="#-log_out       "+p["-log_out"]+"\n";
+		line+="#-pv            "+p["-pv"]+"\n";
+		line+="#================================================================\n";
+		
+	}
+
 	if (module.size()==4 and module.substr(0,4) == "EVAL"){
 		line+="#================================================================\n";
 		line+="#Statistics File for Motif Displacement and Enrichment\n";
@@ -171,7 +186,7 @@ void fill_in_options(char* argv[],params * P, int rank){
 	argv++;
 	if (*argv){
 		P->module  = string(*argv);
-		if (not (P->module== "DB" or P->module=="EVAL" or P->module=="--help" or P->module=="-h"  )){
+		if (not (P->module== "DB" or P->module=="EVAL" or P->module=="GENOME" or P->module=="--help" or P->module=="-h"  )){
 			printf("did not specify module, either DB or EVAL\ntry -h or --help for quick reference software usage\n");
 			P->EXIT 	= true;
 		}
