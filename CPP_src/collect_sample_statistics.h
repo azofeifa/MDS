@@ -12,4 +12,5 @@ void collect_sample_stats(map<string, vector<segment>>,
 	 map<int, vector<double>> &, map<int, map<int, double> > &,int );
 void build_cdfs_PSSMs(PSSM *  , int, int , int , int, int, int,double);
 double get_MD_score(vector<int>, int,bool);
+vector<double> get_many_MD_scores(vector<int> , int);
 #endif

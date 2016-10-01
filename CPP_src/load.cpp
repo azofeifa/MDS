@@ -209,6 +209,7 @@ string PSSM::get_consensus(){
 	return consens;
 }
 
+
 double find_closest(double obs, vector<vector<double>> x  ){
 	int k;
 	int a 	= 0;
@@ -241,6 +242,16 @@ double PSSM::get_pvalue(double obs){
 	}
 	return pvalues[k][1];
 }
+
+void PSSM::get_ll_threshold(double pval){
+	int k = 1;
+	while( (k < pvalues.size()) and (1.0-pval) > pvalues[k][1]){
+		k++;
+	}
+	ll_thresh 	= pvalues[k-1][0];
+}
+
+
 
 double PSSM::get_threshold(double pv){
 	int i = 0;
@@ -631,6 +642,29 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
 			}
 		}
 		FHW<<line<<endl;
+
+	}
+
+	FHW<<"#Multi MD Scores\tNon\tTSS\tCombind\n";
+	for (int p =0 ; p < PSSMS.size(); p++){
+		string line 	= "";
+		for (int i = 0 ; i <PSSMS[p]->md_many_non.size();i++ ){
+			line+=to_string(PSSMS[p]->md_many_non[i]) + ",";
+		}
+		line.substr(0,line.size()-1);
+		line+="\t";
+		for (int i = 0 ; i <PSSMS[p]->md_many_TSS.size();i++ ){
+			line+=to_string(PSSMS[p]->md_many_TSS[i]) + ",";
+		}
+		line.substr(0,line.size()-1);
+		line+="\t";
+		for (int i = 0 ; i <PSSMS[p]->md_many.size();i++ ){
+			line+=to_string(PSSMS[p]->md_many[i]) + ",";
+		}
+		line.substr(0,line.size()-1);
+		line+="\n";
+		FHW<<line;
+
 
 	}
 

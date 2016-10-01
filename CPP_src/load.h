@@ -12,6 +12,7 @@ public:
 	int N;
 	int ID;
 	int SN;
+	double ll_thresh;
 	vector<vector<double>> frequency_table;
 	vector<vector<double>> pvalues;
 	vector<vector<int>> null_displacements;
@@ -20,11 +21,14 @@ public:
 	vector<int> null_displacements_2;
 	vector<int> null_displacements_2_non;
 
-	
+
 	vector<int> observed_displacements; 
 	vector<int> observed_displacements_TSS; 
 	vector<int> observed_displacements_non; 
 
+	vector<double> md_many; 
+	vector<double> md_many_TSS; 
+	vector<double> md_many_non; 
 
 	vector<int> binned_observed_displacements; 
 	vector<int> binned_observed_displacements_TSS; 
@@ -78,6 +82,7 @@ public:
 	double get_pvalue2_f(double,int, int);
 	double get_pvalue2_r(double,int, int);
 	double get_position_specific_pvalue(int , double);
+	void get_ll_threshold(double);
 	string get_consensus();
 
 };

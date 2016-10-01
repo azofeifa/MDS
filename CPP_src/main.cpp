@@ -89,7 +89,7 @@ int main(int argc,char* argv[]){
 		//....5.... Compute P-values, approximation error ~ 1.0 / bins
 		LG->write("computing p-values..........................",verbose);
 		vector<double> background 	= {0.25,0.25,0.25,0.25};
-		DP_pvalues(PSSMS,bins, background, true);
+		DP_pvalues(PSSMS,bins, background, true,pv);
 		LG->write("done\n", verbose);
 		
 		scan_intervals_genome_wide(intervals, PSSMS,  background, pv, 
@@ -100,10 +100,6 @@ int main(int argc,char* argv[]){
 		if (rank==0){
 			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
 		}
-
-
-
-
 	}
 
 
@@ -112,26 +108,26 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
-		string bed_file 			= P->p["-bed"];
-		string TSS_bed_file 		= P->p["-TSS"];
-		string OUT 					= P->p["-o"];
+		string bed_file 				= P->p["-bed"];
+		string TSS_bed_file 			= P->p["-TSS"];
+		string OUT 						= P->p["-o"];
 		string PSSM_DB 				= P->p["-DB"];
-		int job_ID 					= 1;
-		double window 				= 1000;
-		double pv 					= stof(P->p["-pv"]);
-		int test 					= 0;
-		int sim_N 					= stoi(P->p["-sim_N"]);
-		int bins 					= stoi(P->p["-br"]);
+		int job_ID 						= 1;
+		double window 					= 1000;
+		int test 						= 0;
+		int sim_N 						= stoi(P->p["-sim_N"]);
+		int bins 						= stoi(P->p["-br"]);
 		int interval_size 			= 0;
-		int verbose 				= 1;
-		int PSSM_test 				= stoi(P->p["-t"]);
-		int order 					= stoi(P->p["-order"]);
+		int verbose 					= 1;
+		int PSSM_test 					= stoi(P->p["-t"]);
+		int order 						= stoi(P->p["-order"]);
+		double pv 						= stof(P->p["-pv"]);
 		vector<PSSM *> PSSMS;
 		//============================================================
 
-	    Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
 
-	    LG->write(P->get_header(), verbose);
+		LG->write(P->get_header(), verbose);
 		//============================================================
 		//....1.... Load PSSM Database
 
@@ -142,7 +138,7 @@ int main(int argc,char* argv[]){
 		//....2.... Compute P-values, approximation error ~ 1.0 / bins
 		LG->write("computing p-values..........................",verbose);
 		vector<double> background 	= {0.25,0.25,0.25,0.25};
-		DP_pvalues(PSSMS,bins, background, true);
+		DP_pvalues(PSSMS,bins, background, true,pv);
 		LG->write("done\n", verbose);
 		
 
@@ -220,36 +216,38 @@ int main(int argc,char* argv[]){
 		if (rank==0){
 			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
 		}
-
-	}else if (P->module=="EVAL"){
+	}
+	if (P->module=="EVAL"){
 		//============================================================
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
-		string bed_file 			= P->p["-bed"];
+		string bed_file 				= P->p["-bed"];
 		string DB_file 				= P->p["-DB"];
-		string OUT 					= P->p["-o"]; 
-		string OUT2 				= P->p["-o2"];
-		string TSS_bed_file 		= P->p["-TSS"];
+		string OUT 						= P->p["-o"]; 
+		string OUT2 					= P->p["-o2"];
+		string TSS_bed_file 			= P->p["-TSS"];
 
-		int BSN 					= stoi(P->p["-bsn"]);
-		int test 					= 0;
-		int job_ID 					= 1;
-		double window 				= 1000;
-		int MD_window 				= stoi(P->p["-window"]);
-		int verbose 				= 1;
+
+		int BSN 							= stoi(P->p["-bsn"]);
+		int MD_window 					= stoi(P->p["-window"]);
+		double integrate 				= stod(P->p["-integrate"]);
+		int test 						= 0;
+		int job_ID 						= 1;
+		double window 					= 1000;
+		int verbose 					= 1;
 		int interval_size 			= 0;
 		//the rest of the parameters will be in the DB file
 		//============================================================
 
 		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
 		LG->write(P->get_header(), verbose);
-		
-
+	
 		//============================================================
 		//....1.... Load PSSM Database
 		LG->write("loading PSSM DB.............................", verbose);
 		vector<double> background;
 		vector<PSSM *> PSSMS 					= load_personal_DB_file(DB_file, P,background);
+		double pval 								= stod(P->p["-pv"]);
 		if (PSSMS.empty()){
 			if (rank==0){
 				collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
@@ -300,7 +298,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....3.... Computed LLR distribution for motifs
 		LG->write("computing p-values..........................", verbose);
-		DP_pvalues(PSSMS,bins, background,false);
+		DP_pvalues(PSSMS,bins, background,false, pval);
 		LG->write("done\n", verbose);
 
 

@@ -138,6 +138,18 @@ double get_MD_score(vector<int> D, int window, bool NORM){
 	return S;
 }
 
+vector<double> get_many_MD_scores(vector<int> D, int step_size){
+	vector<double> md_scores;
+	for (int window = 1 ; window < 1000; window+=step_size){
+		md_scores.push_back(get_MD_score(D, window, 1));
+	}
+	return md_scores;
+
+}
+
+
+
+
 vector<double> bubble_sort(vector<double> X){
 	bool changed 	= true;
 	while (changed){

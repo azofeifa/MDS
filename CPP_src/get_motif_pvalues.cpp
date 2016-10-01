@@ -128,7 +128,8 @@ vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int 
 }
 
 
-vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background, bool SMOOTH){
+vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,
+		vector<double> background, bool SMOOTH, double pval){
 	double current 				= 0.0;
 	string stars 				= "";
 	string white_space 			= "";
@@ -159,7 +160,9 @@ vector<PSSM *> DP_pvalues(vector<PSSM *> P, int bins,vector<double> background, 
 				P[p]->frequency_table[s][i] 	= 2*(log(P[p]->frequency_table[s][i]) - log(background[i]));
 			}
 		}
+		P[p]->get_ll_threshold(pval);
 	}
+
 
 	return P;
 }

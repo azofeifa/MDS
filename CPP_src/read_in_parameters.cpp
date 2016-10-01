@@ -3,9 +3,8 @@
 using namespace std;
 params::params(){
 	p["-TSS"] 		= "";
-	p["-o"] 		= "";
+	p["-o"] 			= "";
 	p["-o2"] 		= "";
-	
 	p["-bed"] 		= "";
 	p["-fasta"] 	= "";
 	p["-DB"] 		= "";
@@ -16,9 +15,10 @@ params::params(){
 	p["-br"] 		= "100";
 	p["-bsn"] 		= "100";
 	p["-log_out"] 	= "";
-	p["-t"] 		= "0";
+	p["-t"] 			= "0";
 	p["-order"] 	= "0";
 	p["-window"] 	= "100";
+	p["-integrate"]= "0";
 
 	module 		= "";
 	EXIT 		= false;

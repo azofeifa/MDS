@@ -70,12 +70,12 @@ vector<int> get_sig_positions(int forward[2000],
 		}
 
 
-		pvaluef 	= 1.0-p->get_pvalue(llf);
-		pvaluer 	= 1.0-p->get_pvalue(llr);
-		if (pvaluef < pv){
+		// pvaluef 	= 1.0-p->get_pvalue(llf);
+		// pvaluer 	= 1.0-p->get_pvalue(llr);
+		if (llf > p->ll_thresh){
 			locs_pvs.push_back(i);	
 		}
-		if (pvaluer < pv){
+		else if (llr > p->ll_thresh){
 			locs_pvs.push_back(i);
 		}
 	}
@@ -325,6 +325,11 @@ void scan_intervals(map<string, vector<segment>> S ,
 			double MD_score_TSS 		= get_MD_score(final_displacements_TSS,MD_window,true);
 			double MD_score_NON 		= get_MD_score(final_displacements_NON,MD_window,true);
 
+			vector<double> md_scores_many 		= get_many_MD_scores(final_displacements, 10 );
+			vector<double> md_scores_many_TSS 	= get_many_MD_scores(final_displacements_TSS, 10);
+			vector<double> md_scores_many_NON 	= get_many_MD_scores(final_displacements_NON, 10);
+
+
 			double NN 				= final_displacements.size();
 			double NN_TSS 			= final_displacements_TSS.size();
 			double NN_NON 			= final_displacements_NON.size();
@@ -332,6 +337,13 @@ void scan_intervals(map<string, vector<segment>> S ,
 			PSSMS[p]->MD_score 		= MD_score;
 			PSSMS[p]->MD_score_TSS 	= MD_score_TSS;
 			PSSMS[p]->MD_score_NON 	= MD_score_NON;
+
+
+			PSSMS[p]->md_many 		= md_scores_many;
+			PSSMS[p]->md_many_TSS 	= md_scores_many_TSS;
+			PSSMS[p]->md_many_non 	= md_scores_many_NON;
+
+
 
 			PSSMS[p]->total 		= NN;
 			PSSMS[p]->total_TSS 	= NN_TSS;
@@ -478,8 +490,6 @@ void scan_accross_3(map<string, vector<segment> > S , PSSM * p,string out_dir, d
 	}
 
 	FHW.close();
-
-
 }
 
 
@@ -488,17 +498,11 @@ void scan_accross_3(map<string, vector<segment> > S , PSSM * p,string out_dir, d
 void scan_intervals_genome_wide(map<string, vector<segment>> S, vector<PSSM *> PSSMS, vector<double> background, 
 									double pv, 
 									int rank, int nprocs, Log_File * LG, string out_dir ){
-
-
 	typedef map<string, vector<segment>>::iterator it_type;
-
 	#pragma omp parallel for	
 	for (int p=0; p < PSSMS.size(); p++){
 		scan_accross_3(S, PSSMS[p], out_dir, pv,background );
 	}
-
-
-
 }
 
 
