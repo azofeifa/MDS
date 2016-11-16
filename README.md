@@ -1,4 +1,15 @@
 #Motif Displacement Calculator
+This package provides the necessary algorithms to scan for significant sites of TF-binding motifs at locations of regulatory DNA; i.e. enhancers and promoters. To compute a measure of co-occurrence between motifs and regulatory DNA, this package implements the so called motif displacement (MD) score which computes the proportion of motifs falling within some radius (-h) of all regulatory DNA centers against a larger local background (-H). 
+
+This package consists of two modules and is invoked as below.
+
+```
+mpirun -np <.> SE  DB <paramater flags and values>
+
+mpirun -np <.> SE  EVAL <paramater flags and values> 
+```
+
+
 
 #Modules
 
