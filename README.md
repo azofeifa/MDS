@@ -44,7 +44,9 @@ A fair warning, running this module will likely take upwards of a week on a sing
 |-H|numerical|distance around which sequence will collected (default = 1500bp)
 |-pv|numerical|pvalue threshold under which a motif will be considered significant
 |-sim_N|numerical|number of random sequence generations; (default=10,000,000)
+
 ###Output file type (-o)
+
 ![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/ChIP_signal_clustering_chromHMM.png)
 
 Above: A screen shot of a small porition of the db file that is outputed from running DB module. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
