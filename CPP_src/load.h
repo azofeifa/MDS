@@ -74,7 +74,7 @@ public:
 	PSSM(string);
 	PSSM(int);
 	void bin_observations();
-	void bin_null_displacements();
+	void bin_null_displacements(int);
 	void get_pvalue_stats(double);
 	void transform_ft();
 	double get_threshold(double);
@@ -92,8 +92,8 @@ public:
 	string chrom; 
 	int start, stop; 
 	int rstart, rstop;
-	int forward[2000];
-	int reverse[2000];
+	vector<int> forward;
+	vector<int> reverse;
 
 	int position;
 	string seq; 
@@ -121,7 +121,7 @@ void load_PSSM_ID_names_only(string , map<int, string> &  );
 vector<PSSM *> load_PSSM_DB_new(string, int);
 
 void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,vector<vector<double>>,
-					vector<vector<double>>,vector<double ** >,vector<double ** > );
+					vector<vector<double>> );
 
 
 

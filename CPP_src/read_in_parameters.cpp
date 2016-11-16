@@ -16,8 +16,8 @@ params::params(){
 	p["-bsn"] 		= "100";
 	p["-log_out"] 	= "";
 	p["-t"] 			= "0";
-	p["-order"] 	= "0";
-	p["-window"] 	= "100";
+	p["-h"] 	= "150";
+	p["-H"]         = "3000";
 	p["-integrate"]= "0";
 
 	module 		= "";

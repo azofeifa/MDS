@@ -51,9 +51,9 @@ int get_pvalue_llr(vector<int> seq, vector<double> background, double threshold,
 }
 
 vector<vector<int>> make_random_draws(	int sim_N, 
-										vector<int> seqf, vector<int> seqr, 
-										vector<discrete_distribution<int>> D_forward,
-										vector<double> background, PSSM * p, double threshold){
+					vector<int> seqf, vector<int> seqr, 
+					vector<discrete_distribution<int>> D_forward,
+					vector<double> background, PSSM * p, double threshold, int W){
 	vector<vector<int>> DD(sim_N);
 	random_device rd;
 	map<int, int> G;
@@ -61,34 +61,12 @@ vector<vector<int>> make_random_draws(	int sim_N,
 	#pragma omp parallel for
 	for (int s = 0 ; s < sim_N; s++){//number of random samples
 		mt19937 gen(rd()*s);
-		int forward[2000], reverse[2000];
-		for (int i = 0 ; i < 2000; i++){
+		vector<int> forward(W), reverse(W);
+		for (int i = 0 ; i < W; i++){
 			forward[i] 	= D_forward[i](gen);
 			reverse[i] 	= G[forward[i]];
 		}
-		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, threshold);
-	}
-	return DD;
-}
-
-vector<vector<int>> make_random_draws_from_markov(int sim_N, PSSM * p, 
-				double threshold,vector<vector<discrete_distribution<int>>> D_forward_MM){
-	vector<vector<int>> DD(sim_N);
-	random_device rd;
-	discrete_distribution<int> U 	= {0.25,0.25,0.25,0.25};
-	map<int, int> G;
-	G[0] 	=3,G[3] 	=0,G[1] 	=2,G[2] 	=1;
-	#pragma omp parallel for
-	for (int s = 0 ; s < sim_N; s++){//number of random samples
-		mt19937 gen(rd()*s);
-		int forward[2000], reverse[2000];
-		forward[0] 	= U(gen);
-		reverse[0] 	= G[forward[0]];
-		for (int i = 1 ; i < 2000; i++){
-			forward[i] 	= D_forward_MM[i-1][forward[i-1]](gen);
-			reverse[i] 	= G[forward[i]];
-		}
-		DD[s] 		= get_sig_positions(forward, reverse, 2000, p, threshold);
+		DD[s] 		= get_sig_positions(forward, reverse, W, p, threshold);
 	}
 	return DD;
 }
@@ -121,6 +99,7 @@ void send_out_null_displacement_data(vector<vector<int>> & D, int rank, int npro
 			MPI_Ssend(&S, 1, MPI_INT, 0,k, MPI_COMM_WORLD);
 			int * A = new int[S];
 			if (S){
+			  
 				copy(D[k].begin(), D[k].end(), A);
 				MPI_Ssend(&A[0], S, MPI_INT, 0,k+ind_N, MPI_COMM_WORLD);
 			}
@@ -142,30 +121,16 @@ string get_dots(int N){
 void run_simulations(map<string, vector<segment>> intervals, 
 		vector<PSSM *> P, int sim_N,
 		vector<vector<double>> background_D,
-		vector<double> background, double threshold,int rank, int nprocs,Log_File * LG, int order,
-		vector<double ** > MM, int TSS){
+		     vector<double> background, double threshold,int rank, int nprocs,Log_File * LG,  int TSS, int W){
 
 
 	vector<discrete_distribution<int>> D_forward;
 	vector<discrete_distribution<int>> D_reverse;
 
-	vector<vector<discrete_distribution<int>>> D_forward_MM(2000);
-
-	if (order==0){
-		for (int i = 0 ; i < background_D.size(); i++){
-			discrete_distribution<int> Df {background_D[i][0],background_D[i][1],background_D[i][2],background_D[i][3]};
-			D_forward.push_back(Df);
-		}
-	}else{
-		for (int i = 0 ; i < MM.size(); i++){
-			vector<discrete_distribution<int>> current(4);
-			for (int u = 0 ; u < 4; u++){
-				discrete_distribution<int> Df {MM[i][u][0],MM[i][u][1],MM[i][u][2],MM[i][u][3]};
-				current[u] 	= Df;
-			}
-			D_forward_MM[i] 	= current;
-
-		}
+	cout<<background_D.size()<<endl;
+	for (int i = 0 ; i < background_D.size(); i++){
+	  discrete_distribution<int> Df {background_D[i][0],background_D[i][1],background_D[i][2],background_D[i][3]};
+	  D_forward.push_back(Df);
 	}
 	
 	int ind_N 	= sim_N / nprocs;
@@ -179,12 +144,8 @@ void run_simulations(map<string, vector<segment>> intervals,
 		vector<int> seqf(S);
 		vector<int> seqr(S);
 		vector<vector<int>> DD ;
-		if (order==0){
-			DD 							= make_random_draws(ind_N, seqf, seqr, 
-				D_forward, background, P[p], threshold );
-		}else{
-			DD 							= make_random_draws_from_markov(ind_N,P[p], threshold, D_forward_MM);
-		}
+		DD 							= make_random_draws(ind_N, seqf, seqr, 
+											    D_forward, background, P[p], threshold,  2*W );
 		send_out_null_displacement_data(DD, rank, nprocs, ind_N);
 		if (TSS){
 			P[p]->null_displacements 		= DD;

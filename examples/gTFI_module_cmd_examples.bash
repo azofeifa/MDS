@@ -1,6 +1,6 @@
 
 #===========================================================
-install_location=/Users/joazofeifa/Lab/gTFIv2 #whereever you installed gTFI
+install_location=/Users/azofeifa/Lab/gTFIv2/CPP_src/ #whereever you installed gTFI
 #change this accordingly
 #===========================================================
 #input parameters and necessary paths
@@ -19,6 +19,9 @@ NP=3
 sim_N=100
 pv=0.00001
 bsn=150
+H=1500
+h=150
+
 
 echo '\n\n-------------------------Running Unit Tests-------------------------\n\n\n'
 

@@ -47,8 +47,8 @@ map<int, double [2000][4]> get_average_ACGT_profile(map<string, vector<segment> 
 }
 
 void get_ACGT_profile_all(map<string, vector<segment> > S, 
-	vector<vector<double>> & background, int TSS){
-	for (int i = 0 ; i < 2000; i++){
+			  vector<vector<double>> & background, int TSS, int W){
+	for (int i = 0 ; i < W; i++){
 		vector<double> current 	= {10,10,10,10};
 		background.push_back(current);
 		
@@ -61,13 +61,13 @@ void get_ACGT_profile_all(map<string, vector<segment> > S,
 		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
 
 			if ( (s->TSS and TSS) or (not s->TSS and not TSS) ){
-				for (int i = 0 ; i <2000 ; i++ ){
+				for (int i = 0 ; i <W ; i++ ){
 					background[i][s->forward[i]]++;
 				}
 			}
 		}
 	}
-	for (int i = 0 ; i < 2000; i ++){
+	for (int i = 0 ; i < W; i ++){
 		double SUM= 0;
 		for (int j = 0; j < 4; j++ ){
 			SUM+=background[i][j];

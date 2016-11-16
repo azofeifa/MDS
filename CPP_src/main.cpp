@@ -108,20 +108,19 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
-		string bed_file 				= P->p["-bed"];
+		string bed_file 			= P->p["-bed"];
 		string TSS_bed_file 			= P->p["-TSS"];
-		string OUT 						= P->p["-o"];
+		string OUT 				= P->p["-o"];
 		string PSSM_DB 				= P->p["-DB"];
-		int job_ID 						= 1;
-		double window 					= 1000;
-		int test 						= 0;
-		int sim_N 						= stoi(P->p["-sim_N"]);
-		int bins 						= stoi(P->p["-br"]);
+		int job_ID 				= 1;
+		int window 			        = stoi(P->p["-H"]);
+		int test 				= 0;
+		int sim_N 				= stoi(P->p["-sim_N"]);
+		int bins 				= stoi(P->p["-br"]);
 		int interval_size 			= 0;
-		int verbose 					= 1;
-		int PSSM_test 					= stoi(P->p["-t"]);
-		int order 						= stoi(P->p["-order"]);
-		double pv 						= stof(P->p["-pv"]);
+		int verbose 			        = 1;
+		int PSSM_test 			        = stoi(P->p["-t"]);
+		double pv 				= stof(P->p["-pv"]);
 		vector<PSSM *> PSSMS;
 		//============================================================
 
@@ -154,7 +153,7 @@ int main(int argc,char* argv[]){
 
 		LG->write("loading TSS intervals.......................", verbose);
 		double TSS_count 		= 0;
-		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size, TSS_count); 
+		map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, window,interval_size, TSS_count); 
 		LG->write("done\n", verbose);
 		
 		//============================================================
@@ -180,16 +179,12 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....5.... get generic GC content across intervals for background model
 		vector<vector<double>> background_TSS, background_non_TSS;
-		vector<double ** > D_TSS(2000);
-		vector<double ** > D_NON(2000);
 		LG->write("computing ACGT profile......................", verbose);
 		
 
-		get_ACGT_profile_all(intervals, background_TSS, 1);
-		get_ACGT_profile_all(intervals, background_non_TSS, 0);
+		get_ACGT_profile_all(intervals, background_TSS, 1, window*2);
+		get_ACGT_profile_all(intervals, background_non_TSS, 0, window*2);
 		
-		get_1st_order_markov(intervals, D_TSS, 1);
-		get_1st_order_markov(intervals, D_NON, 0);
 		
 
 		LG->write("done\n",verbose);
@@ -198,18 +193,18 @@ int main(int argc,char* argv[]){
 		//....6.... perform simulations and get random MD scores
 		LG->write("\n   running simulations for null model (TSS)\n\n",verbose);
 		
-		run_simulations(intervals,PSSMS, sim_N,background_TSS,background, pv, rank, nprocs, LG, order, D_TSS,1);
+		run_simulations(intervals,PSSMS, sim_N,background_TSS,background, pv, rank, nprocs, LG,1, window);
 
 		LG->write("\n   running simulations for null model (~TSS)\n\n",verbose);
 		
-		run_simulations(intervals,PSSMS, sim_N,background_non_TSS,background, pv, rank, nprocs, LG, order, D_NON,0);
+		run_simulations(intervals,PSSMS, sim_N,background_non_TSS,background, pv, rank, nprocs, LG, 0, window);
 	
 		//============================================================
 		//....6....write out to DB file
 		if (rank==0){
 			LG->write("writing out simulations.....................",verbose);
 
-			write_out_null_stats( PSSMS,OUT,  P, background,background_TSS, background_non_TSS, D_TSS, D_NON);
+			write_out_null_stats( PSSMS,OUT,  P, background,background_TSS, background_non_TSS);
 
 			LG->write("done\n",verbose);
 		}

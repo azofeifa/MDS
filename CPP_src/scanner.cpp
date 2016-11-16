@@ -46,8 +46,8 @@ vector<double> get_GC_content(map<string, vector<segment>> S){
 }
 
 
-vector<int> get_sig_positions(int forward[2000], 
-	int reverse[2000], int N, PSSM * p, double pv){
+vector<int> get_sig_positions(vector<int> forward, 
+			      vector<int> reverse, int N, PSSM * p, double pv){
 
 	vector<int> locs_pvs;
 	int length 	= p->frequency_table.size();
@@ -70,8 +70,6 @@ vector<int> get_sig_positions(int forward[2000],
 		}
 
 
-		// pvaluef 	= 1.0-p->get_pvalue(llf);
-		// pvaluer 	= 1.0-p->get_pvalue(llr);
 		if (llf > p->ll_thresh){
 			locs_pvs.push_back(i);	
 		}
@@ -231,9 +229,9 @@ string get_dots_2(int N){
 
 
 void scan_intervals(map<string, vector<segment>> S ,
- 												vector<PSSM *> PSSMS, vector<double> background, 
- 												double pv, int interval_size, int bsn, 
- 												int rank, int nprocs, Log_File * LG, int MD_window,double TSS_association, string out2){
+		    vector<PSSM *> PSSMS, vector<double> background, 
+		    double pv, int interval_size, int bsn, 
+		    int rank, int nprocs, Log_File * LG, int MD_window,double TSS_association, string out2){
 
 	vector<segment> D 	= collapse_map(S);
 	int threads  		= omp_get_max_threads();

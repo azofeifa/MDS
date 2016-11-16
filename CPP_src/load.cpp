@@ -49,11 +49,11 @@ bool segment::transform(){
 	bool keep 	= true;
 	for (int j = 0 ; j < seq.size(); j++){
 		if (table.find(seq[j]) != table.end()){
-			forward[j] 	= table[seq[j]];
-			reverse[j] 	= flip[table[seq[j]]];
+		  forward.push_back(table[seq[j]]);
+		  reverse.push_back(flip[table[seq[j]]]);
 		}else{
-			forward[j] 	= 5;
-			reverse[j] 	= 5;
+		    forward.push_back(5);
+		    reverse.push_back(5);
 			keep 		= false;
 		}
 	}
@@ -352,8 +352,8 @@ void PSSM::bin_observations(){
 
 }
 
-void PSSM::bin_null_displacements(){
-	for (int i = 0 ; i < 2000; i++){
+void PSSM::bin_null_displacements(int W){
+	for (int i = 0 ; i < W; i++){
 		binned_null_displacements.push_back(0);
 		binned_null_displacements_non.push_back(0); 
 
@@ -443,11 +443,10 @@ const std::string currentDateTime() {
 
 
 void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, 
-	vector<double> background, vector<vector<double>> MAP_background,vector<vector<double>> MAP_background_NON,
-	 vector<double ** > M,vector<double ** > MN){
+	vector<double> background, vector<vector<double>> MAP_background,vector<vector<double>> MAP_background_NON){
 	
 	//transform back to frequency domain
-	for (int p = 0; p < PSSMS.size(); p++){ //
+	for (int p = 0; p < PSSMS.size(); p++){ 
 		for (int i = 0; i < PSSMS[p]->frequency_table.size(); i++){
 			for (int j = 0 ; j < 4;j++){
 				PSSMS[p]->frequency_table[i][j]/=2.0;
@@ -464,7 +463,8 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	string out_dir 				= PP->p["-o"];
 	string PSSM_DB 				= PP->p["-DB"];
 	string job_ID 				= PP->p["-ID"];
-	double window 				= 1000;
+	
+	int window 				= stoi(PP->p["-H"]);
 	double pv 					= stof(PP->p["-pv"]);
 	int test 					= 1;
 	int sim_N 					= stoi(PP->p["-sim_N"]);
@@ -475,12 +475,12 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	FHW<<"#=====================================================================\n";
 	FHW<<"#Database File\n";
 	FHW<<"#Data/Time    "<<currentDateTime()<<endl;
-	FHW<<"#-window      "<<to_string(window)<<endl;
 	FHW<<"#-bed         "<<(bed_file)<<endl;
 	FHW<<"#-fasta       "<<(fasta_file)<<endl;
 	FHW<<"#-sim_N       "<<to_string(sim_N)<<endl;
 	FHW<<"#-bins        "<<to_string(bins)<<endl;
 	FHW<<"#-pv          "<<to_string(pv)<<endl;
+	FHW<<"#-H           "<<to_string(window)<<endl;
 	FHW<<"#-background  "<<to_string(background[0])<<","<<to_string(background[1])<<","<<to_string(background[2])<<","<<to_string(background[3])<<endl;
 	FHW<<"#=====================================================================\n";
 	
@@ -509,7 +509,7 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 			}
 		}
 		
-		PSSMS[p]->bin_null_displacements();
+		PSSMS[p]->bin_null_displacements(window*2);
 		FHW<<to_string(zero) + "|" ;
 		string line 	= "";
 		for (int i = 0 ; i < PSSMS[p]->binned_null_displacements.size() ; i ++  ){
@@ -539,20 +539,6 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	FHW<<"#Estimated Background Distribution (~TSS)\n";
 	for (int i = 0 ; i < MAP_background_NON.size(); i++){
 		FHW<<"#\t"+ to_string(MAP_background_NON[i][0])+","+to_string(MAP_background_NON[i][1])+","+to_string(MAP_background_NON[i][2])+","+to_string(MAP_background_NON[i][3])+ "\n";
-	}
-	FHW<<"#Estimate Markov Chain (TSS)\n";
-	for (int i = 0 ; i < M.size(); i++){
-		FHW<<"#$" + to_string(i)+"\n";
-		for (int u = 0 ; u < 4; u++){
-			FHW<<"#\t" + to_string(M[i][u][0])+","+to_string(M[i][u][1]) + "," + to_string(M[i][u][2]) + "," + to_string(M[i][u][3])+ "\n";
-		}
-	}
-	FHW<<"#Estimate Markov Chain (~TSS)\n";
-	for (int i = 0 ; i < MN.size(); i++){
-		FHW<<"#$" + to_string(i)+"\n";
-		for (int u = 0 ; u < 4; u++){
-			FHW<<"#\t" + to_string(MN[i][u][0])+","+to_string(MN[i][u][1]) + "," + to_string(MN[i][u][2]) + "," + to_string(MN[i][u][3])+ "\n";
-		}
 	}
 }
 
