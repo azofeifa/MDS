@@ -58,4 +58,28 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 |-h|numerical|distance around which the MD score will be computed (default = 150bp)
 |-bsn|numerical|number of random draws from the empiracle distribution estimated from DB module; (default=10,000)
 
+#Advanced HPC usage
+```bash
+#PBS -S /bin/bash
+
+#PBS -N gTFIv2
+#PBS -m ae
+#PBS -M joseph.azofeifa@colorado.edu
+
+
+#PBS -l walltime=72:00:00
+#PBS -l nodes=1:ppn=64
+#PBS -l mem=10gb
+hostlist=$( cat $PBS_NODEFILE | sort | uniq | tr '\n' ',' | sed -e 's/,$//' )
+# -- OpenMP environment variables --
+OMP_NUM_THREADS=64
+export OMP_NUM_THREADS
+module load gcc_4.9.2
+module load mpich_3.1.4
+
+
+
+cmd="mpirun -np $PBS_NUM_NODES -hosts ${hostlist}"
+```
+
 
