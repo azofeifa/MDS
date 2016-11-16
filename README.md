@@ -77,11 +77,11 @@ The EVAL module computes the so called motif displacement (MD) score. The module
 
 Above: A screen shot of output from the EVAL module (-o). To explain the file type briefly, lines starting with a \# indicate descriptive headings and should be ignored in downstream analysis.  The file is broken up into three parts. 
 
-(1) The first portion of the MD score file provides for each motif model the computed MD score from the set of promoter associated, non-promoter associated and combined bed file intervals. Along with the MD score, each line provides the number of motif occurrences in the larger (-H) window. Finally, p-values computed under two different background null models (stationary and non-stationary; binomial and empirical simulations; Supplementary Note \ref{MDscoreStationary}) are provided for each motif model and each promoter association type. 
+(1) The first portion of the MD score file provides for each motif model the computed MD score from the set of promoter associated, non-promoter associated and combined bed file intervals. Along with the MD score, each line provides the number of motif occurrences in the larger (-H) window. Finally, p-values computed under two different background null models (stationary and non-stationary; binomial and empirical simulations; are provided for each motif model and each promoter association type. 
 
-(2) The second portion of the MD score file---following the header ``\#Binned Observation statistics range"---provides the raw motif displacement frequency (histogram) according to each motif model. 
+(2) The second portion of the MD score file-following the header: #Binned Observation statistics range-provides the raw motif displacement frequency (histogram) according to each motif model. 
 
-(3) The third and final portion of the MD score file---following the header ``\#Empiracle Bootstrapped Distribution"---provides the empirical samples of the MD-score (discussed in Supplementary Note \ref{MDscoreLocal}) and used to calculate the non-stationary p-value.
+(3) The third and final portion of the MD score file-following the header: #Empiracle Bootstrapped Distribution-provides the empirical samples of the MD-score and used to calculate the non-stationary p-value.
 
 
 #Advanced HPC usage
