@@ -609,7 +609,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
 		double var 		= get_var(PSSMS[p]->MD_CDF,mean);
 		FHW<< to_string(mean) + "," + to_string(sqrt(var)) +"\n";
 	}
-	FHW<<"#Binned Observation statistics range={-1000,..,1000}\n";
+	FHW<<"#Binned Observation statistics\n";
 	for (int p =0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t";
 		PSSMS[p]->bin_observations();
