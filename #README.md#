@@ -44,6 +44,10 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 |-H|numerical|distance around which sequence will collected (default = 1500bp)
 |-pv|numerical|pvalue threshold under which a motif will be considered significant
 |-sim_N|numerical|number of random sequence generations; (default=10,000,000)
+###Output file type (-o)
+
+
+
 ##EVAL
 
 | Flag | Type | Description |
@@ -57,6 +61,9 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 |-log_out|/path/to |Where temporary and final log files will be generate <-ID>.log
 |-h|numerical|distance around which the MD score will be computed (default = 150bp)
 |-bsn|numerical|number of random draws from the empiracle distribution estimated from DB module; (default=10,000)
+
+
+
 
 #Advanced HPC usage
 
