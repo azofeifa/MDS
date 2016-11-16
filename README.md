@@ -31,7 +31,7 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 #Modules
 
 ##DB
-
+A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both humand mouse, are located within the PSSM_DB/. Fortunately, this file type does is genome-build-free. However, if you would like to re-estimate the GC distribution at your regulatory element of interest than go for it! 
 | Flag | Type | Description |
 |------|------|-------------| 
 |-ID| some string |An identifier, all output files will begin with this prefix
@@ -45,8 +45,9 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 |-pv|numerical|pvalue threshold under which a motif will be considered significant
 |-sim_N|numerical|number of random sequence generations; (default=10,000,000)
 ###Output file type (-o)
+![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/ChIP_signal_clustering_chromHMM.png)
 
-
+Above: A screen shot of a small porition of the db file that is outputed from running DB module. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
 
 ##EVAL
 
