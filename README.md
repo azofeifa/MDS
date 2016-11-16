@@ -25,7 +25,11 @@ $ make clean
 $ make
 ```
 
-The make file requires the path to mpic++ (install and config openMPI) to be in your PATH 
+The make file requires the path to mpic++ (install and config openMPI) to be in your PATH. Installing and configuring your gcc compilers will likely be cause for a headache. I found these sites useful
+
+1. https://www.open-mpi.org
+2. https://www.cyberciti.biz/faq/howto-apple-mac-os-x-install-gcc-compiler/
+
 
 
 #Modules
@@ -85,6 +89,8 @@ Above: A screen shot of output from the EVAL module (-o). To explain the file ty
 
 
 #Advanced HPC usage
+Those using compute cluster may find this below qsub script useful!
+
 
 ```bash
 #PBS -S /bin/bash
@@ -111,4 +117,6 @@ $cmd $src <module> <parameter flags and values>
 
 ```
 
+#Questions/Comments
+Please email me (Joey) at joseph[.]azofeifa[@]colorado[.]edu if you have any questions on usage or bug reports. Or open an Issue.
 
