@@ -32,6 +32,7 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 
 ##DB
 A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both humand mouse, are located within the PSSM_DB/. Fortunately, this file type does is genome-build-free. However, if you would like to re-estimate the GC distribution at your regulatory element of interest than go for it! 
+
 | Flag | Type | Description |
 |------|------|-------------| 
 |-ID| some string |An identifier, all output files will begin with this prefix
