@@ -12,8 +12,8 @@ mpirun -np <.> SE  EVAL <paramater flags and values>
 Evident from the run command, this c++ package requires three dependencies:
 
 1. c++11
-2. openmp (include <omp.h>)
-3. mpi (include <mpi.h>)
+2. openmp (include \<omp.h\>)
+3. mpi (include \<mpi.h\>)
 
 To build 
 
