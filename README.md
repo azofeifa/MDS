@@ -31,7 +31,7 @@ The make file requires the path to mpic++ (install and config openMPI) to be in 
 #Modules
 
 ##DB
-A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both humand mouse, are located within the PSSM_DB/. Fortunately, this file type does is genome-build-free. However, if you would like to re-estimate the GC distribution at your regulatory element of interest than go for it! 
+A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both human and mouse, are located within the PSSM_DB/. Fortunately, this file type is genome-build-free and so does not to be regenerated even if a new fasta file is used during the EVAL module. However, if you would like to re-estimate the GC distribution at your regulatory element of interest than go for it! 
 
 | Flag | Type | Description |
 |------|------|-------------| 
@@ -53,6 +53,17 @@ A fair warning, running this module will likely take upwards of a week on a sing
 Above: A screen shot of a small porition of the db file that is outputed from running DB module. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
 
 ##EVAL
+The EVAL module computes the so called motif displacement (MD) score. The module follows this generic pipeline:
+
+
+1. Takes in as input a bed file corresponding to the regulatory DNA
+2. Extracts the underlying nucleotide sequence from a provide fasta file (of the same build as the bed file) 
+3. Scans for significant motif sites (gathered from the file.db either from the PSSM_DB/ directory or generated from the DB module) 
+4. assess signficance of the MD score under binomial model (stationary background model) and (non-stationary background model estimated from the GC bias from the DB module).
+
+![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/Enrichment_FILE_OUT.png)
+
+
 
 | Flag | Type | Description |
 |------|------|-------------|
