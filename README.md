@@ -25,13 +25,17 @@ $ make clean
 $ make
 ```
 
-The make file requires the path to mpic++ (install and config openMPI) to be in your PATH 
+The make file requires the path to mpic++ (install and config openMPI) to be in your PATH. Installing and configuring your gcc compilers will likely be cause for a headache. I found these sites useful
+
+1. https://www.open-mpi.org
+2. https://www.cyberciti.biz/faq/howto-apple-mac-os-x-install-gcc-compiler/
+
 
 
 #Modules
 
 ##DB
-A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both humand mouse, are located within the PSSM_DB/. Fortunately, this file type does is genome-build-free. However, if you would like to re-estimate the GC distribution at your regulatory element of interest than go for it! 
+A fair warning, running this module will likely take upwards of a week on a single node machine. In short, this module requires access to a large compute cluster. DB files that can be used for the eval module, in both human and mouse, are located within the PSSM_DB/. Fortunately, this file type is genome-build-free and so does not to be regenerated even if a new fasta file is used during the EVAL module. However, if you would like to re-estimate the GC distribution at your regulatory element of interest then go for it! 
 
 | Flag | Type | Description |
 |------|------|-------------| 
@@ -50,9 +54,16 @@ A fair warning, running this module will likely take upwards of a week on a sing
 
 ![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/DB_FILE_OUT.png)
 
-Above: A screen shot of a small porition of the db file that is outputed from running DB module. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
+Above: A screen shot of a small porition of the db file that the DB module outputs. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
 
 ##EVAL
+The EVAL module computes the so called motif displacement (MD) score. The module follows this generic pipeline:
+
+
+1. Takes in as input a bed file corresponding to the regulatory DNA
+2. Extracts the underlying nucleotide sequence from the provided fasta file (of the same build as the bed file) 
+3. Scans for significant motif sites (gathered from the file.db either from the PSSM_DB/ directory or generated from the DB module) 
+4. assess signficance of the MD score under binomial model (stationary background model) and (non-stationary background model estimated from the GC bias from the DB module).
 
 | Flag | Type | Description |
 |------|------|-------------|
@@ -66,10 +77,20 @@ Above: A screen shot of a small porition of the db file that is outputed from ru
 |-h|numerical|distance around which the MD score will be computed (default = 150bp)
 |-bsn|numerical|number of random draws from the empiracle distribution estimated from DB module; (default=10,000)
 
+![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/Enrichment_FILE_OUT.png)
 
+Above: A screen shot of output from the EVAL module (-o). To explain the file type briefly, lines starting with a \# indicate descriptive headings and should be ignored in downstream analysis.  The file is broken up into three parts. 
+
+(1) The first portion of the MD score file provides for each motif model the computed MD score from the set of promoter associated, non-promoter associated and combined bed file intervals. Along with the MD score, each line provides the number of motif occurrences in the larger (-H) window. Finally, p-values computed under two different background null models (stationary and non-stationary; binomial and empirical simulations; are provided for each motif model and each promoter association type. 
+
+(2) The second portion of the MD score file-following the header: #Binned Observation statistics range-provides the raw motif displacement frequency (histogram) according to each motif model. 
+
+(3) The third and final portion of the MD score file-following the header: #Empiracle Bootstrapped Distribution-provides the empirical samples of the MD-score and used to calculate the non-stationary p-value.
 
 
 #Advanced HPC usage
+Those using compute cluster may find this below qsub script useful!
+
 
 ```bash
 #PBS -S /bin/bash
@@ -96,4 +117,6 @@ $cmd $src <module> <parameter flags and values>
 
 ```
 
+#Questions/Comments
+Please email me (Joey) at joseph[.]azofeifa[@]colorado[.]edu if you have any questions on usage or bug reports. Or open an Issue.
 
