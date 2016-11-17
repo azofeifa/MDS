@@ -23,16 +23,16 @@ H=1500
 h=150
 
 
-echo '\n\n-------------------------Running Unit Tests-------------------------\n\n\n'
+echo '-------------------------Running Unit Tests-------------------------'
 
 echo 'Installation Location: ' $install_location ' is this correct?' 
 
 
-echo '\n\n-------------------------Running DB Module-------------------------\n'
+echo '-------------------------Running DB Module--------------------------'
 
 mpirun -np $NP $src DB -bed $input_interval_file -fasta $fasta_file -DB $PSSM_DB -o $out_file_DB -log_out $log_out -ID $ID -sim_N $sim_N -pv $pv ; 
 
-echo '\n\n-----------------------Running EVAL Module---------------------------\n'
+echo '-------------------------Running EVAL Module------------------------'
 
 mpirun -np $NP $src EVAL -bed $input_interval_file -fasta $fasta_file -DB $out_file_DB -o $out_file_stats -log_out $log_out -ID $ID2 -bsn $bsn
 

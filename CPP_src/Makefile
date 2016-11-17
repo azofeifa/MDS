@@ -6,7 +6,7 @@
 
 CXX             = mpic++
 CXXFLAGS        = -Wno-unused-variable -Wno-non-virtual-dtor -std=c++11 -fopenmp -Wno-write-strings -Wno-literal-suffix 
-EXEC            = ${PWD}/SE
+EXEC            = ${PWD}/MDS
 ARCH  		= getconf LONG_BIT
 
 CPP_FLAGS_32  	= -D32_BIT

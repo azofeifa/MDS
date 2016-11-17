@@ -25,7 +25,7 @@ int main(int argc,char* argv[]){
     int threads  	= omp_get_max_threads();
 
 	params * P = new params();
-	fill_in_options(argv, P, 0);
+	fill_in_options(argc, argv, P, 0);
 	if (P->EXIT){
 		printf("exiting...\n");
 		MPI::Finalize();
@@ -40,19 +40,19 @@ int main(int argc,char* argv[]){
 		string PSSM_DB 				= P->p["-DB"];
 		string out_dir 				= P->p["-o"];
 		string bed_file 			= P->p["-bed"];
-		double pv 					= stof(P->p["-pv"]);
-		int bins 					= stoi(P->p["-br"]);
+		double pv 				= stof(P->p["-pv"]);
+		int bins 				= stoi(P->p["-br"]);
 		int verbose 				= 1;
-		int job_ID 					= 1;
+		int job_ID 				= 1;
 		int PSSM_test 				= stoi(P->p["-t"]);
 		int interval_size 			= 0;
 
 		vector<PSSM *> PSSMS;
 		//============================================================
 		//...1... load up PSSMS
-	    Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
-	    LG->write(P->get_header(), verbose);
-    	LG->write("loading PSSM DB.............................", verbose);
+		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+		LG->write(P->get_header(), verbose);
+		LG->write("loading PSSM DB.............................", verbose);
 		PSSMS 		= load_PSSM_DB_new(PSSM_DB, PSSM_test );
 		LG->write("done\n", verbose);
 		//============================================================
@@ -110,8 +110,12 @@ int main(int argc,char* argv[]){
 		string fasta_file 			= P->p["-fasta"];
 		string bed_file 			= P->p["-bed"];
 		string TSS_bed_file 			= P->p["-TSS"];
-		string OUT 				= P->p["-o"];
+		string out_dir 				= P->p["-o"];
 		string PSSM_DB 				= P->p["-DB"];
+		string ID                               = P->p["-ID"];
+		string log_out                          = P->p["-log_out"];
+
+		
 		int job_ID 				= 1;
 		int window 			        = stoi(P->p["-H"]);
 		int test 				= 0;
@@ -124,7 +128,7 @@ int main(int argc,char* argv[]){
 		vector<PSSM *> PSSMS;
 		//============================================================
 
-		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+		Log_File * LG 	= new  Log_File(rank, job_ID, ID, log_out);
 
 		LG->write(P->get_header(), verbose);
 		//============================================================
@@ -203,7 +207,7 @@ int main(int argc,char* argv[]){
 		//....6....write out to DB file
 		if (rank==0){
 			LG->write("writing out simulations.....................",verbose);
-
+			string OUT = out_dir + ID + ".db";
 			write_out_null_stats( PSSMS,OUT,  P, background,background_TSS, background_non_TSS);
 
 			LG->write("done\n",verbose);
@@ -216,25 +220,25 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//necessary user input parameters for DB module
 		string fasta_file 			= P->p["-fasta"];
-		string bed_file 				= P->p["-bed"];
+		string bed_file 			= P->p["-bed"];
 		string DB_file 				= P->p["-DB"];
-		string OUT 						= P->p["-o"]; 
-		string OUT2 					= P->p["-o2"];
+		string out_dir 				= P->p["-o"]; 
 		string TSS_bed_file 			= P->p["-TSS"];
+		string ID                               = P->p["-ID"];
+		string log_out                          = P->p["-log_out"];
+		
 
-
-		int BSN 							= stoi(P->p["-bsn"]);
-		int MD_window 					= stoi(P->p["-window"]);
-		double integrate 				= stod(P->p["-integrate"]);
-		int test 						= 0;
-		int job_ID 						= 1;
-		double window 					= 1000;
-		int verbose 					= 1;
+		int BSN 			        = stoi(P->p["-bsn"]);
+		int MD_window 				= stoi(P->p["-h"]);
+		int test 				= 0;
+		int job_ID 				= 1;
+		double window 				= 1000;
+		int verbose 				= 1;
 		int interval_size 			= 0;
 		//the rest of the parameters will be in the DB file
 		//============================================================
 
-		Log_File * LG 	= new  Log_File(rank, job_ID, P->p["-ID"], P->p["-log_out"]);
+		Log_File * LG 	= new  Log_File(rank, job_ID, ID, log_out);
 		LG->write(P->get_header(), verbose);
 	
 		//============================================================
@@ -276,7 +280,7 @@ int main(int argc,char* argv[]){
 		//....5.... label intervals as TSS and not
 
 		LG->write("labeling TSS association....................", verbose);
-		double TSS_association =	0;
+		double TSS_association =  0;
 		intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
 		LG->write("done, " + to_string(TSS_association*100)+" percent association\n", verbose);
 
@@ -300,7 +304,7 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....6.... scan the provided intervals
 		LG->write("\n         scanning intervals\n\n",verbose);
-		
+		string OUT2  = out_dir + ID + "_hits.bed";
 		scan_intervals(intervals, PSSMS, background, 
  								pv,  interval_size,   BSN, 
  								rank,   nprocs,   LG, MD_window, TSS_association, OUT2);
@@ -309,8 +313,9 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....7.... assess significance
 		if (rank==0){
-			write_out_stats(PSSMS, OUT, P, TSS_association, total_TSS, total_intervals );
-			collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+		  string OUT = out_dir+ ID+ "_MDS.tsv";
+		  write_out_stats(PSSMS, OUT, P, TSS_association, total_TSS, total_intervals );
+		  collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
 		}
 	}
 	

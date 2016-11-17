@@ -1,24 +1,26 @@
 #include "read_in_parameters.h"
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fstream>
+#include <cctype>
 using namespace std;
 params::params(){
-	p["-TSS"] 		= "";
-	p["-o"] 			= "";
-	p["-o2"] 		= "";
-	p["-bed"] 		= "";
+	p["-TSS"] 	= "";
+	p["-o"] 	= "";
+	p["-hits"] 	= "";
+	p["-bed"] 	= "";
 	p["-fasta"] 	= "";
-	p["-DB"] 		= "";
-	p["-null"] 		= "1";
-	p["-pv"] 		= "0.0000001";
-	p["-ID"] 		= "gTFI";
+	p["-DB"] 	= "";
+	p["-pv"] 	= "0.0000001";
+	p["-ID"] 	= "gTFI";
 	p["-sim_N"] 	= "10";
-	p["-br"] 		= "100";
-	p["-bsn"] 		= "100";
+	p["-br"] 	= "100";
+	p["-bsn"] 	= "100";
 	p["-log_out"] 	= "";
-	p["-t"] 			= "0";
+	p["-t"] 	= "0";
 	p["-h"] 	= "150";
 	p["-H"]         = "3000";
-	p["-integrate"]= "0";
 
 	module 		= "";
 	EXIT 		= false;
@@ -36,8 +38,6 @@ bool params::check(){
 	return EXIT;
 }
 void params::help(){
-
-
 	string header 	= "";
 	header+="--------------------------------------------------------------------------------------\n";
 	header+="                    Global Transcription Factor Inference (tINF)                      \n";
@@ -91,17 +91,8 @@ void params::help(){
 	printf("              generate, recomeneded >10^7 (default)\n");
 	printf("-bsn      : (to be used for the \"EVAL\" module) number of bootstrapped samples\n");
 	printf("              recomeneded >10^4 (default)\n");
-	printf("\nQuestions/Bugs? joseph[dot]azofeifa[at]colorado[dot]edu\n" );
-		
+	printf("\nQuestions/Bugs? joseph[dot]azofeifa[at]colorado[dot]edu\n" );		
 	printf("--------------------------------------------------------------------------------------------\n");
-
-	
-	
-
-	
-
-
-
 
 }
 const std::string currentDateTime2() {
@@ -144,6 +135,9 @@ string params::get_header(){
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
 		line+="#-bsn           "+p["-bsn"]+"\n";
+		line+="#-hits          "+p["-hits"]+"\n";
+		line+="#-h             "+p["-h"]+"\n";
+		line+="#-H             "+p["-H"]+"\n";
 		line+="#================================================================\n";
 	}else if(module.size()==2 and module.substr(0,2) == "DB"){
 		line+="#================================================================\n";
@@ -158,6 +152,7 @@ string params::get_header(){
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
 		line+="#-sim_N         "+p["-sim_N"]+"\n";
+		line+="#-H             "+p["-H"]+"\n";
 		line+="#================================================================\n";		
 	}
 	return line;
@@ -179,51 +174,142 @@ void params::display(){
 	printf("------------------------------------------------\n" );
 }
 
-void fill_in_options(char* argv[],params * P, int rank){
-	string F 		= "";
-	char * COM 		= "-";
-	string current 	= "";
-	argv++;
-	if (*argv){
-		P->module  = string(*argv);
-		if (not (P->module== "DB" or P->module=="EVAL" or P->module=="GENOME" or P->module=="--help" or P->module=="-h"  )){
-			printf("did not specify module, either DB or EVAL\ntry -h or --help for quick reference software usage\n");
-			P->EXIT 	= true;
-		}
-	}else{
-		printf("No module specified\ntry -h or --help for quick reference software usage\n");
-		P->EXIT 		= true;
-	}
-	while (*argv){
-		F 	= string(*argv); 
-		if(!current.empty()){
-			P->p[current] 	= F;
-			current 		= "";
-		}
-		if ((*argv)[0] == COM[0]){
-			current 	= F;
-			if ( P->p.find(F) ==P->p.end() ){
-				if (rank == 0 and F.substr(0,2)!="-h" and F.substr(0,7)!="--help" ){
-					printf("Unknown user option: %s\n", F.c_str() );
-				}
-				current 	= "";
-			}
-			else if(P->p.find(F) !=P->p.end() ){
-				current 	= F;
-			}
-		}
-		if (F.substr(0,2) == "-h" or F.substr(0,7)=="--help" ){
-			P->help();
-			P->EXIT;
-		}
-		
-		argv++;
-	}
+string does_file_exist(string FILE, bool & EXIT){
+  ifstream infile(FILE);
+  if (infile.good()){
+    EXIT=false;
+    return "yes";
+  }
+  EXIT= true;
+  return "no";
+}
 
-	
-	if (!current.empty()){
-		P->p[current] 	= F;
+string does_dir_exist(string pathname, bool & EXIT){
+  struct stat info;
+  if( stat( pathname.c_str(), &info ) != 0 ){
+    EXIT =true;
+    return "no";
+  }
+  else if( info.st_mode & S_IFDIR ){ 
+    EXIT = false;
+    return "yes";
+  }
+  EXIT =true;
+  return "no";
+}
+
+string is_number(string x, bool & EXIT){
+  for (int i = 0 ; i < x.size(); i++){
+    if (!isdigit( x[ i ] ) and x[i]!='.' ){
+      EXIT=true;
+      return "no";
+    }
+  }
+  EXIT=false;
+  return "yes";
+}
+
+
+void fill_in_options(int argc, char* argv[], params * P, int rank){
+  if (argc < 2){
+    printf("No module specified\ntry -h or --help for quick reference software usage\n");
+    P->EXIT                 = true;
+  }else{
+    string param=argv[1];
+    P->module=param;
+    if (not (P->module== "DB" or P->module=="EVAL" or P->module=="GENOME" or P->module=="--help" or P->module=="-h"  )){
+      printf("did not specify module, either DB or EVAL\ntry -h or --help for quick reference software usage\n");
+      P->EXIT         = true;
+    }
+    
+    for (int i = 2 ; i < argc; i++){
+      param=argv[i];
+      if (P->p.find(param)==P->p.end()){
+	printf("Unknown user option: %s\ntry -h or --help for quick reference software usage\n", param.c_str() );
+	P->EXIT=true;
+      }else{
+	if (param=="-hits"){
+	  P->p[param]="1";
 	}
+	if (param!="-hits" and i+1 < argc ){
+	  P->p[param]=argv[i+1];
+	  i+=1;
+	}
+      }
+    }
+  }
+  if (not P->EXIT){
+    bool temp    = false;
+    string result="";
+    result       = does_file_exist(P->p["-fasta"], temp);
+    if (rank==0){
+      printf("checking if fasta file (-fasta) exists................................%s\n", result.c_str());
+    }
+    P->EXIT      = P->EXIT or temp;
+    
+    result       = does_file_exist(P->p["-DB"], temp);
+    if (rank==0){
+      printf("checking if database file (-db) exists................................%s\n", result.c_str());
+    }
+    P->EXIT      = P->EXIT or temp;
+
+    result       = does_file_exist(P->p["-bed"], temp);
+    if (rank==0){
+      printf("checking if bed file (-bed) exists....................................%s\n", result.c_str());
+    }
+    P->EXIT      = P->EXIT or temp;
+
+    result       = does_file_exist(P->p["-TSS"], temp);
+    if (rank==0){
+      printf("checking if promoter/TSS location bed file (-TSS) exists..............%s\n", result.c_str());
+    }
+    P->EXIT      = P->EXIT or temp;
+
+    result       = does_dir_exist(P->p["-o"], temp);
+    if (rank==0){
+      printf("checking if out directory (-o) exists.................................%s\n", result.c_str());
+    }
+    P->EXIT      = P->EXIT or temp;
+    if (P->module=="DB"){
+      result       = is_number(P->p["-pv"],temp);
+      P->EXIT      = P->EXIT or temp;
+      if (not temp){
+	float x    = stod(P->p["-pv"]);
+	if (x <= 0 or x >= 1){
+	  result   = "no", P->EXIT=true;
+	}
+      }
+      if (rank==0){
+	printf("checking if pvalue threshold (-pv) is a number in [0,1]...............%s\n", result.c_str());
+      }
+      
+      result       = is_number(P->p["-H"],temp);
+      if (rank==0){
+	printf("checking if local background radius (-H) is a number..................%s\n", result.c_str());
+      }
+      P->EXIT      = P->EXIT or temp;
+      
+      result       = is_number(P->p["-sim_N"],temp);
+      if (rank==0){
+	printf("checking if number of sequence simulations (-sim_N) is a number.......%s\n", result.c_str());
+      }
+      P->EXIT      = P->EXIT or temp;
+    }
+    else if (P->module == "EVAL"){
+      result       = is_number(P->p["-h"],temp);
+      if (rank==0){
+	printf("checking if MDS radius (-h) is a number...............................%s\n", result.c_str());
+      }
+      P->EXIT      = P->EXIT or temp;
+
+      result       = is_number(P->p["-BSN"],temp);
+      if (rank==0){
+	printf("checking if MD simulation generation (-bsn) is a number...............%s\n", result.c_str());
+      }
+      P->EXIT      = P->EXIT or temp;
+    }
+
+  }
 
 }
 

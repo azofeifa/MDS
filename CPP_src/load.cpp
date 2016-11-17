@@ -609,20 +609,21 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
 		double var 		= get_var(PSSMS[p]->MD_CDF,mean);
 		FHW<< to_string(mean) + "," + to_string(sqrt(var)) +"\n";
 	}
-	FHW<<"#Binned Observation statistics\n";
+	FHW<<"#Binned Observation statistics\tMotif Model Name\tNON\tTSS\tCOMB\n";
 	for (int p =0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t";
 		PSSMS[p]->bin_observations();
 		string line="";
-		vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements_non};
+		vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_non,PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements};
 		for (int a = 0; a < A.size(); a++){
 			for (int i = 0; i < A[a].size(); i++ ){
 				if (i+1 <  A[a].size()){
 					line+=to_string(A[a][i]) + ",";
-				}else{
-					line+=to_string(A[a][i]);				
 				}
 			}
+			line=line.substr(0,line.size()-1 );
+			
+			
 			if (a+1 < A.size()){
 				line+="\t";
 			}

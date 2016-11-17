@@ -14,7 +14,7 @@ public:
 	void display();
 	string get_header();
 };
-void fill_in_options(char** ,params *  , int);
+void fill_in_options(int, char** ,params *  , int);
 
 
 #endif
