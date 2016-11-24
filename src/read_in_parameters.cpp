@@ -8,7 +8,7 @@ using namespace std;
 params::params(){
 	p["-TSS"] 	= "";
 	p["-o"] 	= "";
-	p["-hits"] 	= "";
+	p["-hits"] 	= "0";
 	p["-bed"] 	= "";
 	p["-fasta"] 	= "";
 	p["-DB"] 	= "";

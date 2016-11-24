@@ -109,6 +109,15 @@ public:
 
 };
 
+class normal{
+ public:
+  double mu, sigma;
+  normal();
+  normal(double,double);
+  double cdf(double);
+};
+
+
 vector<PSSM *> load_PSSM_DB(string, int, int, int);
 
 map<string, vector<segment>> load_bed_file(string, int, int &, double &) ;

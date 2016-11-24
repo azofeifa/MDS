@@ -304,7 +304,10 @@ int main(int argc,char* argv[]){
 		//============================================================
 		//....6.... scan the provided intervals
 		LG->write("\n         scanning intervals\n\n",verbose);
-		string OUT2  = out_dir + ID + "_hits.bed";
+		string OUT2  = "";
+		if (stoi(P->p["-hits"] ) ){
+		  OUT2       = out_dir + ID + "_hits.bed";
+		}
 		scan_intervals(intervals, PSSMS, background, 
  								pv,  interval_size,   BSN, 
  								rank,   nprocs,   LG, MD_window, TSS_association, OUT2);

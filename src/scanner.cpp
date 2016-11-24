@@ -362,6 +362,7 @@ void scan_intervals(map<string, vector<segment>> S ,
 	}
 }
 
+
 void scan_accross_3(map<string, vector<segment> > S , PSSM * p,string out_dir, double pv,vector<double> background ){
 	map<char, int> table;
 	map<int, int>flip;
@@ -502,19 +503,6 @@ void scan_intervals_genome_wide(map<string, vector<segment>> S, vector<PSSM *> P
 		scan_accross_3(S, PSSMS[p], out_dir, pv,background );
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -180,6 +180,27 @@ map<string, vector<segment> > insert_fasta_sequence(string fasta_file, map<strin
 	}
 	return newS;
 }
+
+
+double get_mean(vector<vector<double>> X){
+  double N        = X.size(), S = 0;
+  for (int i = 0 ; i < X.size(); i++){
+    S+=X[i][0];
+  }
+  return S/N;
+}
+double get_var(vector<vector<double>> X, double mu){
+  double N        = X.size(), S = 0;
+  for (int i = 0 ; i < X.size(); i++){
+    S+=pow(X[i][0]-mu,2);
+  }
+  return S/N;
+}
+
+
+
+
+
 PSSM::PSSM(){
 	ENRICH_score=0,MD_score=0;
 };
@@ -300,34 +321,38 @@ double PSSM::get_pvalue2_r(double obs, int i, int s){
 
 void PSSM::get_pvalue_stats(double prob){
 
-	vector<double> MD_scores 				= {MD_score, MD_score_TSS, MD_score_NON};
-	vector<vector<vector<double>>> CDFS 	= {MD_CDF, MD_CDF_NON, MD_CDF_TSS};
-
-	for (int l = 0 ; l < 3; l++){
-		vector<vector<double>> CDF 	= CDFS[l];
-		double score 				= MD_scores[l];
-		int i 	= 0;
-		int J=0;
-
-		while (i < CDF.size()-1){
-			if (CDF[i][0] >= score  ){
-				J++;
-				
-			}
-			i++;
-		}
-		double pv 	= float(J) / CDF.size();
-		double mean 		= total*prob;
-		double std 			= sqrt(mean*(1-prob));
-		double z_score 		= (score*total - mean)/std;
-		stationary_pvalue 	= 0.5*(1+erf(z_score));
-
-		non_pvalues.push_back(pv);
-		stationary_p_values.push_back(stationary_pvalue);
-
-	}
-
-
+  vector<double> MD_scores 		= {MD_score, MD_score_TSS, MD_score_NON};
+  vector<vector<vector<double>>> CDFS 	= {MD_CDF, MD_CDF_NON, MD_CDF_TSS};
+  
+  for (int l = 0 ; l < 3; l++){
+    vector<vector<double>> CDF 	= CDFS[l];
+    double score 				= MD_scores[l];
+    int i 	= 0;
+    int J=0;
+    
+    while (i < CDF.size()-1){
+      if (CDF[i][0] >= score ){
+	J++;
+      }
+      i++;
+    }
+    double pv 	                = float(J) / CDF.size();
+    double mean_ns              = get_mean(CDF);
+    double std_ns               = sqrt(get_var(CDF, mean_ns)) ;
+    
+    double mean 		= total*prob;
+    double std 	                = sqrt(mean*(1-prob));
+    double z_score 		= (score*total - mean)/std;
+    double z_score2             = (score - mean_ns)/std_ns;
+    double pv_s 	        = 1.0 - 0.5*(1+erf(z_score));
+    double pv_ns                = 1.0 - 0.5*(1+erf(z_score2));
+    
+    non_pvalues.push_back(log10(pv_s+pow(10,-40)));
+    stationary_p_values.push_back(log10(pv_ns+pow(10,-40)));
+    
+  }
+  
+  
 }
 void PSSM::bin_observations(){
 	for (int i = 0 ; i < 2000; i++){
@@ -560,19 +585,16 @@ vector<PSSM *> sort_PSSMS(vector<PSSM *> PSSMS){
 
 	return PSSMS;
 }
-double get_mean(vector<vector<double>> X){
-	double N 	= X.size(), S = 0;
-	for (int i = 0 ; i < X.size(); i++){
-		S+=X[i][0];
-	}
-	return S/N;
+
+normal::normal(){}
+normal::normal(double MU, double SIGMA){
+  mu=MU, sigma=SIGMA;
 }
-double get_var(vector<vector<double>> X, double mu){
-	double N 	= X.size(), S = 0;
-	for (int i = 0 ; i < X.size(); i++){
-		S+=pow(X[i][0]-mu,2);
-	}
-	return S/N;	
+double normal::cdf(double x){
+  double pv = 0.5;
+  double Z  =erf( (x-this->mu) / (this->sigma*sqrt(2)));
+  pv        = 0.5*(1+Z);
+  return pv;
 }
 
 
@@ -586,16 +608,25 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
 	ofstream FHW(OUT);
 	PSSMS 	= sort_PSSMS(PSSMS);
 	FHW<<P->get_header();
-	FHW<<"#alpha level 0.01\tadjusted alpha level " + to_string(0.01/PSSMS.size())+"\n";
 	FHW<<"#overlap_stats\t" + to_string(TSS_association) + "," + to_string(total_intervals) + "\t";
 	FHW<<to_string(TSS_percent) + "," + to_string(total_TSS) + "\n";
 
-	FHW<<"#motif identifier\tTotal(NON,TSS,COMB)\tMD score(NON,TSS,COMB)\tStationary p-value(NON,TSS,COMB)\tNon-stationary p-value(NON,TSS,COMB)\tNull Expectation, Variance\n";
+	FHW<<"#motif identifier\tTotal(NON,TSS,COMB)\tMD score(NON,TSS,COMB)\tStationary p-value(NON,TSS,COMB)\tNon-stationary p-value(NON,TSS,COMB)\tNull Expectations(NON,TSS,COMB)\tNull STDs\n";
 	
 	for (int p = 0 ; p < PSSMS.size(); p++){
 		FHW<<PSSMS[p]->name<<"\t";
-		FHW<<to_string(int(PSSMS[p]->total_NON))<<","<<to_string(int(PSSMS[p]->total_TSS))<<","<<to_string(int(PSSMS[p]->total))<<"\t";
+		
+                double mean       = get_mean(PSSMS[p]->MD_CDF_NON);
+		double mean2      = get_mean(PSSMS[p]->MD_CDF_TSS);
+		double mean3      = get_mean(PSSMS[p]->MD_CDF);
 
+                double var        = sqrt(get_var(PSSMS[p]->MD_CDF_NON,mean));
+		double var2       = sqrt(get_var(PSSMS[p]->MD_CDF_TSS,mean2));
+		double var3       = sqrt(get_var(PSSMS[p]->MD_CDF,mean3));
+		
+
+		FHW<<to_string(int(PSSMS[p]->total_NON))<<","<<to_string(int(PSSMS[p]->total_TSS))<<","<<to_string(int(PSSMS[p]->total))<<"\t";
+		
 
 		FHW<<to_string(PSSMS[p]->MD_score_NON)<<","<<to_string(PSSMS[p]->MD_score_TSS)<<","<<to_string(PSSMS[p]->MD_score)+"\t";
 
@@ -604,10 +635,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
 		FHW<<to_string(PSSMS[p]->non_pvalues[0])<<","<<to_string(PSSMS[p]->non_pvalues[1])<<","<<to_string(PSSMS[p]->non_pvalues[2])+"\t";
 
 
-
-		double mean 	= get_mean(PSSMS[p]->MD_CDF);
-		double var 		= get_var(PSSMS[p]->MD_CDF,mean);
-		FHW<< to_string(mean) + "," + to_string(sqrt(var)) +"\n";
+		FHW<< to_string(mean) + "," + to_string(mean2) + "," + to_string(mean3) + "\t" + to_string(var) + "," + to_string(var2) + "," + to_string(var3)    +"\n";
 	}
 	FHW<<"#Binned Observation statistics\tMotif Model Name\tNON\tTSS\tCOMB\n";
 	for (int p =0 ; p < PSSMS.size(); p++){
