@@ -274,7 +274,7 @@ int main(int argc,char* argv[]){
     
     LG->write("loading TSS intervals.......................", verbose);
     double total_TSS 	= 0;
-    map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, 1000,interval_size,total_TSS); 
+    map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, large_window,interval_size,total_TSS); 
     LG->write("done\n", verbose);
     
     //============================================================

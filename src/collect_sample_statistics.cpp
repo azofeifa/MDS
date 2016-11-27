@@ -1,7 +1,7 @@
 #include "collect_sample_statistics.h"
 #include <cmath>
 #include <random>
-
+#include <iostream>
 using namespace std;
 void fill_displacements(map<int, vector<double>> & displacements, vector<segment> segments ){
   typedef map<int, vector<double>>::iterator it_type;
@@ -57,7 +57,7 @@ double get_min_2(vector<double> X){
 
 
 
-
+/*
 void collect_sample_stats(map<string, vector<segment>> observed,
 			  vector<PSSM *> P,  
 			  map<int, vector<double> > & observed_statistics,
@@ -119,14 +119,13 @@ void collect_sample_stats(map<string, vector<segment>> observed,
     get_stats(i->second, current_stats);
     observed_statistics[i->first]=current_stats;
   }
-	
-
 }
+*/
 double get_MD_score(vector<int> D, int window, bool NORM, int large_window){
   double N 	= 0, S 	= 0, center 	= large_window; //this is assumed;NO ITS NOT!!!
   double a 	= center-window, b = center + window;
   for (int i = 0 ; i < D.size();i++){
-    if ( D[i] >  a and D[i] < b){
+    if ( D[i] >=  a and D[i] <= b){
       S++;
     }
     N++;

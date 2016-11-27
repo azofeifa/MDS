@@ -73,7 +73,7 @@ public:
 	PSSM();
 	PSSM(string);
 	PSSM(int);
-	void bin_observations();
+	void bin_observations(int);
 	void bin_null_displacements(int);
 	void get_pvalue_stats(double);
 	void transform_ft();

@@ -278,8 +278,8 @@ void scan_intervals(map<string, vector<segment>> S ,
 	  TSS_spec_association++;
 	}
 	N++;			
-	if (abs(displacements[i][j] - 1000) < MIN){
-	  MIN 	= abs(displacements[i][j] - 1000);
+	if (abs(displacements[i][j] - large_window) < MIN){
+	  MIN 	= abs(displacements[i][j] - large_window);
 	}
 	final_displacements.push_back(displacements[i][j]);
 	if (D[start+i].TSS){
@@ -307,7 +307,7 @@ void scan_intervals(map<string, vector<segment>> S ,
       }
     }
     t = clock() - t;
-    LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC)) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), " + to_string(TSS_spec_association)+"\n", 1);
+    LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*double(threads))) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), " + to_string(TSS_spec_association)+"\n", 1);
   }
   if (rank==0){
     if (not out2.empty()){
@@ -346,7 +346,7 @@ void scan_intervals(map<string, vector<segment>> S ,
       PSSMS[p]->total_TSS 	= NN_TSS;
       PSSMS[p]->total_NON 	= NN_NON;
 
-      build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, NN_TSS, NN_NON, MD_window,0.01,large_window);
+      build_cdfs_PSSMs(PSSMS[p], bsn, interval_size, NN, NN_TSS, NN_NON, MD_window,PSSMS[p]->TSS_association,large_window);
 			
 
 

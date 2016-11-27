@@ -354,8 +354,8 @@ void PSSM::get_pvalue_stats(double prob){
   
   
 }
-void PSSM::bin_observations(){
-  for (int i = 0 ; i < 2000; i++){
+void PSSM::bin_observations(int window){
+  for (int i = 0 ; i < window*2; i++){
     binned_observed_displacements.push_back(0);
     binned_observed_displacements_TSS.push_back(0);
     binned_observed_displacements_non.push_back(0);
@@ -606,6 +606,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
   double TSS_percent 	= (total_intervals*TSS_association)/total_TSS;
 
   ofstream FHW(OUT);
+  int large_window     = stoi(P->p["-H"]);
   PSSMS 	= sort_PSSMS(PSSMS);
   FHW<<P->get_header();
   FHW<<"#overlap_stats\t" + to_string(TSS_association) + "," + to_string(total_intervals) + "\t";
@@ -640,7 +641,7 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P,
   FHW<<"#Binned Observation statistics\tMotif Model Name\tNON\tTSS\tCOMB\n";
   for (int p =0 ; p < PSSMS.size(); p++){
     FHW<<PSSMS[p]->name<<"\t";
-    PSSMS[p]->bin_observations();
+    PSSMS[p]->bin_observations(large_window);
     string line="";
     vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_non,PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements};
     for (int a = 0; a < A.size(); a++){
@@ -762,7 +763,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
 	line_array 	= split_by_ws(line.substr(1,line.size()-1), "");
 	string F 	= line_array[0];
 	string val 	= line_array[line_array.size()-1];
-	if (F.substr(0,F.size())=="-pv" or F.substr(0,F.size())=="-bins"){
+	if (F.substr(0,F.size())=="-pv" or F.substr(0,F.size())=="-bins" or F.substr(0,F.size())=="-H"  ){
 	  P->p[F] = val;
 	}else if (F.substr(0,F.size())=="-background"){
 	  line_array 	= split_by_comma(val, "");
@@ -774,6 +775,7 @@ vector<PSSM *> load_personal_DB_file(string FILE, params * P, vector<double> & b
       }else if (line.substr(0,1)==">" and line.substr(0,1)!="#"){
 	if (pssm != NULL){
 	  PSSMS.push_back(pssm);
+	  
 	}
 	counter 	= 0;
 	pssm 	= new PSSM(line.substr(1,line.size()-1));
