@@ -237,7 +237,7 @@ int main(int argc,char* argv[]){
     //....3.... load intervals from user 
     LG->write("loading intervals...........................", verbose);
     double total_intervals 	= 0;
-    map<string, vector<segment>> intervals 		= load_bed_file(bed_file, 2*large_window,interval_size,total_intervals); 
+    map<string, vector<segment>> intervals 		= load_bed_file(bed_file, large_window,interval_size,total_intervals); 
     LG->write("done\n", verbose);
 
     
