@@ -248,16 +248,11 @@ void scan_intervals(map<string, vector<segment>> S ,
       write_out_bed_file(D, out2 , MD_window);
       LG->write("done\n",1);
     }
-    LG->write("computing boostrapped distribution..........", 1);
-
-    t = clock();
     #pragma omp parallel for
     for (int p = 0 ; p < PSSMS.size(); p++){
       vector<int> final_displacements 	= array_of_final_displacements[p];
       PSSMS[p]->observed_displacements 		  = final_displacements;			
     }
-    t = clock() - t;
-    LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*threads)) + " seconds\n", 1);
   }
 }
 
