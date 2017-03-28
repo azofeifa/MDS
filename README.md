@@ -44,7 +44,6 @@ A fair warning, running this module will likely take upwards of a week on a sing
 |-DB|/path/to/file/from/<PSSM_DB>|A specific file from PSSM_DB/; gives the motif models
 |-o|/path/to/ |Will output <-ID>.db; this will be required for the EVAL module
 |-fasta|/path/to/genome.fasta|fasta file of the same genome build as <-bed> 
-|-TSS  |/path/to/.bed|A bed file of promoter start sites  
 |-log_out|/path/to |Where temporary and final log files will be generate <-ID>.log
 |-H|numerical|distance around which sequence will collected (default = 1500bp)
 |-pv|numerical|pvalue threshold under which a motif will be considered significant
@@ -54,7 +53,7 @@ A fair warning, running this module will likely take upwards of a week on a sing
 
 ![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/DB_FILE_OUT.png)
 
-Above: A screen shot of a small porition of the db file that the DB module outputs. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final two lines is the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the regulatory element.  
+Above: A screen shot of a small porition of the db file that the DB module outputs. The file type is broken up into blocks according to the PSSM model (641 in human).  Each block (delimited by the ~ symbol) contains the probability distribution matrix of each PSSM model. The final lines are the empiracle distribution of motif displacement estimated from the non-stationary GC content surrounding the inputted bed files.  
 
 ##EVAL
 The EVAL module computes the so called motif displacement (MD) score. The module follows this generic pipeline:
@@ -69,23 +68,12 @@ The EVAL module computes the so called motif displacement (MD) score. The module
 |------|------|-------------|
 |-ID| some string |An identifier, all output files will begin with this prefix
 |-bed  |/path/to/.bed|A bed file over which motif displacement will be calculated
-|-DB|/path/to/file.db|output file from the db module; gives the simulation,parameter info
+|-DB|/path/to/<PSSM_DB>|A specific file from PSSM_DB/; gives the motif models
 |-o|/path/to/ |Will output <-ID>.tsv; this provides information on motif displacements and scores
 |-fasta|/path/to/genome.fasta|fasta file of the same genome build as <-bed>
-|-TSS  |/path/to/.bed|A bed file of promoter start sites
 |-log_out|/path/to |Where temporary and final log files will be generate <-ID>.log
-|-h|numerical|distance around which the MD score will be computed (default = 150bp)
 |-bsn|numerical|number of random draws from the empiracle distribution estimated from DB module; (default=10,000)
 
-![alt tag](https://github.com/azofeifa/gTFIv2/blob/master/images/Enrichment_FILE_OUT.png)
-
-Above: A screen shot of output from the EVAL module (-o). To explain the file type briefly, lines starting with a \# indicate descriptive headings and should be ignored in downstream analysis.  The file is broken up into three parts. 
-
-(1) The first portion of the MD score file provides for each motif model the computed MD score from the set of promoter associated, non-promoter associated and combined bed file intervals. Along with the MD score, each line provides the number of motif occurrences in the larger (-H) window. Finally, p-values computed under two different background null models (stationary and non-stationary; binomial and empirical simulations; are provided for each motif model and each promoter association type. 
-
-(2) The second portion of the MD score file-following the header: #Binned Observation statistics range-provides the raw motif displacement frequency (histogram) according to each motif model. 
-
-(3) The third and final portion of the MD score file-following the header: #Empiracle Bootstrapped Distribution-provides the empirical samples of the MD-score and used to calculate the non-stationary p-value.
 
 
 #Advanced HPC usage
