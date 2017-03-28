@@ -21,7 +21,7 @@ params::params(){
 	p["-log_out"] 	= "";
 	p["-t"] 	= "0";
 	p["-h"] 	= "150";
-	p["-H"]         = "3000";
+	p["-H"]         = "1500";
 
 	module 		= "";
 	EXIT 		= false;

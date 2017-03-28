@@ -226,7 +226,6 @@ void scan_intervals(map<string, vector<segment>> S ,
       	special_hits.push_back(start + i);
       }
     }
-    cout<<N<<endl;
     TSS_spec_association=send_out_displacement_data(final_displacements,
 						      rank, nprocs,TSS_spec_association, special_hits );
 
