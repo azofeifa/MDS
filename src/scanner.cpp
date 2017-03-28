@@ -234,7 +234,7 @@ void scan_intervals(map<string, vector<segment>> S ,
     t = clock() - t;
     LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*double(threads))) 
       + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), "
-      + to_string(N) +"\n", 1);
+      + to_string(N) + "," + to_string(PSSMS[p]->ll_thresh) +"\n", 1);
   }
 
   if (rank==0){
@@ -245,8 +245,7 @@ void scan_intervals(map<string, vector<segment>> S ,
     }
     #pragma omp parallel for
     for (int p = 0 ; p < PSSMS.size(); p++){
-      vector<int> final_displacements 	= array_of_final_displacements[p];
-      PSSMS[p]->observed_displacements 		  = final_displacements;			
+      PSSMS[p]->observed_displacements 		  = array_of_final_displacements[p];			
     }
   }
 
