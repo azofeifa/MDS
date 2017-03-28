@@ -214,20 +214,20 @@ void scan_intervals(map<string, vector<segment>> S ,
     vector<int> special_hits;
     double TSS_spec_association 	= 0;
     double N 	= 0.01;
+
     for (int i =0 ; i < displacements.size(); i++){
       double MIN 	= 2000;
       for (int j = 0 ; j < displacements[i].size(); j++ ){
-	N++;			
-	if (abs(displacements[i][j] - large_window) < MIN){
-	  MIN 	= abs(displacements[i][j] - large_window);
-	}
-	final_displacements.push_back(displacements[i][j]);
+        if (abs(displacements[i][j] - large_window) < MIN){
+          MIN 	= abs(displacements[i][j] - large_window);
+        }
+        N+=1;
+        final_displacements.push_back(displacements[i][j]);
       }
       if (MIN < MD_window){
-	special_hits.push_back(start + i);
+      	special_hits.push_back(start + i);
       }
     }
-    TSS_spec_association/=N;
     TSS_spec_association=send_out_displacement_data(final_displacements,
 						      rank, nprocs,TSS_spec_association, special_hits );
 
