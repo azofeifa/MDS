@@ -115,33 +115,28 @@ double send_out_displacement_data(vector<int> & DD, int rank, int nprocs, double
   if (rank==0){
     for (int j = 1 ; j < nprocs; j++){
       //===========================================
-      //recieve All
-      
+      //recieve All      
       int S;
       double S2;
       MPI_Recv(&S, 1, MPI_INT, j, 1, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
       MPI_Recv(&S2, 1, MPI_DOUBLE, j, 2, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
       final_association+=S2;
       if (S>0){
-	int * A = new int[S];
-	MPI_Recv(&A[0], S, MPI_INT, j, 3, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
-	vector<int> temp 	= to_vector_2(A, S);
-	DD.insert(DD.end(), temp.begin(), temp.end());
+      	int * A = new int[S];
+      	MPI_Recv(&A[0], S, MPI_INT, j, 3, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+      	vector<int> temp 	= to_vector_2(A, S);
+      	DD.insert(DD.end(), temp.begin(), temp.end());
       }
       int S3;
       //===========================================
       //recieve spec interval hits (for bed_out)
       MPI_Recv(&S3, 1, MPI_INT, j, 4, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
       if (S3>0){
-	int * B = new int[S3];
-	MPI_Recv(&B[0], S3, MPI_INT, j, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
-	vector<int> temp 	= to_vector_2(B, S3);
-	special_hits.insert(special_hits.end(), temp.begin(), temp.end());
-	
+      	int * B = new int[S3];
+      	MPI_Recv(&B[0], S3, MPI_INT, j, 5, MPI_COMM_WORLD,MPI_STATUS_IGNORE);					
+      	vector<int> temp 	= to_vector_2(B, S3);
+      	special_hits.insert(special_hits.end(), temp.begin(), temp.end());      	
       }
-      
-    
-      
     }
   }else{
     int S 		= DD.size();
@@ -206,12 +201,13 @@ void scan_intervals(map<string, vector<segment>> S ,
     LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
     #pragma omp parallel for
     for (int i = 0 ; i < stop-start; i++ ){
-      displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2*large_window, PSSMS[p], pv);
+      displacements[i] 	= get_sig_positions(D[start+i].forward, 
+                D[start+i].reverse, 2*large_window, PSSMS[p], pv);
     }
     vector<int> final_displacements;		
     vector<int> special_hits;
     double TSS_spec_association 	= 0;
-    double N 	= 0.01;
+    int N 	= 0;
     double MIN  = 2000;
 
     for (int i =0 ; i < displacements.size(); i++){
@@ -228,8 +224,6 @@ void scan_intervals(map<string, vector<segment>> S ,
     }
     TSS_spec_association=send_out_displacement_data(final_displacements,
 						      rank, nprocs,TSS_spec_association, special_hits );
-
-    PSSMS[p]->TSS_association 	= TSS_spec_association;
     if (rank==0){
       array_of_final_displacements[p] 		= final_displacements;
 
@@ -238,8 +232,11 @@ void scan_intervals(map<string, vector<segment>> S ,
       }
     }
     t = clock() - t;
-    LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*double(threads))) + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), " + to_string(TSS_spec_association)+"\n", 1);
+    LG->write("done: " + to_string(float(t)/(CLOCKS_PER_SEC*double(threads))) 
+      + " seconds (" + to_string(p+1) + "/" + to_string(PSSMS.size())+"), "
+      + to_string(N) +"\n", 1);
   }
+
   if (rank==0){
     if (not out2.empty()){
       LG->write("writing out bed hits........................", 1);
@@ -252,6 +249,7 @@ void scan_intervals(map<string, vector<segment>> S ,
       PSSMS[p]->observed_displacements 		  = final_displacements;			
     }
   }
+
 }
 
 
