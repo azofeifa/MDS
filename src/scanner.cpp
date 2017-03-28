@@ -74,7 +74,6 @@ vector<int> get_sig_positions(vector<int> forward,
       l--;
     }
 
-    
     if (llf > p->ll_thresh){
       locs_pvs.push_back(i);	
     }
@@ -186,9 +185,9 @@ void scan_intervals(map<string, vector<segment>> S ,
 		    int rank, int nprocs, Log_File * LG, int MD_window, string out2, double large_window){
 
   vector<segment> D 	= collapse_map(S);
-  int threads  		= omp_get_max_threads();
-  int diff 			= D.size() / nprocs;
-  int start 	= rank*diff, stop 	= min(int( (rank+1)*diff),int(D.size()));
+  int threads  		     = omp_get_max_threads();
+  int diff 			      = D.size() / nprocs;
+  int start 	     = rank*diff, stop 	= min(int( (rank+1)*diff),int(D.size()));
   if (rank+1==nprocs){
     stop 	= D.size();
   }
@@ -207,16 +206,15 @@ void scan_intervals(map<string, vector<segment>> S ,
     LG->write(PSSMS[p]->name + get_dots_2(WN), 1);
     #pragma omp parallel for
     for (int i = 0 ; i < stop-start; i++ ){
-      displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, large_window, PSSMS[p], pv);
+      displacements[i] 	= get_sig_positions(D[start+i].forward, D[start+i].reverse, 2*large_window, PSSMS[p], pv);
     }
-    vector<int> final_displacements;
-		
+    vector<int> final_displacements;		
     vector<int> special_hits;
     double TSS_spec_association 	= 0;
     double N 	= 0.01;
+    double MIN  = 2000;
 
     for (int i =0 ; i < displacements.size(); i++){
-      double MIN 	= 2000;
       for (int j = 0 ; j < displacements[i].size(); j++ ){
         if (abs(displacements[i][j] - large_window) < MIN){
           MIN 	= abs(displacements[i][j] - large_window);
@@ -228,6 +226,7 @@ void scan_intervals(map<string, vector<segment>> S ,
       	special_hits.push_back(start + i);
       }
     }
+    cout<<N<<endl;
     TSS_spec_association=send_out_displacement_data(final_displacements,
 						      rank, nprocs,TSS_spec_association, special_hits );
 

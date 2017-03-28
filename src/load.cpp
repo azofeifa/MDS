@@ -361,24 +361,11 @@ void PSSM::get_pvalue_stats(double prob){
 void PSSM::bin_observations(int window){
   for (int i = 0 ; i < window*2; i++){
     binned_observed_displacements.push_back(0);
-    binned_observed_displacements_TSS.push_back(0);
-    binned_observed_displacements_non.push_back(0);
   }
   for (int i = 0 ; i < observed_displacements.size(); i++){
     int x 	= observed_displacements[i];
     binned_observed_displacements[x]++;
   }
-  for (int i = 0 ; i < observed_displacements_TSS.size(); i++){
-    int x 	= observed_displacements_TSS[i];
-    binned_observed_displacements_TSS[x]++;
-	
-  }
-  for (int i = 0 ; i < observed_displacements_non.size(); i++){
-    int x 	= observed_displacements_non[i];
-    binned_observed_displacements_non[x]++;
-
-  }
-
 }
 
 void PSSM::bin_null_displacements(int W){
