@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "MPI_comm.h"
 #include <mpi.h>
 using namespace std;

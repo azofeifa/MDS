@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "error_stdo_logging.h"
 
 Log_File::Log_File(){}

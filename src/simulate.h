@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef SIM_H
 #define SIM_H
 #include <map>

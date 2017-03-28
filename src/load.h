@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef load_H
 #define load_H
 #include <string>
@@ -129,14 +131,13 @@ vector<PSSM *> convert_streatmed_to_vector(vector<vector<vector<double>>>,
 void load_PSSM_ID_names_only(string , map<int, string> &  );
 vector<PSSM *> load_PSSM_DB_new(string, int);
 
-void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,vector<vector<double>>,
-					vector<vector<double>> );
+void write_out_null_stats(vector<PSSM *> , string, params * , vector<double> ,vector<vector<double>>);
 
 
 
 
 vector<PSSM *> load_personal_DB_file(string , params *, vector<double> & );
-void write_out_stats(vector<PSSM *>, string, params *, double, double, double);
+void write_out_stats(vector<PSSM *>, string, params *);
 
 void collect_all_tmp_files(string , string , int  , int );
 

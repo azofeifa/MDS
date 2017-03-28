@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "read_in_parameters.h"
 #include <iostream>
 #include <sys/types.h>
@@ -6,7 +8,6 @@
 #include <cctype>
 using namespace std;
 params::params(){
-	p["-TSS"] 	= "";
 	p["-o"] 	= "";
 	p["-hits"] 	= "0";
 	p["-bed"] 	= "";
@@ -130,7 +131,6 @@ string params::get_header(){
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
-		line+="#-TSS           "+p["-TSS"]+"\n";
 		line+="#-o             "+p["-o"]+"\n";
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
@@ -147,7 +147,6 @@ string params::get_header(){
 		line+="#-bed           "+p["-bed"]+"\n";
 		line+="#-fasta         "+p["-fasta"]+"\n";
 		line+="#-DB            "+p["-DB"]+"\n";
-		line+="#-TSS           "+p["-TSS"]+"\n";
 		line+="#-o             "+p["-o"]+"\n";
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
@@ -256,12 +255,6 @@ void fill_in_options(int argc, char* argv[], params * P, int rank){
     result       = does_file_exist(P->p["-bed"], temp);
     if (rank==0){
       printf("checking if bed file (-bed) exists....................................%s\n", result.c_str());
-    }
-    P->EXIT      = P->EXIT or temp;
-
-    result       = does_file_exist(P->p["-TSS"], temp);
-    if (rank==0){
-      printf("checking if promoter/TSS location bed file (-TSS) exists..............%s\n", result.c_str());
     }
     P->EXIT      = P->EXIT or temp;
 

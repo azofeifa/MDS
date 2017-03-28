@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "out.h"
 #include <map>
 #include <iostream>

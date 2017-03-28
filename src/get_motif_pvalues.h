@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef gmp_H
 #define gmp_H
 #include "load.h"

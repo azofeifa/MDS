@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "get_motif_pvalues.h"
 #include <iostream>
 #include <random>

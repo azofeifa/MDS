@@ -1,3 +1,4 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
 #include "ACGT_profile.h"
 
 using namespace std;
@@ -59,11 +60,8 @@ void get_ACGT_profile_all(map<string, vector<segment> > S,
 	double N 	= 0;
 	for (it_type c = S.begin(); c!=S.end(); c++){
 		for (it_type_2 s=c->second.begin(); s!=c->second.end(); s++){
-
-			if ( (s->TSS and TSS) or (not s->TSS and not TSS) ){
-				for (int i = 0 ; i <W ; i++ ){
-					background[i][s->forward[i]]++;
-				}
+			for (int i = 0 ; i <W ; i++ ){
+				background[i][s->forward[i]]++;
 			}
 		}
 	}

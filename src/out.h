@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef out_H
 #define out_H
 #include <map>

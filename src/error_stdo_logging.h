@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef error_stdo_logging_H
 #define error_stdo_logging_H
 #include <fstream>

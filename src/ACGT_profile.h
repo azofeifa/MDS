@@ -1,3 +1,4 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
 #ifndef ACGT_H
 #define ACGT_H
 #include <map>

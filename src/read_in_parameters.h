@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef read_in_parameters_H
 #define read_in_parameters_H
 #include <map>

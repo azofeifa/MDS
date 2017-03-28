@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef scanner_H
 #define scanner_H
 #include <vector>
@@ -20,7 +22,7 @@ map<string, vector<segment> > run_accross2(map<string, vector<segment>>   ,
 vector<int> get_sig_positions(vector<int> , 
 			      vector<int>, int, PSSM *  , double );
 void scan_intervals(map<string, vector<segment>> ,vector<PSSM *>  , vector<double> , double  , int  , int  , 
-		    int  , int  , Log_File *, int, double,string,double );
+		    int  , int  , Log_File *, int,string,double );
 
 
 

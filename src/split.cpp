@@ -1,6 +1,9 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "split.h"
 #include <iostream>
 #include <sstream>
+#include <string>
 using namespace std;
 
 vector<string> splitter(string ELE, string D){

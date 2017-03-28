@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #include "load.h"
 #include <vector>
 #include <iostream>
@@ -61,9 +63,11 @@ bool segment::transform(){
 }
 
 
-map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double & count){
+map<string, vector<segment>> load_bed_file(string FILE, 
+      int pad, int & N,double & count){
   map<string, vector<segment>> S ;
   ifstream FH(FILE);
+  string TAB = "\t";
   if (FH){
     string line, chrom;
     vector<string> line_array;
@@ -72,7 +76,7 @@ map<string, vector<segment>> load_bed_file(string FILE, int pad, int & N,double 
     int i 	= 0;
     while (getline(FH, line)){
       if (line.substr(0,1)!="#"){
-	line_array=splitter(line, "\t");
+	line_array=splitter(line, TAB);
 	chrom 	= line_array[0], start = stoi(line_array[1]), stop = stoi(line_array[2]);
 	N++;
 	x 	= (start + stop)/2.;
@@ -380,19 +384,11 @@ void PSSM::bin_observations(int window){
 void PSSM::bin_null_displacements(int W){
   for (int i = 0 ; i < W; i++){
     binned_null_displacements.push_back(0);
-    binned_null_displacements_non.push_back(0); 
-
   }
   for (int i = 0 ; i < null_displacements.size(); i++){
     for (int j = 0 ; j < null_displacements[i].size(); j++){
       int x 	= null_displacements[i][j];
       binned_null_displacements[x]++;
-    }
-  }
-  for (int i = 0 ; i < null_displacements_non.size(); i++){
-    for (int j = 0 ; j < null_displacements_non[i].size(); j++){
-      int x 	= null_displacements_non[i][j];
-      binned_null_displacements_non[x]++;
     }
   }
 }
@@ -468,7 +464,7 @@ const std::string currentDateTime() {
 
 
 void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP, 
-			  vector<double> background, vector<vector<double>> MAP_background,vector<vector<double>> MAP_background_NON){
+			  vector<double> background, vector<vector<double>> MAP_background){
 	
   //transform back to frequency domain
   for (int p = 0; p < PSSMS.size(); p++){ 
@@ -528,12 +524,7 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	zero++;
       }
     }
-    for (int s = 0 ; s < PSSMS[p]->null_displacements_non.size(); s++){
-      if (PSSMS[p]->null_displacements_non[s].empty()){
-	zero_non++;
-      }
-    }
-		
+
     PSSMS[p]->bin_null_displacements(window*2);
     FHW<<to_string(zero) + "|" ;
     string line 	= "";
@@ -544,26 +535,12 @@ void write_out_null_stats(vector<PSSM *> PSSMS, string OUT, params * PP,
 	line+=to_string(PSSMS[p]->binned_null_displacements[i]);	
       }
     }
-    FHW<<line+"\n~";	
-    FHW<<to_string(zero_non) + "|" ;
-    line 	= "";
-    for (int i = 0 ; i < PSSMS[p]->binned_null_displacements_non.size() ; i ++  ){
-      if (i+1 < PSSMS[p]->binned_null_displacements_non.size() ){
-	line+=to_string(PSSMS[p]->binned_null_displacements_non[i])+",";
-      }else{
-	line+=to_string(PSSMS[p]->binned_null_displacements_non[i]);	
-      }
-    }
-    FHW<<line+"\n";
+    FHW<<line+"\n";	
 
   }
-  FHW<<"#Estimated Background Distribution (TSS)\n";
+  FHW<<"#Estimated Background Distribution\n";
   for (int i = 0 ; i < MAP_background.size(); i++){
     FHW<<"#\t"+ to_string(MAP_background[i][0])+","+to_string(MAP_background[i][1])+","+to_string(MAP_background[i][2])+","+to_string(MAP_background[i][3])+ "\n";
-  }
-  FHW<<"#Estimated Background Distribution (~TSS)\n";
-  for (int i = 0 ; i < MAP_background_NON.size(); i++){
-    FHW<<"#\t"+ to_string(MAP_background_NON[i][0])+","+to_string(MAP_background_NON[i][1])+","+to_string(MAP_background_NON[i][2])+","+to_string(MAP_background_NON[i][3])+ "\n";
   }
 }
 
@@ -600,81 +577,27 @@ double normal::cdf(double x){
 
 
 
-void write_out_stats(vector<PSSM *> PSSMS, string OUT, params *P, 
-		     double TSS_association,  double total_TSS, double total_intervals  ){
+void write_out_stats(vector<PSSM *> PSSMS, string OUT, params * P  ){
 
-  double TSS_percent 	= (total_intervals*TSS_association)/total_TSS;
 
   ofstream FHW(OUT);
   int large_window     = stoi(P->p["-H"]);
   PSSMS 	= sort_PSSMS(PSSMS);
-  FHW<<P->get_header();
-  FHW<<"#overlap_stats\t" + to_string(TSS_association) + "," + to_string(total_intervals) + "\t";
-  FHW<<to_string(TSS_percent) + "," + to_string(total_TSS) + "\n";
 
-  FHW<<"#motif identifier\tTotal(NON,TSS,COMB)\tMD score(NON,TSS,COMB)\tStationary p-value(NON,TSS,COMB)\tNon-stationary p-value(NON,TSS,COMB)\tNull Expectations(NON,TSS,COMB)\tNull STDs\n";
 	
-  for (int p = 0 ; p < PSSMS.size(); p++){
-    FHW<<PSSMS[p]->name<<"\t";
-		
-    double mean       = get_mean(PSSMS[p]->MD_CDF_NON);
-    double mean2      = get_mean(PSSMS[p]->MD_CDF_TSS);
-    double mean3      = get_mean(PSSMS[p]->MD_CDF);
-
-    double var        = sqrt(get_var(PSSMS[p]->MD_CDF_NON,mean));
-    double var2       = sqrt(get_var(PSSMS[p]->MD_CDF_TSS,mean2));
-    double var3       = sqrt(get_var(PSSMS[p]->MD_CDF,mean3));
-		
-
-    FHW<<to_string(int(PSSMS[p]->total_NON))<<","<<to_string(int(PSSMS[p]->total_TSS))<<","<<to_string(int(PSSMS[p]->total))<<"\t";
-		
-
-    FHW<<to_string(PSSMS[p]->MD_score_NON)<<","<<to_string(PSSMS[p]->MD_score_TSS)<<","<<to_string(PSSMS[p]->MD_score)+"\t";
-
-    FHW<<to_string(PSSMS[p]->stationary_p_values[0])<<","<<to_string(PSSMS[p]->stationary_p_values[1])<<","<<to_string(PSSMS[p]->stationary_p_values[2])+"\t";
-
-    FHW<<to_string(PSSMS[p]->non_pvalues[0])<<","<<to_string(PSSMS[p]->non_pvalues[1])<<","<<to_string(PSSMS[p]->non_pvalues[2])+"\t";
-
-
-    FHW<< to_string(mean) + "," + to_string(mean2) + "," + to_string(mean3) + "\t" + to_string(var) + "," + to_string(var2) + "," + to_string(var3)    +"\n";
-  }
-  FHW<<"#Binned Observation statistics\tMotif Model Name\tNON\tTSS\tCOMB\n";
   for (int p =0 ; p < PSSMS.size(); p++){
-    FHW<<PSSMS[p]->name<<"\t";
+    FHW<<PSSMS[p]->name<<",";
     PSSMS[p]->bin_observations(large_window);
     string line="";
-    vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements_non,PSSMS[p]->binned_observed_displacements_TSS, PSSMS[p]->binned_observed_displacements};
-    for (int a = 0; a < A.size(); a++){
-      for (int i = 0; i < A[a].size(); i++ ){
-	if (i+1 <  A[a].size()){
-	  line+=to_string(A[a][i]) + ",";
-	}
-      }
-      line=line.substr(0,line.size()-1 );
-			
-			
-      if (a+1 < A.size()){
-	line+="\t";
-      }
+    vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements};
+    for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
+    	if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
+    	  line+=to_string(PSSMS[p]->binned_observed_displacements[i]) + ",";
+    	}
     }
+    line=line.substr(0,line.size()-1 );			
     FHW<<line<<endl;
-
   }
-
-  FHW<<"#Empiracle Bootstrapped Distribution\n";
-  for (int p = 0 ; p < PSSMS.size(); p++){
-    string line = "", line2="";
-
-    FHW<<PSSMS[p]->name<<"\t";
-    for (int i = 0 ; i < PSSMS[p]->MD_CDF.size();i++){
-      if (i+1 < PSSMS[p]->MD_CDF.size()){
-	line+=to_string(PSSMS[p]->MD_CDF[i][0])+",";
-      }else{
-	line+=to_string(PSSMS[p]->MD_CDF[i][0]);	
-      }
-    }
-    FHW<<line<<endl;
-  }	
 }
 
 void load_PSSM_ID_names_only(string FILE, map<int, string> & G){

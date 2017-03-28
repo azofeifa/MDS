@@ -1,3 +1,5 @@
+#define _GLIBCXX_USE_CXX11_ABI 0
+
 #ifndef MPI_H
 #define MPI_H
 #include "load.h"

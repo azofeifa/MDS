@@ -1,4 +1,5 @@
 
+#define _GLIBCXX_USE_CXX11_ABI 0
 #include "read_in_parameters.h"
 #include "load.h"
 #include "get_motif_pvalues.h"
@@ -19,17 +20,18 @@
 using namespace std;
 
 int main(int argc,char* argv[]){
-  MPI::Init(argc, argv);
   clock_t t1,t2;
-  int nprocs		= MPI::COMM_WORLD.Get_size();
-  int rank 		= MPI::COMM_WORLD.Get_rank();
+  int rank, nprocs;
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   int threads  	= omp_get_max_threads();
-  
+
   params * P = new params();
   fill_in_options(argc, argv, P, 0);
   if (P->EXIT){
     printf("exiting...\n");
-    MPI::Finalize();
+    MPI_Finalize();
     return 0;
   }
   
@@ -79,12 +81,7 @@ int main(int argc,char* argv[]){
     LG->write("inserting fasta.............................", verbose);
     intervals 									= insert_fasta_sequence(fasta_file, intervals,0,1);
     LG->write("done\n", verbose);
-
-    
-    
-    
-    
-    
+ 
     
     //============================================================
     //....5.... Compute P-values, approximation error ~ 1.0 / bins
@@ -95,8 +92,7 @@ int main(int argc,char* argv[]){
     
     scan_intervals_genome_wide(intervals, PSSMS,  background, pv, 
 			       rank,  nprocs,  LG,  out_dir );
-    
-    
+        
     
     if (rank==0){
       collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
@@ -110,11 +106,10 @@ int main(int argc,char* argv[]){
     //necessary user input parameters for DB module
     string fasta_file 			= P->p["-fasta"];
     string bed_file 			= P->p["-bed"];
-    string TSS_bed_file 			= P->p["-TSS"];
     string out_dir 				= P->p["-o"];
     string PSSM_DB 				= P->p["-DB"];
-    string ID                               = P->p["-ID"];
-    string log_out                          = P->p["-log_out"];
+    string ID                   = P->p["-ID"];
+    string log_out              = P->p["-log_out"];
     
     
     int job_ID 				= 1;
@@ -152,25 +147,7 @@ int main(int argc,char* argv[]){
     double interval_count  	= 0;
     map<string, vector<segment>> intervals 		= load_bed_file(bed_file, window,interval_size,interval_count); 
     LG->write("done\n", verbose);
-    
-    //============================================================
-    //....4.... load TSS intervals from user 
-    
-    LG->write("loading TSS intervals.......................", verbose);
-    double TSS_count 		= 0;
-    map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, window,interval_size, TSS_count); 
-    LG->write("done\n", verbose);
-    
-    //============================================================
-    //....5.... label intervals as TSS and not
-    
-    LG->write("labeling TSS association....................", verbose);
-    double TSS_association =	0;
-    intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
-    LG->write("done, " + to_string(TSS_association*100)+" percent association\n", verbose);
-    
-    
-    
+        
     
     //============================================================
     //....4.... insert the fasta sequnece into the provided intervals
@@ -183,12 +160,11 @@ int main(int argc,char* argv[]){
     
     //============================================================
     //....5.... get generic GC content across intervals for background model
-    vector<vector<double>> background_TSS, background_non_TSS;
+    vector<vector<double>> background_across;
     LG->write("computing ACGT profile......................", verbose);
     
     
-    get_ACGT_profile_all(intervals, background_TSS, 1, window*2);
-    get_ACGT_profile_all(intervals, background_non_TSS, 0, window*2);
+    get_ACGT_profile_all(intervals, background_across, 1, window*2);
     
     
     
@@ -196,20 +172,17 @@ int main(int argc,char* argv[]){
     
     //============================================================
     //....6.... perform simulations and get random MD scores
-    LG->write("\n   running simulations for null model (TSS)\n\n",verbose);
-		
-    run_simulations(intervals,PSSMS, sim_N,background_TSS,background, pv, rank, nprocs, LG,1, window);
     
-    LG->write("\n   running simulations for null model (~TSS)\n\n",verbose);
+    LG->write("\n   running simulations for null model\n\n",verbose);
     
-    run_simulations(intervals,PSSMS, sim_N,background_non_TSS,background, pv, rank, nprocs, LG, 0, window);
+    run_simulations(intervals,PSSMS, sim_N,background_across,background, pv, rank, nprocs, LG, 0, window);
     
     //============================================================
     //....6....write out to DB file
     if (rank==0){
       LG->write("writing out simulations.....................",verbose);
       string OUT = out_dir + ID + ".db";
-      write_out_null_stats( PSSMS,OUT,  P, background,background_TSS, background_non_TSS);
+      write_out_null_stats( PSSMS,OUT,  P, background,background_across);
       
       LG->write("done\n",verbose);
     }
@@ -222,15 +195,17 @@ int main(int argc,char* argv[]){
     //necessary user input parameters for DB module
     string fasta_file 			= P->p["-fasta"];
     string bed_file 			= P->p["-bed"];
-    string DB_file 				= P->p["-DB"];
+    string PSSM_DB 				= P->p["-DB"];
     string out_dir 				= P->p["-o"]; 
-    string TSS_bed_file 			= P->p["-TSS"];
-    string ID                               = P->p["-ID"];
-    string log_out                          = P->p["-log_out"];
-    
+    string ID                   = P->p["-ID"];
+    string log_out              = P->p["-log_out"];
 
+    int PSSM_test               = stoi(P->p["-t"]);
     int BSN 			        = stoi(P->p["-bsn"]);
     int MD_window 				= stoi(P->p["-h"]);
+    int large_window            = stoi(P->p["-H"]);
+    int bins                    = stoi(P->p["-br"]);
+    double pv                   = stod(P->p["-pv"]);
     int test 				= 0;
     int job_ID 				= 1;
     int verbose 				= 1;
@@ -244,46 +219,27 @@ int main(int argc,char* argv[]){
     //============================================================
     //....1.... Load PSSM Database
     LG->write("loading PSSM DB.............................", verbose);
-    vector<double> background;
-    vector<PSSM *> PSSMS 					= load_personal_DB_file(DB_file, P,background);
+    vector<PSSM *> PSSMS      = load_PSSM_DB_new(PSSM_DB, PSSM_test );
+
     double pval 								= stod(P->p["-pv"]);
     if (PSSMS.empty()){
       if (rank==0){
-	collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
+	   collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
       }
       LG->write("exiting...\n", verbose);
-      MPI::Finalize();
+      MPI_Finalize();
       return 0;
     }
     LG->write("done\n",verbose);
 		
-    int bins 		= stoi(P->p["-bins"]);
-    double pv 		= stod(P->p["-pv"]);
-    
 
     //============================================================
     //....3.... load intervals from user 
     LG->write("loading intervals...........................", verbose);
     double total_intervals 	= 0;
-    double large_window           = stod(P->p["-H"]);
     map<string, vector<segment>> intervals 		= load_bed_file(bed_file, large_window,interval_size,total_intervals); 
     LG->write("done\n", verbose);
 
-    //============================================================
-    //....4.... load TSS intervals from user 
-    
-    LG->write("loading TSS intervals.......................", verbose);
-    double total_TSS 	= 0;
-    map<string, vector<segment>> TSS_intervals 	= load_bed_file(TSS_bed_file, large_window,interval_size,total_TSS); 
-    LG->write("done\n", verbose);
-    
-    //============================================================
-    //....5.... label intervals as TSS and not
-    
-    LG->write("labeling TSS association....................", verbose);
-    double TSS_association =  0;
-    intervals 									= label_TSS(intervals, TSS_intervals,TSS_association);
-    LG->write("done, " + to_string(TSS_association*100)+" percent association\n", verbose);
     
     
     
@@ -298,7 +254,8 @@ int main(int argc,char* argv[]){
     //============================================================
     //....3.... Computed LLR distribution for motifs
     LG->write("computing p-values..........................", verbose);
-    DP_pvalues(PSSMS,bins, background,false, pval);
+    vector<double> background   = {0.25,0.25,0.25,0.25};
+    DP_pvalues(PSSMS,bins, background,false, pv);
     LG->write("done\n", verbose);
     
     
@@ -311,21 +268,21 @@ int main(int argc,char* argv[]){
     }
     scan_intervals(intervals, PSSMS, background, 
 		   pv,  interval_size,   BSN, 
-		   rank,   nprocs,   LG, MD_window, TSS_association, OUT2,large_window);
+		   rank,   nprocs,   LG, MD_window, OUT2,large_window);
     
     
     //============================================================
     //....7.... assess significance
     if (rank==0){
       string OUT = out_dir+ ID+ "_MDS.tsv";
-      write_out_stats(PSSMS, OUT, P, TSS_association, total_TSS, total_intervals );
+      write_out_stats(PSSMS, OUT, P  );
       collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
     }
   }
   
   
 
-  MPI::Finalize();
+  MPI_Finalize();
 
   
   return 0;
