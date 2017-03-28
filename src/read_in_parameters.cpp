@@ -90,8 +90,6 @@ void params::help(){
 	printf("              motif hit, recomeneded < 10^-6 (default)\n");
 	printf("-sim_N    : (to be used for the \"DB\" module) number of random sequences to\n");
 	printf("              generate, recomeneded >10^7 (default)\n");
-	printf("-bsn      : (to be used for the \"EVAL\" module) number of bootstrapped samples\n");
-	printf("              recomeneded >10^4 (default)\n");
 	printf("\nQuestions/Bugs? joseph[dot]azofeifa[at]colorado[dot]edu\n" );		
 	printf("--------------------------------------------------------------------------------------------\n");
 
@@ -134,9 +132,7 @@ string params::get_header(){
 		line+="#-o             "+p["-o"]+"\n";
 		line+="#-log_out       "+p["-log_out"]+"\n";
 		line+="#-pv            "+p["-pv"]+"\n";
-		line+="#-bsn           "+p["-bsn"]+"\n";
 		line+="#-hits          "+p["-hits"]+"\n";
-		line+="#-h             "+p["-h"]+"\n";
 		line+="#-H             "+p["-H"]+"\n";
 		line+="#================================================================\n";
 	}else if(module.size()==2 and module.substr(0,2) == "DB"){
