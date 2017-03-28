@@ -278,7 +278,7 @@ void fill_in_options(int argc, char* argv[], params * P, int rank){
       
       result       = is_number(P->p["-H"],temp);
       if (rank==0){
-	printf("checking if local background radius (-H) is a number..................%s\n", result.c_str());
+			printf("checking if local background radius (-H) is a number..................%s\n", result.c_str());
       }
       P->EXIT      = P->EXIT or temp;
       
@@ -289,17 +289,7 @@ void fill_in_options(int argc, char* argv[], params * P, int rank){
       P->EXIT      = P->EXIT or temp;
     }
     else if (P->module == "EVAL"){
-      result       = is_number(P->p["-h"],temp);
-      if (rank==0){
-	printf("checking if MDS radius (-h) is a number...............................%s\n", result.c_str());
-      }
-      P->EXIT      = P->EXIT or temp;
-
-      result       = is_number(P->p["-BSN"],temp);
-      if (rank==0){
-	printf("checking if MD simulation generation (-bsn) is a number...............%s\n", result.c_str());
-      }
-      P->EXIT      = P->EXIT or temp;
+      
     }
 
   }
