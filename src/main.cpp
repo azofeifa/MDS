@@ -273,7 +273,7 @@ int main(int argc,char* argv[]){
     //============================================================
     //....7.... assess significance
     if (rank==0){
-      string OUT = out_dir+ ID+ "_MDS.tsv";
+      string OUT = out_dir+ ID+ "_MDS.csv";
       write_out_stats(PSSMS, OUT, P  );
       collect_all_tmp_files(P->p["-log_out"], P->p["-ID"], nprocs, job_ID);
     }
