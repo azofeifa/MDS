@@ -32,7 +32,7 @@ void smooth_frequence_table(PSSM * p){
 	for (int i = 0 ; i < X.size(); i++){
 		double SUM 	= 0.0;
 		for (int j = 0; j < X[i].size(); j++){
-			X[i][j]=(X[i][j]*double(p->N) + 1);
+			X[i][j]=(X[i][j]*double(p->N) + 0.01);
 			SUM+=X[i][j];
 		}
 		for (int j = 0; j < X[i].size(); j++){
