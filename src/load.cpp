@@ -572,11 +572,27 @@ void write_out_stats(vector<PSSM *> PSSMS, string OUT, params * P  ){
   int large_window     = stoi(P->p["-H"]);
   PSSMS 	= sort_PSSMS(PSSMS);
 
+
 	
   for (int p =0 ; p < PSSMS.size(); p++){
-    FHW<<PSSMS[p]->name<<",";
-    PSSMS[p]->bin_observations(large_window);
     string line="";
+    PSSMS[p]->bin_observations(large_window);
+    if (p==0){
+      /*
+        write out the header
+      */
+      int N   = PSSMS[p]->binned_observed_displacements.size();
+      line+="ID,";
+
+      for (int i = (-N/2)+1 ; i < N/2; i++ ){
+        line+=to_string(i)+",";
+      }
+      line=line.substr(0,line.size()-1 );     
+      FHW<<line<<endl;
+    }
+    line="";
+
+    FHW<<PSSMS[p]->name<<",";
     vector<vector<int>> A 	= {PSSMS[p]->binned_observed_displacements};
     for (int i = 0; i < PSSMS[p]->binned_observed_displacements.size(); i++ ){
     	if (i+1 <  PSSMS[p]->binned_observed_displacements.size()){
