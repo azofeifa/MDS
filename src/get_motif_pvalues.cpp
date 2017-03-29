@@ -67,7 +67,6 @@ void histogram(vector<double> x, vector<double> y, int bins,
 {
 	double delta 	= (max_x - min_x) / double(bins);
 	sort_xy(x,y);
-
 	for (int i = 0; i < bins; i++){
 		edges.push_back(min_x + (i*delta));
 		counts.push_back(0);
@@ -84,7 +83,8 @@ void histogram(vector<double> x, vector<double> y, int bins,
 	}
 }
 
-vector<vector<double>> compute_pvalues(PSSM * p, vector<double > background,int bins){
+vector<vector<double>> compute_pvalues(PSSM * p, 
+									vector<double > background,int bins){
 	vector<vector<double>>p_values;
 	int N 	= p->frequency_table.size(); //number of positions in the PSSM
 	double min_score 	= get_order_stat(p->frequency_table, background, true);

@@ -111,7 +111,6 @@ int main(int argc,char* argv[]){
     string ID                   = P->p["-ID"];
     string log_out              = P->p["-log_out"];
     
-    
     int job_ID 				= 1;
     int window 			        = stoi(P->p["-H"]);
     int test 				= 0;
@@ -255,7 +254,7 @@ int main(int argc,char* argv[]){
     //....3.... Computed LLR distribution for motifs
     LG->write("computing p-values..........................", verbose);
     vector<double> background   = {0.25,0.25,0.25,0.25};
-    DP_pvalues(PSSMS,bins, background,false, pv);
+    DP_pvalues(PSSMS,bins, background,true, pv);
     LG->write("done\n", verbose);
     
     

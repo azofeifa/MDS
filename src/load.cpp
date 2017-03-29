@@ -274,6 +274,7 @@ void PSSM::get_ll_threshold(double pval){
     k++;
   }
   ll_thresh 	= pvalues[k-1][0];
+  printf("%d,%d,%f\n",k, pvalues.size(),ll_thresh);
 }
 
 
